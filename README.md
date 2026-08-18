@@ -37,6 +37,41 @@ A leitura é **por perfil de forças** — não há nota de aprovação.
 e de pesquisa, apresentados em versão em português com as referências originais
 citadas em cada teste.
 
+## Histórico e painel de acompanhamento
+
+Ao concluir um teste, um registro do **resultado agregado** (data/hora, instrumento,
+identificação opcional, pontuações, faixas e subescalas — **sem as respostas
+individuais**) é salvo:
+
+- **Neste dispositivo** (localStorage) — sempre.
+- **No registro central** (Supabase) — quando ativado (ver abaixo).
+
+O painel fica em **`/painel-ahsd`** (URL discreta, fora da navegação e com
+`noindex`): lista os registros com data e hora, detalhamento por subescala,
+exportação CSV e, para o registro central, acesso protegido por senha.
+
+### Ativando o registro central (opcional, ~3 minutos)
+
+1. Crie um projeto gratuito em [supabase.com](https://supabase.com) (região São Paulo).
+2. Abra o **SQL Editor** do projeto e rode o conteúdo de [`supabase/setup.sql`](supabase/setup.sql)
+   — **troque a senha do painel** na linha indicada.
+3. No Vercel (Settings → Environment Variables), defina:
+   - `NEXT_PUBLIC_SUPABASE_URL` = `https://SEU-PROJETO.supabase.co`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = a *publishable/anon key* do projeto
+4. Faça um novo deploy. Pronto: todos os dispositivos passam a registrar no banco
+   central, e o painel `/painel-ahsd` mostra tudo mediante a senha.
+
+Segurança: a chave pública (anon) só permite **inserir** resultados; a leitura é
+bloqueada por RLS e só acontece por uma função do banco protegida pela senha do
+painel.
+
+## Guia educativo
+
+A página **`/superdotacao`** explica, com referências, como rastreios online se
+relacionam com testes de QI (WAIS, WISC, Raven), o que é exigido para um laudo de
+AH/SD no Brasil (SATEPSI/CFP), os modelos de Renzulli e Gagné e os caminhos para
+adultos (avaliação formal, ConBraSD, Mensa Brasil).
+
 ## Arquitetura
 
 Cada instrumento é **orientado a dados**: uma definição declarativa (perguntas +

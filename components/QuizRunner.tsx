@@ -4,12 +4,15 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { getInstrument } from "@/lib/instruments";
 import { countAnswered, isComplete, optionsFor } from "@/lib/scoring";
+import { insertRemoteRecord, recordFromResult, saveLocalRecord } from "@/lib/history";
+import { remoteEnabled } from "@/lib/remote-config";
 import type { Responses } from "@/lib/types";
 import ResultView from "./ResultView";
 
 export default function QuizRunner({ id }: { id: string }) {
   const inst = getInstrument(id);
   const [responses, setResponses] = useState<Responses>({});
+  const [respondent, setRespondent] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [showError, setShowError] = useState(false);
 
@@ -46,6 +49,19 @@ export default function QuizRunner({ id }: { id: string }) {
         document.getElementById(`q-${firstUnanswered.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
       }
       return;
+    }
+    // Grava o resultado agregado (sem respostas individuais) no histórico.
+    const result = inst!.score(responses);
+    const record = recordFromResult(
+      inst!,
+      result,
+      respondent,
+      crypto.randomUUID(),
+      new Date().toISOString(),
+    );
+    saveLocalRecord(record);
+    if (remoteEnabled()) {
+      void insertRemoteRecord(record);
     }
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -149,17 +165,42 @@ export default function QuizRunner({ id }: { id: string }) {
         </p>
       )}
 
-      <div className="no-print mt-6 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
-        >
-          Ver resultado
-        </button>
-        <span className="text-sm text-slate-400">
-          {complete ? "Tudo respondido ✓" : `${total - answered} restantes`}
-        </span>
+      <div className="no-print mt-6 rounded-xl border border-slate-200 bg-white p-4">
+        <label htmlFor="respondent" className="block text-sm font-medium text-slate-700">
+          Identificação (opcional)
+        </label>
+        <p className="text-xs text-slate-400">
+          Nome ou apelido de quem respondeu — útil para acompanhar resultados de várias pessoas.
+        </p>
+        <input
+          id="respondent"
+          type="text"
+          maxLength={80}
+          value={respondent}
+          onChange={(e) => setRespondent(e.target.value)}
+          placeholder="ex.: Gustavo, filho mais velho…"
+          className="mt-2 w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+        />
+
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
+          >
+            Ver resultado
+          </button>
+          <span className="text-sm text-slate-400">
+            {complete ? "Tudo respondido ✓" : `${total - answered} restantes`}
+          </span>
+        </div>
+        <p className="mt-3 text-xs text-slate-400">
+          Ao ver o resultado, um registro com data/hora, identificação (se informada) e as
+          pontuações — <strong>sem as respostas individuais</strong> — é salvo neste dispositivo
+          {remoteEnabled()
+            ? " e no registro central desta plataforma, para acompanhamento no painel."
+            : " para acompanhamento no painel deste dispositivo."}
+        </p>
       </div>
     </div>
   );

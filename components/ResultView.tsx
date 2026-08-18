@@ -168,6 +168,15 @@ export default function ResultView({
         <strong>Lembrete:</strong> este resultado é um rastreio (triagem), não um diagnóstico.
         Instrumentos de autorrelato têm limitações. Leve este relatório a um profissional
         qualificado para interpretação no seu contexto.
+        {inst.category === "altas-habilidades" && (
+          <>
+            {" "}
+            <Link href="/superdotacao" className="font-medium underline">
+              Entenda como este rastreio se relaciona com testes de QI e com o laudo formal de
+              AH/SD →
+            </Link>
+          </>
+        )}
       </div>
 
       <div className="no-print mt-6 flex flex-wrap gap-3">

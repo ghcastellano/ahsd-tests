@@ -10,8 +10,11 @@ export default function SobrePage() {
       <p className="mt-4 text-slate-600">
         Este é um sistema de <strong>rastreio (triagem)</strong> de Altas Habilidades/Superdotação
         (AH/SD) e de condições que frequentemente coocorrem — o que a literatura chama de{" "}
-        <em>dupla excepcionalidade</em>. A correção e a interpretação são feitas automaticamente e
-        totalmente no seu navegador: nenhuma resposta é enviada ou armazenada em servidores.
+        <em>dupla excepcionalidade</em>. A correção e a interpretação são feitas automaticamente no
+        seu navegador. Ao concluir um teste, um registro do <strong>resultado agregado</strong>{" "}
+        (data/hora, pontuações, faixas e a identificação opcional) é salvo no dispositivo — e no
+        registro central da plataforma, quando ativado — para o painel de acompanhamento. As
+        respostas individuais de cada questão não são armazenadas.
       </p>
 
       <h2 className="mt-8 text-lg font-semibold text-slate-900">Como funciona a pontuação</h2>

@@ -14,8 +14,16 @@ export default function HomePage() {
         <p className="mt-4 max-w-3xl text-slate-600">
           Questionários validados, com correção automática, pontuação e detalhamento dos
           resultados. Feito para autoavaliação e para que profissionais e familiares possam
-          aplicar e interpretar. Os resultados são calculados no seu navegador — nada é enviado
-          para servidores.
+          aplicar e interpretar. Os resultados são calculados no seu navegador; um registro do
+          resultado (data/hora e pontuações, sem as respostas individuais) é guardado para o
+          painel de acompanhamento.
+        </p>
+        <p className="mt-3 max-w-3xl text-sm text-slate-500">
+          Quer entender como estes rastreios se relacionam com testes de QI e com o laudo formal
+          de superdotação?{" "}
+          <Link href="/superdotacao" className="font-medium text-brand-600 hover:underline">
+            Leia o guia sobre superdotação →
+          </Link>
         </p>
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           <span className="rounded-lg border border-slate-200 bg-white px-3 py-2">
