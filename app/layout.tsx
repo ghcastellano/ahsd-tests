@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Rastreio AH/SD e Neurodivergências",
   description:
-    "Plataforma de triagem com questionários validados de Altas Habilidades/Superdotação, TDAH, autismo, humor, ansiedade e trauma — com avaliação e detalhamento.",
+    "Plataforma de triagem de Altas Habilidades/Superdotação e neurodivergências: rastreios clínicos validados (PHQ-9, GAD-7, ASRS, AQ, RAADS-R e outros) e módulos autorais de AH/SD, com correção automática e detalhamento.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

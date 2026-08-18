@@ -32,7 +32,20 @@ export interface ResultRecord {
 const STORAGE_KEY = "ahsd:historico:v1";
 const MAX_LOCAL_RECORDS = 500;
 
-/** Monta um registro a partir de um resultado calculado (função pura). */
+/** Id único com fallback: crypto.randomUUID só existe em contexto seguro (HTTPS). */
+export function makeRecordId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Monta um registro a partir de um resultado calculado (função pura).
+ * As `notes` do resultado NÃO entram no registro: elas podem revelar a resposta
+ * de um item específico (ex.: o item 9 do PHQ-9), o que quebraria a promessa de
+ * não armazenar respostas individuais.
+ */
 export function recordFromResult(
   inst: Instrument,
   result: InstrumentResult,
@@ -60,7 +73,6 @@ export function recordFromResult(
       max: s.max,
       mean: s.mean,
     })),
-    notes: result.notes,
   };
 }
 
@@ -107,9 +119,10 @@ export async function insertRemoteRecord(record: ResultRecord): Promise<boolean>
         "Content-Type": "application/json",
         Prefer: "return=minimal",
       },
+      // created_at fica de fora de propósito: o servidor carimba com now(),
+      // impedindo datas forjadas de bagunçar a ordenação do painel.
       body: JSON.stringify({
         client_id: record.id,
-        created_at: record.createdAt,
         instrument_id: record.instrumentId,
         acronym: record.acronym,
         instrument_name: record.instrumentName,
@@ -121,7 +134,6 @@ export async function insertRemoteRecord(record: ResultRecord): Promise<boolean>
         positive: record.positive ?? null,
         metric_is_mean: record.metricIsMean ?? false,
         subscales: record.subscales ?? null,
-        notes: record.notes ?? null,
       }),
     });
     return res.ok;
@@ -162,7 +174,10 @@ export async function fetchRemoteRecords(password: string): Promise<ResultRecord
   });
   if (!res.ok) {
     const body = await res.text();
-    if (body.includes("senha")) throw new Error("Senha incorreta.");
+    // A função SQL lança exatamente 'senha incorreta'; um substring mais curto
+    // ("senha") também casaria com o erro PGRST202 de função-não-encontrada,
+    // cuja mensagem ecoa o parâmetro "p_senha".
+    if (body.includes("senha incorreta")) throw new Error("Senha incorreta.");
     throw new Error(`Falha ao consultar o registro central (${res.status}).`);
   }
   const rows = (await res.json()) as RemoteRow[];
@@ -191,10 +206,19 @@ export function formatDateTimeBR(iso: string): string {
 }
 
 function csvEscape(value: string): string {
-  if (/[";\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`;
+  // Neutraliza injeção de fórmula: célula começando com = + - @ seria
+  // executada pelo Excel/LibreOffice ao abrir o arquivo.
+  let v = value;
+  if (/^[=+\-@]/.test(v)) v = `'${v}`;
+  if (/[";\n\r]/.test(v)) {
+    return `"${v.replace(/"/g, '""')}"`;
   }
-  return value;
+  return v;
+}
+
+/** Números no padrão pt-BR (vírgula decimal), consistente com a interface. */
+function csvNumber(n: number): string {
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
 }
 
 /** Gera CSV (separador ';', padrão pt-BR/Excel) a partir dos registros. */
@@ -212,15 +236,18 @@ export function buildCsv(records: ResultRecord[]): string {
   ];
   const lines = records.map((r) => {
     const subs = (r.subscales ?? [])
-      .map((s) => `${s.name}: ${s.mean !== undefined ? `média ${s.mean}` : `${s.raw}/${s.max}`}`)
+      .map(
+        (s) =>
+          `${s.name}: ${s.mean !== undefined ? `média ${csvNumber(s.mean)}` : `${csvNumber(s.raw)}/${csvNumber(s.max)}`}`,
+      )
       .join(" | ");
     return [
       formatDateTimeBR(r.createdAt),
       r.instrumentName,
       r.acronym,
       r.respondent ?? "",
-      String(r.totalScore),
-      String(r.maxScore),
+      csvNumber(r.totalScore),
+      csvNumber(r.maxScore),
       r.bandLabel,
       r.positive === undefined ? "" : r.positive ? "sim" : "não",
       subs,

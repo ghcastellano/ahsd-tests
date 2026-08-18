@@ -157,8 +157,11 @@ export default function AdminPanel() {
     try {
       setRemote(await fetchRemoteRecords(password));
     } catch (e) {
-      setRemote(null);
-      setRemoteError(e instanceof Error ? e.message : "Erro ao consultar o registro central.");
+      const msg = e instanceof Error ? e.message : "Erro ao consultar o registro central.";
+      setRemoteError(msg);
+      // Senha recusada volta ao login; falha transitória (rede/5xx) durante um
+      // "Atualizar" preserva os dados já carregados.
+      setRemote((prev) => (msg === "Senha incorreta." ? null : prev));
     } finally {
       setLoading(false);
     }
@@ -263,8 +266,12 @@ export default function AdminPanel() {
           </div>
         ) : (
           <>
+            {remoteError && <p className="mt-2 text-sm text-rose-600">{remoteError}</p>}
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-slate-500">{remote.length} registro(s) no banco central.</p>
+              <p className="text-sm text-slate-500">
+                {remote.length} registro(s) no banco central
+                {remote.length >= 2000 ? " (o painel mostra até os 2.000 mais recentes)" : ""}.
+              </p>
               <div className="flex gap-2">
                 <button
                   type="button"

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { getInstrument } from "@/lib/instruments";
 import { countAnswered, isComplete, optionsFor } from "@/lib/scoring";
-import { insertRemoteRecord, recordFromResult, saveLocalRecord } from "@/lib/history";
+import { insertRemoteRecord, makeRecordId, recordFromResult, saveLocalRecord } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
 import type { Responses } from "@/lib/types";
 import ResultView from "./ResultView";
@@ -56,7 +56,7 @@ export default function QuizRunner({ id }: { id: string }) {
       inst!,
       result,
       respondent,
-      crypto.randomUUID(),
+      makeRecordId(),
       new Date().toISOString(),
     );
     saveLocalRecord(record);

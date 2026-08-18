@@ -5,9 +5,11 @@ e de condições que frequentemente coocorrem (dupla excepcionalidade), com
 **questionários completos, correção automática, pontuação e detalhamento** dos
 resultados — para autoavaliação e para aplicação por profissionais e familiares.
 
-Construída do zero, com lógica de pontuação verificada por testes automatizados e
-resultados calculados inteiramente no navegador (nenhuma resposta é enviada a
-servidores).
+Construída do zero, com lógica de pontuação verificada por testes automatizados.
+Os resultados são calculados no navegador; ao concluir um teste, um registro do
+**resultado agregado** (data/hora, identificação opcional, pontuações, faixas e
+subescalas — sem as respostas de cada questão) é salvo no dispositivo e, quando o
+registro central estiver ativado, também no banco da plataforma.
 
 > ⚠️ **Não é diagnóstico.** Todos os instrumentos são de rastreio e orientação
 > inicial. A identificação formal de AH/SD ou de qualquer condição exige
@@ -60,12 +62,20 @@ exportação CSV e, para o registro central, acesso protegido por senha.
 3. No Vercel (Settings → Environment Variables), defina:
    - `NEXT_PUBLIC_SUPABASE_URL` = `https://SEU-PROJETO.supabase.co`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = a *publishable/anon key* do projeto
-4. Faça um novo deploy. Pronto: todos os dispositivos passam a registrar no banco
-   central, e o painel `/painel-ahsd` mostra tudo mediante a senha.
+4. **Defina a senha do painel** (obrigatório — o script semeia `TROQUE-ESTA-SENHA`):
+   ```sql
+   update public.admin_config
+     set senha_hash = crypt('sua-senha-longa-e-unica', gen_salt('bf'))
+     where id = 1;
+   ```
+5. Faça um novo deploy. Pronto: todos os dispositivos passam a registrar no banco
+   central, e o painel `/painel-ahsd` mostra os registros (até os 2.000 mais
+   recentes) mediante a senha.
 
 Segurança: a chave pública (anon) só permite **inserir** resultados; a leitura é
-bloqueada por RLS e só acontece por uma função do banco protegida pela senha do
-painel.
+bloqueada por RLS e só acontece por uma função do banco que valida a senha contra
+um hash bcrypt. A função é pública — a proteção é a senha, então use uma senha
+longa e única. Re-rodar o `setup.sql` não sobrescreve uma senha já definida.
 
 ## Guia educativo
 
@@ -82,13 +92,18 @@ opções) e uma **função de pontuação pura** (`score(responses) => result`).
 mostra pontuação, faixa de interpretação, subescalas, observações e referências.
 
 ```
-app/                 # Next.js App Router (home, /teste/[id], /sobre)
-components/           # QuizRunner + ResultView (client)
+app/                 # Next.js App Router (home, /teste/[id], /sobre,
+                     #   /superdotacao, /painel-ahsd)
+components/          # QuizRunner + ResultView + AdminPanel (client)
 lib/
   types.ts           # tipos do domínio
   scoring.ts         # helpers de pontuação (soma, reverso, faixas, subescalas)
+  history.ts         # registro de resultados (local + central) e exportação CSV
+  remote-config.ts   # ativação do registro central (variáveis NEXT_PUBLIC_*)
   instruments/       # uma definição por instrumento + registry (index.ts)
-  scoring.test.ts    # 31 testes unitários de pontuação (Vitest)
+  scoring.test.ts    # testes unitários de pontuação (Vitest)
+  history.test.ts    # testes do registro/CSV
+supabase/setup.sql   # schema + RLS do registro central
 ```
 
 ### Pontuação verificada
@@ -97,7 +112,7 @@ A lógica de pontuação de todos os instrumentos é coberta por testes automati
 (cortes, itens reversos, algoritmos, marcas de rastreio, médias de perfil):
 
 ```bash
-npm test          # roda os 31 testes de pontuação
+npm test          # roda a suíte de testes (46 testes)
 ```
 
 ## Desenvolvimento

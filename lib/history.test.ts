@@ -38,6 +38,14 @@ describe("recordFromResult", () => {
     const rec = recordFromResult(phq9, result, "x".repeat(200), "id-3", AT);
     expect(rec.respondent?.length).toBe(80);
   });
+
+  it("never carries result notes (they can disclose individual answers)", () => {
+    // PHQ-9 com o item 9 endossado gera uma nota sobre ideação de autolesão.
+    const result = phq9.score({ ...answers(phq9.questions, 0), q9: 2 });
+    expect(result.notes?.length).toBeGreaterThan(0);
+    const rec = recordFromResult(phq9, result, "Ana", "id-4", AT);
+    expect(rec.notes).toBeUndefined();
+  });
 });
 
 describe("buildCsv", () => {
@@ -68,6 +76,27 @@ describe("buildCsv", () => {
   it("handles empty record list", () => {
     const csv = buildCsv([]);
     expect(csv.split("\r\n").length).toBe(1);
+  });
+
+  it("writes decimals with pt-BR comma (Excel pt-BR compatible)", () => {
+    const csv = buildCsv([
+      {
+        ...base,
+        respondent: undefined,
+        totalScore: 3.83,
+        maxScore: 5,
+        metricIsMean: true,
+        subscales: [{ name: "Intelectual", raw: 27, max: 35, mean: 3.86 }],
+      },
+    ]);
+    expect(csv).toContain(";3,83;5;");
+    expect(csv).toContain("média 3,86");
+    expect(csv).not.toContain("3.83");
+  });
+
+  it("neutralizes spreadsheet formula injection in text cells", () => {
+    const csv = buildCsv([{ ...base, respondent: "=HYPERLINK(1,2)", subscales: undefined }]);
+    expect(csv).toContain("'=HYPERLINK(1,2)");
   });
 });
 

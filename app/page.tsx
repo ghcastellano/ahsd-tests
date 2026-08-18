@@ -12,11 +12,12 @@ export default function HomePage() {
           Mapa de testes de Altas Habilidades/Superdotação e neurodivergências
         </h1>
         <p className="mt-4 max-w-3xl text-slate-600">
-          Questionários validados, com correção automática, pontuação e detalhamento dos
-          resultados. Feito para autoavaliação e para que profissionais e familiares possam
-          aplicar e interpretar. Os resultados são calculados no seu navegador; um registro do
-          resultado (data/hora e pontuações, sem as respostas individuais) é guardado para o
-          painel de acompanhamento.
+          Rastreios clínicos validados (PHQ-9, GAD-7, ASRS, AQ-50, RAADS-R, MDQ, HCL-32, PCL-5,
+          ACE e DERS) e módulos autorais de AH/SD fundamentados na literatura — com correção
+          automática, pontuação e detalhamento. Feito para autoavaliação e para que profissionais
+          e familiares possam aplicar e interpretar. Os resultados são calculados no seu
+          navegador; um registro do resultado (data/hora, identificação opcional e pontuações —
+          sem as respostas de cada questão) é guardado para o painel de acompanhamento.
         </p>
         <p className="mt-3 max-w-3xl text-sm text-slate-500">
           Quer entender como estes rastreios se relacionam com testes de QI e com o laudo formal
