@@ -21,12 +21,14 @@ servidores).
 | SE/OE | Sobre-excitabilidades de Dabrowski *(autoral)* | Altas Habilidades | 35 | Perfil das 5 dimensões |
 | ASRS v1.1 | Autorrelato de TDAH no adulto (OMS) | TDAH | 18 | Marcas da Parte A (≥4 = positivo) |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
+| RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
 | PHQ-9 | Saúde do Paciente – Depressão | Humor | 9 | 0–27 (5/10/15/20) |
 | GAD-7 | Ansiedade Generalizada | Ansiedade | 7 | 0–21 (corte 10) |
 | MDQ | Transtornos do Humor (bipolar) | Humor | 15 | Algoritmo de 3 critérios |
 | HCL-32 | Checklist de Hipomania | Humor | 32 | 0–32 (corte 14) |
 | PCL-5 | Checklist de TEPT (DSM-5) | Trauma | 20 | 0–80 (corte provisório 33) |
 | ACE | Experiências Adversas na Infância | Trauma | 10 | 0–10 (dose-resposta; 4+) |
+| DERS | Dificuldades de Regulação Emocional | Reg. emocional | 36 | 36–180 (6 subescalas; 11 itens reversos; referência normativa) |
 
 **Módulos de AH/SD (autorais):** itens originais fundamentados na literatura
 brasileira de AH/SD (Delou; MEC/Virgolim; Fleith & Alencar), no modelo dos três

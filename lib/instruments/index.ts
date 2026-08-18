@@ -9,18 +9,22 @@ import { mdq } from "./mdq";
 import { hcl32 } from "./hcl32";
 import { pcl5 } from "./pcl5";
 import { ace } from "./ace";
+import { raadsR } from "./raads-r";
+import { ders } from "./ders";
 
 export const instruments: Instrument[] = [
   ahsdIndicadores,
   sobreExcitabilidades,
   asrs,
   aq50,
+  raadsR,
   phq9,
   gad7,
   mdq,
   hcl32,
   pcl5,
   ace,
+  ders,
 ];
 
 export const categories: CategoryMeta[] = [
@@ -59,6 +63,12 @@ export const categories: CategoryMeta[] = [
     name: "Trauma e Adversidade",
     description: "Estresse pós-traumático e experiências adversas na infância.",
     accent: "violet",
+  },
+  {
+    key: "regulacao-emocional",
+    name: "Regulação Emocional",
+    description: "Como você percebe, aceita e maneja suas emoções.",
+    accent: "emerald",
   },
 ];
 

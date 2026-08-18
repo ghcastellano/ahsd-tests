@@ -13,6 +13,8 @@ import { pcl5 } from "./instruments/pcl5";
 import { ace } from "./instruments/ace";
 import { ahsdIndicadores } from "./instruments/ahsd-indicadores";
 import { sobreExcitabilidades } from "./instruments/sobre-excitabilidades";
+import { raadsR } from "./instruments/raads-r";
+import { ders } from "./instruments/ders";
 
 /** Answer every question of an instrument with the same value. */
 function answerAll(questions: Question[], value: number): Responses {
@@ -216,8 +218,78 @@ describe("Overexcitabilities (profile)", () => {
   });
 });
 
+describe("RAADS-R reverse scoring and cutoff", () => {
+  const REVERSE = [1, 6, 11, 18, 23, 26, 33, 37, 43, 47, 48, 53, 58, 62, 68, 72, 77];
+
+  it("has 80 items split 39/7/20/14 across subscales", () => {
+    expect(raadsR.questions.length).toBe(80);
+    const count = (key: string) => raadsR.questions.filter((q) => q.subscale === key).length;
+    expect(count("social")).toBe(39);
+    expect(count("linguagem")).toBe(7);
+    expect(count("sensorial")).toBe(20);
+    expect(count("interesses")).toBe(14);
+  });
+
+  it("flags exactly the 17 normative items as reverse-scored", () => {
+    const flagged = raadsR.questions.filter((q) => q.reverse).map((q) => Number(q.id.slice(1)));
+    expect(flagged.sort((a, b) => a - b)).toEqual(REVERSE);
+  });
+
+  it("scores 51 when everything is 'never true' (only reverse items score)", () => {
+    const r = raadsR.score(answerAll(raadsR.questions, 0));
+    expect(r.totalScore).toBe(17 * 3); // 51
+    expect(r.positive).toBe(false);
+    expect(r.band.label).toBe("Abaixo do limiar");
+  });
+
+  it("scores 189 when everything is 'true now and when young'", () => {
+    const r = raadsR.score(answerAll(raadsR.questions, 3));
+    expect(r.totalScore).toBe(63 * 3); // reverse items contribute 0
+    expect(r.positive).toBe(true);
+  });
+
+  it("crosses the cutoff at exactly 65+", () => {
+    const base = answerAll(raadsR.questions, 0); // 51
+    for (const id of ["q2", "q3", "q4", "q5", "q7"]) base[id] = 3; // +15 => 66
+    const r = raadsR.score(base);
+    expect(r.totalScore).toBe(66);
+    expect(r.positive).toBe(true);
+  });
+});
+
+describe("DERS reverse scoring and reference bands", () => {
+  it("has 36 items in 6 subscales summing 36, with 11 reverse items", () => {
+    expect(ders.questions.length).toBe(36);
+    const bySub = new Map<string, number>();
+    for (const q of ders.questions) bySub.set(q.subscale!, (bySub.get(q.subscale!) ?? 0) + 1);
+    expect([...bySub.values()].reduce((a, b) => a + b, 0)).toBe(36);
+    expect(bySub.get("estrategias")).toBe(8);
+    expect(bySub.get("consciencia")).toBe(6);
+    expect(ders.questions.filter((q) => q.reverse).length).toBe(11);
+  });
+
+  it("scores 80 at all 'quase nunca' (reverse items score 5 each)", () => {
+    const r = ders.score(answerAll(ders.questions, 1));
+    expect(r.totalScore).toBe(25 * 1 + 11 * 5); // 80
+    expect(r.band.label).toBe("Acima da média");
+  });
+
+  it("scores 136 at all 'quase sempre'", () => {
+    const r = ders.score(answerAll(ders.questions, 5));
+    expect(r.totalScore).toBe(25 * 5 + 11 * 1); // 136
+    expect(r.band.label).toBe("Bem acima da média");
+  });
+
+  it("reaches the true minimum 36 with ideal answers", () => {
+    const r: Responses = {};
+    for (const q of ders.questions) r[q.id] = q.reverse ? 5 : 1;
+    expect(ders.score(r).totalScore).toBe(36);
+    expect(ders.score(r).band.label).toBe("Faixa típica");
+  });
+});
+
 describe("instrument integrity", () => {
-  const all = [phq9, gad7, asrs, aq50, mdq, hcl32, pcl5, ace, ahsdIndicadores, sobreExcitabilidades];
+  const all = [phq9, gad7, asrs, aq50, mdq, hcl32, pcl5, ace, ahsdIndicadores, sobreExcitabilidades, raadsR, ders];
   it("every question id is unique within an instrument", () => {
     for (const inst of all) {
       const ids = inst.questions.map((q) => q.id);
