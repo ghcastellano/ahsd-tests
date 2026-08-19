@@ -56,6 +56,9 @@ exportação CSV e, para o registro central, acesso protegido por senha.
 
 ### Ativando o registro central (opcional, ~3 minutos)
 
+> Passo a passo detalhado (com o caminho em que o Claude faz quase tudo):
+> **[GUIA-SUPABASE.md](GUIA-SUPABASE.md)**
+
 1. Crie um projeto gratuito em [supabase.com](https://supabase.com) (região São Paulo).
 2. Abra o **SQL Editor** do projeto e rode o conteúdo de [`supabase/setup.sql`](supabase/setup.sql)
    — **troque a senha do painel** na linha indicada.
