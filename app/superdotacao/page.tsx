@@ -148,7 +148,11 @@ export default function SuperdotacaoPage() {
         <li>
           <strong>Mensa Brasil</strong> — admissão pelo teste supervisionado próprio (critério: topo
           2%) ou pela submissão de laudo prévio com testes aceitos (mensa.org.br). Testes online
-          não são aceitos.
+          não são aceitos — mas você pode se familiarizar com o formato no nosso{" "}
+          <Link href="/teste-qi" className="font-medium text-brand-600 hover:underline">
+            treino de matrizes
+          </Link>
+          .
         </li>
         <li>
           <strong>Na escola (crianças/adolescentes):</strong> a rede pública deve identificar e

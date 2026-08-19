@@ -75,6 +75,35 @@ export default function HomePage() {
         );
       })}
 
+      <section className="mb-10">
+        <div className="mb-4 border-l-4 border-brand-500 pl-3">
+          <h2 className="text-xl font-semibold text-slate-900">Raciocínio Fluido (treino)</h2>
+          <p className="text-sm text-slate-500">
+            Exercite o formato usado em testes de QI supervisionados, como o da Mensa.
+          </p>
+        </div>
+        <Link
+          href="/teste-qi"
+          className="group block rounded-xl border border-slate-200 bg-white p-5 transition hover:border-brand-400 hover:shadow-md"
+        >
+          <div className="flex items-center justify-between">
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+              MATRIZES
+            </span>
+            <span className="text-xs text-slate-400">30 itens · 25 min · cronometrado</span>
+          </div>
+          <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-brand-700">
+            Treino de Raciocínio Fluido — matrizes estilo Mensa
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Matrizes progressivas 3×3 originais, com dificuldade crescente e correção por nível.
+            Treino de familiarização: <strong>não gera QI nem percentil</strong> — a admissão na
+            Mensa exige teste presencial supervisionado.
+          </p>
+          <p className="mt-3 text-sm font-medium text-brand-600">Iniciar treino →</p>
+        </Link>
+      </section>
+
       <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
         <strong>Importante:</strong> nenhum questionário isolado diagnostica altas habilidades ou
         qualquer condição. Estes instrumentos são de rastreio: apontam indícios que merecem
