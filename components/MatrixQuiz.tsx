@@ -220,6 +220,8 @@ export default function MatrixQuiz() {
           <strong>não gera QI nem percentil válidos</strong>, pois não tem normatização nem
           supervisão. Ele serve para você conhecer o formato e exercitar o raciocínio fluido. Só o
           teste supervisionado da Mensa (ou um laudo com testes aprovados) decide a admissão.
+          Este site <strong>não tem afiliação com a Mensa</strong> — &quot;Mensa&quot; é marca da
+          Mensa International, citada aqui apenas para descrever o formato do teste.
         </div>
         <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-slate-600">
           <li>30 itens, 25 minutos corridos — o teste encerra sozinho no fim do tempo.</li>
