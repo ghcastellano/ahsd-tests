@@ -54,6 +54,17 @@ O painel fica em **`/painel-ahsd`** (URL discreta, fora da navegação e com
 `noindex`): lista os registros com data e hora, detalhamento por subescala,
 exportação CSV e, para o registro central, acesso protegido por senha.
 
+### Receber resultados de outras pessoas — sem servidor (já ativo)
+
+Toda tela de resultado tem o bloco **"Enviar este resultado ao avaliador"**: um
+link que carrega o resultado dentro do próprio endereço (no fragmento `#`, que
+**não passa por nenhum servidor**). A pessoa envia por WhatsApp/e-mail; quem
+abre o link vê um cartão de confirmação e o resultado entra no painel do
+aparelho de quem abriu, com deduplicação por id. O painel também aceita colar
+links/códigos manualmente ("Importar resultado(s) por código"). A decodificação
+valida estritamente o formato (whitelist de campos, limites de tamanho) — links
+corrompidos ou forjados fora do formato são rejeitados.
+
 ### Ativando o registro central (opcional, ~3 minutos)
 
 > Passo a passo detalhado (com o caminho em que o Claude faz quase tudo):

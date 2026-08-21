@@ -11,8 +11,9 @@ import {
   type CellSpec,
   type MatrixScore,
 } from "@/lib/matrix/engine";
-import { insertRemoteRecord, makeRecordId, saveLocalRecord } from "@/lib/history";
+import { insertRemoteRecord, makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
+import ShareBlock from "./ShareBlock";
 
 // ---------- Renderização SVG de uma célula ----------
 
@@ -134,6 +135,7 @@ export default function MatrixQuiz() {
   const [chosen, setChosen] = useState<(number | null)[]>(() => items.map(() => null));
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT_SECONDS);
   const [respondent, setRespondent] = useState("");
+  const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
   const finishedRef = useRef(false);
 
   const allOptions = useMemo(() => items.map((it) => optionsFor(it)), []);
@@ -185,6 +187,7 @@ export default function MatrixQuiz() {
     };
     saveLocalRecord(record);
     if (remoteEnabled()) void insertRemoteRecord(record);
+    setSavedRecord(record);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
@@ -317,6 +320,8 @@ export default function MatrixQuiz() {
           incentivo real para tentar o teste oficial; um desempenho fraco hoje também não te
           define: familiaridade com o formato melhora muito o resultado.
         </div>
+
+        {savedRecord && <ShareBlock record={savedRecord} />}
 
         <div className="mt-6 rounded-xl border border-brand-200 bg-brand-50 p-5">
           <h2 className="text-lg font-semibold text-brand-900">Como entrar na Mensa Brasil</h2>

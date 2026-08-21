@@ -4,7 +4,13 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { getInstrument } from "@/lib/instruments";
 import { countAnswered, isComplete, optionsFor } from "@/lib/scoring";
-import { insertRemoteRecord, makeRecordId, recordFromResult, saveLocalRecord } from "@/lib/history";
+import {
+  insertRemoteRecord,
+  makeRecordId,
+  recordFromResult,
+  saveLocalRecord,
+  type ResultRecord,
+} from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
 import type { Responses } from "@/lib/types";
 import ResultView from "./ResultView";
@@ -14,6 +20,7 @@ export default function QuizRunner({ id }: { id: string }) {
   const [responses, setResponses] = useState<Responses>({});
   const [respondent, setRespondent] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
   const [showError, setShowError] = useState(false);
 
   const answered = useMemo(
@@ -63,6 +70,7 @@ export default function QuizRunner({ id }: { id: string }) {
     if (remoteEnabled()) {
       void insertRemoteRecord(record);
     }
+    setSavedRecord(record);
     setSubmitted(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -73,8 +81,10 @@ export default function QuizRunner({ id }: { id: string }) {
       <ResultView
         inst={inst}
         result={result}
+        record={savedRecord ?? undefined}
         onRetake={() => {
           setResponses({});
+          setSavedRecord(null);
           setSubmitted(false);
           window.scrollTo({ top: 0 });
         }}

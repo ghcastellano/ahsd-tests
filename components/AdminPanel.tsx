@@ -8,8 +8,10 @@ import {
   fetchRemoteRecords,
   formatDateTimeBR,
   loadLocalRecords,
+  saveLocalRecord,
   type ResultRecord,
 } from "@/lib/history";
+import { codeFromHash, decodeRecord } from "@/lib/share";
 import { remoteEnabled } from "@/lib/remote-config";
 import type { Severity } from "@/lib/types";
 
@@ -145,11 +147,79 @@ export default function AdminPanel() {
   const [remote, setRemote] = useState<ResultRecord[] | null>(null);
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [pendingImport, setPendingImport] = useState<ResultRecord | null>(null);
+  const [pasteValue, setPasteValue] = useState("");
+  const [importMsg, setImportMsg] = useState<string | null>(null);
   const central = useMemo(() => remoteEnabled(), []);
 
   useEffect(() => {
     setLocal(loadLocalRecords());
+    // Link de compartilhamento: /painel-ahsd#add=CODIGO — o fragmento não passa
+    // por servidores; o registro chega pronto para confirmação. O listener de
+    // hashchange cobre um segundo link aberto na mesma aba (navegação
+    // same-document não remonta o componente).
+    function handleHash() {
+      const code = codeFromHash(window.location.hash);
+      if (!code) return;
+      const rec = decodeRecord(code);
+      if (rec) {
+        setPendingImport(rec);
+        setImportMsg(null);
+      } else {
+        setImportMsg("O link de resultado recebido é inválido ou está corrompido.");
+      }
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
   }, []);
+
+  function acceptPending() {
+    if (!pendingImport) return;
+    const exists = loadLocalRecords().some((r) => r.id === pendingImport.id);
+    if (!exists) saveLocalRecord(pendingImport);
+    setLocal(loadLocalRecords());
+    setImportMsg(exists ? "Este resultado já estava no painel (não duplicado)." : "Resultado importado com sucesso.");
+    setPendingImport(null);
+  }
+
+  function importPasted() {
+    // Aceita tanto o código puro (v1.…) quanto o link completo (…#add=v1.…).
+    const codes = pasteValue
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((tok) => {
+        const idx = tok.indexOf("#add=");
+        if (idx === -1) return tok;
+        try {
+          return decodeURIComponent(tok.slice(idx + 5));
+        } catch {
+          return tok.slice(idx + 5);
+        }
+      });
+    let ok = 0;
+    let dup = 0;
+    let bad = 0;
+    const existing = new Set(loadLocalRecords().map((r) => r.id));
+    for (const c of codes) {
+      const rec = decodeRecord(c);
+      if (!rec) {
+        bad++;
+      } else if (existing.has(rec.id)) {
+        dup++;
+      } else {
+        saveLocalRecord(rec);
+        existing.add(rec.id);
+        ok++;
+      }
+    }
+    setLocal(loadLocalRecords());
+    setPasteValue("");
+    setImportMsg(
+      `Importação: ${ok} novo(s), ${dup} já existente(s), ${bad} inválido(s).`,
+    );
+  }
 
   async function loadRemote() {
     setLoading(true);
@@ -181,6 +251,40 @@ export default function AdminPanel() {
           ← Site
         </Link>
       </div>
+
+      {/* Confirmação de importação via link */}
+      {pendingImport && (
+        <div className="mt-6 rounded-xl border border-emerald-300 bg-emerald-50 p-5">
+          <h2 className="font-semibold text-emerald-900">Resultado recebido por link</h2>
+          <p className="mt-1 text-sm text-emerald-900">
+            <strong>{pendingImport.acronym}</strong> — {pendingImport.instrumentName}
+            {pendingImport.respondent ? ` · ${pendingImport.respondent}` : ""} ·{" "}
+            {formatDateTimeBR(pendingImport.createdAt)} ·{" "}
+            {pendingImport.totalScore}/{pendingImport.maxScore} ({pendingImport.bandLabel})
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              type="button"
+              onClick={acceptPending}
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+            >
+              Importar para o painel
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingImport(null)}
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
+            >
+              Descartar
+            </button>
+          </div>
+        </div>
+      )}
+      {importMsg && (
+        <p className="mt-3 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
+          {importMsg}
+        </p>
+      )}
 
       {/* Registros deste dispositivo */}
       <section className="mt-8">
@@ -214,10 +318,37 @@ export default function AdminPanel() {
           </div>
         </div>
         <p className="mt-1 text-xs text-slate-400">
-          Testes respondidos neste navegador. Registros feitos antes da criação deste painel não
-          existem — o histórico começa a partir da ativação do recurso.
+          Testes respondidos neste navegador + resultados importados por link. Registros feitos
+          antes da criação deste painel não existem — o histórico começa a partir da ativação do
+          recurso.
         </p>
         <RecordsTable records={local} />
+
+        <details className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+          <summary className="cursor-pointer text-sm font-medium text-slate-700">
+            Importar resultado(s) por código
+          </summary>
+          <p className="mt-2 text-xs text-slate-500">
+            Cole aqui um ou mais links/códigos de resultado recebidos (um por linha). O código é a
+            parte que começa com <code className="rounded bg-slate-100 px-1">v1.</code> — pode
+            colar o link inteiro também.
+          </p>
+          <textarea
+            value={pasteValue}
+            onChange={(e) => setPasteValue(e.target.value)}
+            rows={3}
+            className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs focus:border-brand-500 focus:outline-none"
+            placeholder="https://…/painel-ahsd#add=v1.eyJ…  ou  v1.eyJ…"
+          />
+          <button
+            type="button"
+            onClick={importPasted}
+            disabled={!pasteValue.trim()}
+            className="mt-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-40"
+          >
+            Importar
+          </button>
+        </details>
       </section>
 
       {/* Registro central */}
@@ -226,15 +357,15 @@ export default function AdminPanel() {
         {!central ? (
           <div className="mt-3 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
             <p>
-              O registro central ainda <strong>não está ativado</strong> — por enquanto, cada
-              dispositivo guarda apenas os próprios testes.
+              O banco central (Supabase) <strong>não está ativado</strong> — mas você não precisa
+              dele para receber resultados de outras pessoas: peça que usem o botão{" "}
+              <strong>&quot;Enviar este resultado ao avaliador&quot;</strong> na tela de resultado
+              e abra o link aqui neste aparelho — o resultado entra na lista acima, sem passar por
+              servidor nenhum.
             </p>
             <p className="mt-2">
-              Para ativar: crie um projeto gratuito no Supabase, rode o script{" "}
-              <code className="rounded bg-slate-100 px-1">supabase/setup.sql</code> do repositório e
-              defina <code className="rounded bg-slate-100 px-1">NEXT_PUBLIC_SUPABASE_URL</code> e{" "}
-              <code className="rounded bg-slate-100 px-1">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> nas
-              variáveis de ambiente do Vercel. Instruções completas no README.
+              Para gravação automática num banco central (sem depender de links), siga o{" "}
+              <code className="rounded bg-slate-100 px-1">GUIA-SUPABASE.md</code> do repositório.
             </p>
           </div>
         ) : remote === null ? (

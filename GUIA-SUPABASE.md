@@ -1,5 +1,12 @@
 # Ativação do registro central (Supabase) — guia de 3 minutos
 
+> **Talvez você nem precise disto:** o site já permite receber resultados de
+> outras pessoas **sem servidor** — cada tela de resultado tem o botão
+> "Enviar este resultado ao avaliador", que gera um link; ao abri-lo no seu
+> aparelho, o resultado entra no painel `/painel-ahsd` automaticamente.
+> O Supabase é o upgrade para gravação automática centralizada (sem depender
+> de a pessoa enviar o link).
+
 O painel `/painel-ahsd` já funciona por dispositivo. Este guia ativa o **registro
 central**: todos os testes, de todos os dispositivos, num painel só.
 

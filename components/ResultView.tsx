@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import type { Instrument, InstrumentResult, Severity } from "@/lib/types";
+import type { ResultRecord } from "@/lib/history";
+import ShareBlock from "./ShareBlock";
 
 const severityStyles: Record<Severity, { badge: string; bar: string; text: string }> = {
   info: { badge: "bg-slate-100 text-slate-700", bar: "bg-slate-400", text: "text-slate-700" },
@@ -16,10 +18,12 @@ const severityStyles: Record<Severity, { badge: string; bar: string; text: strin
 export default function ResultView({
   inst,
   result,
+  record,
   onRetake,
 }: {
   inst: Instrument;
   result: InstrumentResult;
+  record?: ResultRecord;
   onRetake: () => void;
 }) {
   const sev = severityStyles[result.band.severity];
@@ -162,6 +166,9 @@ export default function ResultView({
           ))}
         </ul>
       </div>
+
+      {/* Compartilhar com o avaliador */}
+      {record && <ShareBlock record={record} />}
 
       {/* Disclaimer */}
       <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
