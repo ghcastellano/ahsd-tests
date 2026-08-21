@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { codeFromHash, decodeRecord, encodeRecord, shareLink } from "./share";
+import { codeFromHash, decodeRecord, encodeRecord, extractCode, shareLink } from "./share";
 import type { ResultRecord } from "./history";
 
 const full: ResultRecord = {
@@ -83,5 +83,21 @@ describe("share codec", () => {
     expect(codeFromHash("#add=v1.abc")).toBe("v1.abc");
     expect(codeFromHash("#outro=x")).toBeNull();
     expect(codeFromHash("")).toBeNull();
+  });
+
+  it("codeFromHash never throws on malformed percent-escapes (truncated links)", () => {
+    // decodeURIComponent("%E0%A4") lançaria URIError; aqui degrada para o texto cru.
+    expect(() => codeFromHash("#add=%E0%A4")).not.toThrow();
+    expect(codeFromHash("#add=%E0%A4")).toBe("%E0%A4");
+  });
+
+  it("extractCode accepts raw codes and full links, ignores prose", () => {
+    const code = encodeRecord(full);
+    expect(extractCode(code)).toBe(code);
+    expect(extractCode(`https://ahsdtests.vercel.app/painel-ahsd#add=${code}`)).toBe(code);
+    // Palavras de uma mensagem colada junto não viram "códigos inválidos".
+    expect(extractCode("Resultado")).toBeNull();
+    expect(extractCode("do")).toBeNull();
+    expect(extractCode("painel:")).toBeNull();
   });
 });

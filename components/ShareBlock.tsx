@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ResultRecord } from "@/lib/history";
 import { shareLink } from "@/lib/share";
 
@@ -10,28 +10,40 @@ import { shareLink } from "@/lib/share";
  * registro entrar no painel do próprio aparelho.
  */
 export default function ShareBlock({ record }: { record: ResultRecord }) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"idle" | "ok" | "fail">("idle");
   const [url, setUrl] = useState("");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setUrl(shareLink(window.location.origin, record));
   }, [record]);
 
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  function flash(state: "ok" | "fail") {
+    setCopied(state);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setCopied("idle"), 2500);
+  }
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(url);
-      setCopied(true);
+      flash("ok");
     } catch {
-      // Fallback para contextos sem clipboard API.
+      // Fallback para contextos sem clipboard API — só confirma se funcionou.
       const ta = document.createElement("textarea");
       ta.value = url;
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand("copy");
+      const success = document.execCommand("copy");
       document.body.removeChild(ta);
-      setCopied(true);
+      flash(success ? "ok" : "fail");
     }
-    setTimeout(() => setCopied(false), 2500);
   }
 
   async function nativeShare() {
@@ -69,7 +81,11 @@ export default function ShareBlock({ record }: { record: ResultRecord }) {
           onClick={() => void copy()}
           className="rounded-lg bg-emerald-600 px-5 py-2.5 font-medium text-white transition hover:bg-emerald-700"
         >
-          {copied ? "Link copiado ✓" : "Copiar link do resultado"}
+          {copied === "ok"
+            ? "Link copiado ✓"
+            : copied === "fail"
+              ? "Falhou — copie do campo acima"
+              : "Copiar link do resultado"}
         </button>
         {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
           <button

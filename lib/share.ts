@@ -128,8 +128,28 @@ export function shareLink(origin: string, record: ResultRecord): string {
   return `${origin}/painel-ahsd#add=${encodeRecord(record)}`;
 }
 
-/** Extrai o código de um fragmento de URL ("#add=..."), se houver. */
+/**
+ * Extrai o código de um fragmento de URL ("#add=..."), se houver.
+ * Nunca lança: um percent-escape truncado (link cortado por um app de
+ * mensagens) faria decodeURIComponent explodir e derrubaria o painel.
+ */
 export function codeFromHash(hash: string): string | null {
   const m = hash.match(/^#add=(.+)$/);
-  return m ? decodeURIComponent(m[1]) : null;
+  if (!m) return null;
+  try {
+    return decodeURIComponent(m[1]);
+  } catch {
+    return m[1];
+  }
+}
+
+/**
+ * Normaliza um token colado pelo usuário: aceita o código puro ("v1.…") ou um
+ * link completo ("…#add=v1.…"). Retorna null para tokens que claramente não
+ * são códigos (palavras soltas de uma mensagem colada junto).
+ */
+export function extractCode(token: string): string | null {
+  const idx = token.indexOf("#add=");
+  if (idx !== -1) return codeFromHash(token.slice(idx));
+  return token.startsWith(PREFIX) ? token : null;
 }

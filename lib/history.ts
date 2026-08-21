@@ -88,13 +88,15 @@ export function loadLocalRecords(): ResultRecord[] {
   }
 }
 
-export function saveLocalRecord(record: ResultRecord): void {
-  if (typeof window === "undefined") return;
+/** Retorna false quando o armazenamento falhou (modo privado, cota etc.). */
+export function saveLocalRecord(record: ResultRecord): boolean {
+  if (typeof window === "undefined") return false;
   try {
     const all = [record, ...loadLocalRecords()].slice(0, MAX_LOCAL_RECORDS);
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    return true;
   } catch {
-    // localStorage indisponível (modo privado etc.) — histórico local é melhor-esforço.
+    return false;
   }
 }
 

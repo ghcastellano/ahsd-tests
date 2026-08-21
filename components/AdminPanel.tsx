@@ -11,7 +11,7 @@ import {
   saveLocalRecord,
   type ResultRecord,
 } from "@/lib/history";
-import { codeFromHash, decodeRecord } from "@/lib/share";
+import { codeFromHash, decodeRecord, extractCode } from "@/lib/share";
 import { remoteEnabled } from "@/lib/remote-config";
 import type { Severity } from "@/lib/types";
 
@@ -147,7 +147,9 @@ export default function AdminPanel() {
   const [remote, setRemote] = useState<ResultRecord[] | null>(null);
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [pendingImport, setPendingImport] = useState<ResultRecord | null>(null);
+  // Fila de importações pendentes: um segundo link aberto antes de confirmar o
+  // primeiro entra na fila em vez de descartar o anterior silenciosamente.
+  const [pendingImports, setPendingImports] = useState<ResultRecord[]>([]);
   const [pasteValue, setPasteValue] = useState("");
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const central = useMemo(() => remoteEnabled(), []);
@@ -163,44 +165,46 @@ export default function AdminPanel() {
       if (!code) return;
       const rec = decodeRecord(code);
       if (rec) {
-        setPendingImport(rec);
+        setPendingImports((prev) => (prev.some((p) => p.id === rec.id) ? prev : [...prev, rec]));
         setImportMsg(null);
       } else {
         setImportMsg("O link de resultado recebido é inválido ou está corrompido.");
       }
-      window.history.replaceState(null, "", window.location.pathname);
+      // Remove só o fragmento, preservando o caminho e a query string.
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
     handleHash();
     window.addEventListener("hashchange", handleHash);
     return () => window.removeEventListener("hashchange", handleHash);
   }, []);
 
+  const pendingImport = pendingImports[0] ?? null;
+
   function acceptPending() {
     if (!pendingImport) return;
     const exists = loadLocalRecords().some((r) => r.id === pendingImport.id);
-    if (!exists) saveLocalRecord(pendingImport);
+    if (exists) {
+      setImportMsg("Este resultado já estava no painel (não duplicado).");
+    } else if (saveLocalRecord(pendingImport)) {
+      setImportMsg("Resultado importado com sucesso.");
+    } else {
+      setImportMsg(
+        "Não foi possível gravar neste navegador (modo privado ou armazenamento bloqueado). O resultado NÃO foi importado.",
+      );
+    }
     setLocal(loadLocalRecords());
-    setImportMsg(exists ? "Este resultado já estava no painel (não duplicado)." : "Resultado importado com sucesso.");
-    setPendingImport(null);
+    setPendingImports((prev) => prev.slice(1));
   }
 
   function importPasted() {
-    // Aceita tanto o código puro (v1.…) quanto o link completo (…#add=v1.…).
-    const codes = pasteValue
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((tok) => {
-        const idx = tok.indexOf("#add=");
-        if (idx === -1) return tok;
-        try {
-          return decodeURIComponent(tok.slice(idx + 5));
-        } catch {
-          return tok.slice(idx + 5);
-        }
-      });
+    // extractCode aceita o código puro (v1.…) ou o link completo (…#add=v1.…)
+    // e ignora palavras soltas de uma mensagem colada junto.
+    const tokens = pasteValue.split(/\s+/).filter(Boolean);
+    const codes = tokens.map(extractCode).filter((c): c is string => c !== null);
     let ok = 0;
     let dup = 0;
     let bad = 0;
+    let failed = 0;
     const existing = new Set(loadLocalRecords().map((r) => r.id));
     for (const c of codes) {
       const rec = decodeRecord(c);
@@ -208,17 +212,23 @@ export default function AdminPanel() {
         bad++;
       } else if (existing.has(rec.id)) {
         dup++;
-      } else {
-        saveLocalRecord(rec);
+      } else if (saveLocalRecord(rec)) {
         existing.add(rec.id);
         ok++;
+      } else {
+        failed++;
       }
     }
     setLocal(loadLocalRecords());
     setPasteValue("");
-    setImportMsg(
-      `Importação: ${ok} novo(s), ${dup} já existente(s), ${bad} inválido(s).`,
-    );
+    if (codes.length === 0) {
+      setImportMsg("Nenhum código de resultado encontrado no texto colado.");
+    } else {
+      setImportMsg(
+        `Importação: ${ok} novo(s), ${dup} já existente(s), ${bad} inválido(s)` +
+          (failed ? `, ${failed} com falha de gravação.` : "."),
+      );
+    }
   }
 
   async function loadRemote() {
@@ -272,12 +282,17 @@ export default function AdminPanel() {
             </button>
             <button
               type="button"
-              onClick={() => setPendingImport(null)}
+              onClick={() => setPendingImports((prev) => prev.slice(1))}
               className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-100"
             >
               Descartar
             </button>
           </div>
+          {pendingImports.length > 1 && (
+            <p className="mt-2 text-xs text-emerald-800">
+              +{pendingImports.length - 1} resultado(s) na fila.
+            </p>
+          )}
         </div>
       )}
       {importMsg && (
