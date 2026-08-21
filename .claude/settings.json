@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "defaultMode": "acceptEdits",
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Edit",
       "Write",
@@ -9,20 +9,14 @@
       "Grep",
       "WebFetch",
       "WebSearch",
-      "Bash(npm *)",
-      "Bash(npx *)",
-      "Bash(node *)",
-      "Bash(git *)",
-      "Bash(curl *)",
-      "Bash(ls *)",
-      "Bash(cat *)",
-      "Bash(grep *)",
-      "Bash(mkdir *)",
-      "Bash(kill *)",
-      "Bash(pgrep *)",
-      "Bash(sleep *)",
-      "Bash(until *)",
-      "Bash(echo *)"
+      "Bash",
+      "Agent",
+      "Workflow",
+      "TaskCreate",
+      "TaskUpdate",
+      "mcp__github",
+      "mcp__Supabase",
+      "mcp__Vercel"
     ]
   }
 }
