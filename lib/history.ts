@@ -1,5 +1,5 @@
 import type { Instrument, InstrumentResult, Severity } from "./types";
-import { SUPABASE_KEY, SUPABASE_URL, remoteEnabled } from "./remote-config";
+import { ADMIN_RPC, RESULTS_TABLE, SUPABASE_KEY, SUPABASE_URL, remoteEnabled } from "./remote-config";
 
 // Registro de resultado gravado no histórico (local e, quando ativo, central).
 // Por privacidade, NÃO armazenamos as respostas individuais — apenas o
@@ -113,7 +113,7 @@ export function clearLocalRecords(): void {
 export async function insertRemoteRecord(record: ResultRecord): Promise<boolean> {
   if (!remoteEnabled()) return false;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/resultados`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${RESULTS_TABLE}`, {
       method: "POST",
       headers: {
         apikey: SUPABASE_KEY,
@@ -165,7 +165,7 @@ interface RemoteRow {
 /** Lista os registros centrais mediante a senha do painel (RPC segura). */
 export async function fetchRemoteRecords(password: string): Promise<ResultRecord[]> {
   if (!remoteEnabled()) throw new Error("Registro central não está ativado.");
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_listar_resultados`, {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${ADMIN_RPC}`, {
     method: "POST",
     headers: {
       apikey: SUPABASE_KEY,
