@@ -109,17 +109,21 @@ export function clearLocalRecords(): void {
   }
 }
 
-/** Envia o registro para o banco central (quando ativado). Melhor-esforço. */
+/**
+ * Envia o registro para o banco central (quando ativado). Melhor-esforço e
+ * idempotente: o banco tem UNIQUE(client_id) e a inserção ignora duplicatas,
+ * então re-sincronizar o mesmo registro nunca duplica.
+ */
 export async function insertRemoteRecord(record: ResultRecord): Promise<boolean> {
   if (!remoteEnabled()) return false;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${RESULTS_TABLE}`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${RESULTS_TABLE}?on_conflict=client_id`, {
       method: "POST",
       headers: {
         apikey: SUPABASE_KEY,
         Authorization: `Bearer ${SUPABASE_KEY}`,
         "Content-Type": "application/json",
-        Prefer: "return=minimal",
+        Prefer: "return=minimal, resolution=ignore-duplicates",
       },
       // created_at fica de fora de propósito: o servidor carimba com now(),
       // impedindo datas forjadas de bagunçar a ordenação do painel.

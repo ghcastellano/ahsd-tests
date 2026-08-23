@@ -7,6 +7,7 @@ import {
   clearLocalRecords,
   fetchRemoteRecords,
   formatDateTimeBR,
+  insertRemoteRecord,
   loadLocalRecords,
   saveLocalRecord,
   type ResultRecord,
@@ -152,7 +153,30 @@ export default function AdminPanel() {
   const [pendingImports, setPendingImports] = useState<ResultRecord[]>([]);
   const [pasteValue, setPasteValue] = useState("");
   const [importMsg, setImportMsg] = useState<string | null>(null);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const central = useMemo(() => remoteEnabled(), []);
+
+  // Sincroniza os registros deste dispositivo com o banco central (idempotente:
+  // o banco ignora client_id duplicado, então rodar toda vez é seguro).
+  useEffect(() => {
+    if (!remoteEnabled()) return;
+    const records = loadLocalRecords();
+    if (records.length === 0) return;
+    let cancelled = false;
+    void (async () => {
+      let ok = 0;
+      for (const r of records) {
+        if (await insertRemoteRecord(r)) ok++;
+        if (cancelled) return;
+      }
+      if (!cancelled && ok > 0) {
+        setSyncMsg(`${ok} registro(s) deste dispositivo sincronizado(s) com o banco central.`);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     setLocal(loadLocalRecords());
@@ -298,6 +322,11 @@ export default function AdminPanel() {
       {importMsg && (
         <p className="mt-3 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600">
           {importMsg}
+        </p>
+      )}
+      {syncMsg && (
+        <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+          ☁️ {syncMsg}
         </p>
       )}
 
