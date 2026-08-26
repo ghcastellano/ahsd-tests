@@ -111,19 +111,23 @@ export function clearLocalRecords(): void {
 
 /**
  * Envia o registro para o banco central (quando ativado). Melhor-esforço e
- * idempotente: o banco tem UNIQUE(client_id) e a inserção ignora duplicatas,
- * então re-sincronizar o mesmo registro nunca duplica.
+ * idempotente: UNIQUE(client_id) faz o banco recusar repetições com 409, que
+ * tratamos como sucesso ("já estava sincronizado").
+ *
+ * Deliberadamente NÃO usamos upsert (`resolution=ignore-duplicates`): o modo
+ * upsert do PostgREST exige política de UPDATE no RLS, e dar UPDATE ao papel
+ * anônimo permitiria a qualquer visitante sobrescrever resultados alheios.
  */
 export async function insertRemoteRecord(record: ResultRecord): Promise<boolean> {
   if (!remoteEnabled()) return false;
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${RESULTS_TABLE}?on_conflict=client_id`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${RESULTS_TABLE}`, {
       method: "POST",
       headers: {
         apikey: SUPABASE_KEY,
         Authorization: `Bearer ${SUPABASE_KEY}`,
         "Content-Type": "application/json",
-        Prefer: "return=minimal, resolution=ignore-duplicates",
+        Prefer: "return=minimal",
       },
       // created_at fica de fora de propósito: o servidor carimba com now(),
       // impedindo datas forjadas de bagunçar a ordenação do painel.
@@ -142,7 +146,8 @@ export async function insertRemoteRecord(record: ResultRecord): Promise<boolean>
         subscales: record.subscales ?? null,
       }),
     });
-    return res.ok;
+    // 409 = client_id já existe: o registro está no banco, missão cumprida.
+    return res.ok || res.status === 409;
   } catch {
     return false;
   }
