@@ -79,28 +79,45 @@ export default function HomePage() {
         <div className="mb-4 border-l-4 border-brand-500 pl-3">
           <h2 className="text-xl font-semibold text-slate-900">Raciocínio Fluido (treino)</h2>
           <p className="text-sm text-slate-500">
-            Exercite o formato usado em testes de QI supervisionados, como o da Mensa.
+            Bateria cronometrada nos formatos usados em avaliações supervisionadas de alto QI.
           </p>
         </div>
         <Link
+          href="/treino"
+          className="group block rounded-xl border-2 border-brand-300 bg-brand-50 p-5 transition hover:border-brand-500 hover:shadow-md"
+        >
+          <div className="flex items-center justify-between">
+            <span className="rounded-md bg-brand-600 px-2 py-0.5 text-xs font-semibold text-white">
+              BATERIA
+            </span>
+            <span className="text-xs text-slate-500">4 treinos · 83 itens · 59 min</span>
+          </div>
+          <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-brand-700">
+            Bateria de treino + guia de regras
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Matrizes avançadas (36 itens/40 min), séries de figuras e classificação sob pressão de
+            tempo, e séries numéricas. Com <strong>revisão da regra de cada item</strong> ao final —
+            o passo que a pesquisa aponta como o mais rentável da preparação.
+          </p>
+          <p className="mt-3 text-sm font-medium text-brand-600">Ver a bateria →</p>
+        </Link>
+        <Link
           href="/teste-qi"
-          className="group block rounded-xl border border-slate-200 bg-white p-5 transition hover:border-brand-400 hover:shadow-md"
+          className="group mt-3 block rounded-xl border border-slate-200 bg-white p-4 transition hover:border-brand-400"
         >
           <div className="flex items-center justify-between">
             <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
-              MATRIZES
+              INICIANTE
             </span>
-            <span className="text-xs text-slate-400">30 itens · 25 min · cronometrado</span>
+            <span className="text-xs text-slate-400">30 itens · 25 min</span>
           </div>
-          <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-brand-700">
-            Treino de Raciocínio Fluido — matrizes estilo Mensa
+          <h3 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-brand-700">
+            Treino introdutório de matrizes
           </h3>
           <p className="mt-1 text-sm text-slate-600">
-            Matrizes progressivas 3×3 originais, com dificuldade crescente e correção por nível.
-            Treino de familiarização: <strong>não gera QI nem percentil</strong> — a admissão na
-            Mensa exige teste presencial supervisionado.
+            Versão mais leve, para o primeiro contato com o formato.
           </p>
-          <p className="mt-3 text-sm font-medium text-brand-600">Iniciar treino →</p>
         </Link>
       </section>
 
