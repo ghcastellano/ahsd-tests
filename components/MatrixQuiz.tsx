@@ -13,6 +13,7 @@ import {
 } from "@/lib/matrix/engine";
 import { insertRemoteRecord, makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
+import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import ShareBlock from "./ShareBlock";
 
 // ---------- Renderização SVG de uma célula ----------
@@ -157,11 +158,12 @@ export default function MatrixQuiz() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
+  useScrollTopOnScreenChange(phase);
+
   function finish() {
     if (finishedRef.current) return;
     finishedRef.current = true;
     setPhase("done");
-    window.scrollTo({ top: 0 });
   }
 
   // Grava o registro quando o resultado é calculado.

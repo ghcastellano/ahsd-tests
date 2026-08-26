@@ -12,6 +12,7 @@ import {
   type ResultRecord,
 } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
+import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import type { Responses } from "@/lib/types";
 import ResultView from "./ResultView";
 
@@ -27,6 +28,11 @@ export default function QuizRunner({ id }: { id: string }) {
     () => (inst ? countAnswered(inst.questions, responses) : 0),
     [inst, responses],
   );
+
+  // Rola ao topo ao trocar entre questionário e resultado (ver o utilitário).
+  // Fica ANTES do retorno condicional abaixo: hooks não podem ficar atrás de
+  // um `return`, senão a contagem muda entre renderizações.
+  useScrollTopOnScreenChange(submitted);
 
   if (!inst) {
     return (
@@ -72,7 +78,6 @@ export default function QuizRunner({ id }: { id: string }) {
     }
     setSavedRecord(record);
     setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   if (submitted) {
@@ -86,7 +91,6 @@ export default function QuizRunner({ id }: { id: string }) {
           setResponses({});
           setSavedRecord(null);
           setSubmitted(false);
-          window.scrollTo({ top: 0 });
         }}
       />
     );

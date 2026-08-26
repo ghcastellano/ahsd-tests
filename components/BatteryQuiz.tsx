@@ -8,6 +8,7 @@ import { getTest } from "@/lib/battery";
 import type { Item, TestDef } from "@/lib/battery/types";
 import { insertRemoteRecord, makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
+import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 
 type Phase = "intro" | "running" | "done";
 
@@ -72,11 +73,13 @@ export default function BatteryQuiz({ id }: { id: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
+  // Rola ao topo depois que a tela nova renderiza (ver o utilitário).
+  useScrollTopOnScreenChange(phase);
+
   function finish() {
     if (finishedRef.current) return;
     finishedRef.current = true;
     setPhase("done");
-    window.scrollTo({ top: 0 });
   }
 
   // Grava o resultado quando o teste termina.
