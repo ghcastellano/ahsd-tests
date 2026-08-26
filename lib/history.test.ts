@@ -12,14 +12,14 @@ const AT = "2026-08-18T21:30:00.000Z";
 
 describe("recordFromResult", () => {
   it("captures score, band and subscales without raw answers", () => {
+    // Com todas as respostas em 4, todo domínio atinge o limiar (4,0).
     const result = ahsdIndicadores.score(answers(ahsdIndicadores.questions, 4));
     const rec = recordFromResult(ahsdIndicadores, result, "  Gustavo  ", "id-1", AT);
     expect(rec.instrumentId).toBe("ahsd-indicadores");
     expect(rec.respondent).toBe("Gustavo"); // trimmed
-    expect(rec.totalScore).toBe(4);
-    expect(rec.maxScore).toBe(5);
-    expect(rec.metricIsMean).toBe(true);
-    expect(rec.subscales?.length).toBe(6);
+    expect(rec.totalScore).toBe(8); // domínios no limiar, não média
+    expect(rec.maxScore).toBe(8);
+    expect(rec.subscales?.length).toBe(8);
     expect(rec.createdAt).toBe(AT);
     // no answers field of any kind
     expect(JSON.stringify(rec)).not.toContain('"q1"');

@@ -61,12 +61,33 @@ export default function SobrePage() {
 
       <h2 className="mt-8 text-lg font-semibold text-slate-900">Origem dos instrumentos</h2>
       <p className="mt-2 text-slate-600">
-        Os rastreios clínicos (PHQ-9, GAD-7, ASRS, AQ, MDQ, HCL-32, PCL-5, ACE) são instrumentos
-        validados, de uso livre para fins clínicos e de pesquisa, apresentados aqui em versão em
-        português com as devidas referências. Os módulos de Altas Habilidades/Superdotação —
-        indicadores e sobre-excitabilidades — são instrumentos autorais desta plataforma,
-        fundamentados na literatura de AH/SD (Delou; MEC/Virgolim; Renzulli) e na teoria das
-        sobre-excitabilidades de Dabrowski.
+        Os rastreios clínicos (PHQ-9, GAD-7, ASRS, AQ, RAADS-R, MDQ, HCL-32, PCL-5, ACE, DERS) são
+        instrumentos validados, de uso livre para fins clínicos e de pesquisa, apresentados aqui em
+        versão em português com as devidas referências. Os módulos de Altas
+        Habilidades/Superdotação — indicadores e sobre-excitabilidades — são instrumentos{" "}
+        <strong>autorais</strong> desta plataforma: os itens são originais e não passaram por
+        estudo de validação psicométrica.
+      </p>
+      <p className="mt-3 text-slate-600">
+        O que fizemos foi alinhar o <strong>desenho</strong> às convenções dos instrumentos
+        validados. Três decisões concretas: (1) as perguntas usam{" "}
+        <strong>frequência de comportamentos concretos</strong> (últimos 12 meses) ou{" "}
+        <strong>comparação normativa</strong> com a maioria das pessoas — nunca concordância com
+        adjetivos, porque nenhuma escala validada de superdotação (TIAH/S, GRS, HOPE, SRBCSS)
+        pergunta por concordância; (2) o resultado é reportado <strong>por domínio</strong>, sem
+        escore único, porque um índice geral achata perfis com picos em poucas áreas — exatamente
+        o padrão da dupla excepcionalidade; (3) a cobertura segue as cinco áreas da Política
+        Nacional (MEC, 2008) mais criatividade, envolvimento com a tarefa e a intensidade
+        emocional que a <strong>Lei nº 15.436/2026</strong> passou a nomear na definição legal de
+        AH/SD.
+      </p>
+      <p className="mt-3 text-slate-600">
+        E os limites, ditos com todas as letras: autorrelato de capacidade correlaciona{" "}
+        <strong>~0,30</strong> com medidas objetivas (cerca de 9% de variância compartilhada), e{" "}
+        <strong>não existe instrumento brasileiro de AH/SD validado para adultos</strong> — os
+        validados (TIAH/S, EICAS-AH/SD, BAAH/S) cobrem 9 a 15 anos. Nosso instrumento não
+        substitui nenhum deles nem a avaliação profissional; ele serve para indicar se vale a pena
+        buscá-la.
       </p>
 
       <h2 className="mt-8 text-lg font-semibold text-slate-900">Limitações importantes</h2>

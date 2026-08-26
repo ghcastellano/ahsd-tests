@@ -194,18 +194,82 @@ describe("ACE", () => {
   });
 });
 
-describe("AH/SD indicators (profile-based mean)", () => {
-  it("returns a mean of 5 when all max", () => {
-    const r = ahsdIndicadores.score(answerAll(ahsdIndicadores.questions, 5));
-    expect(r.totalScore).toBe(5);
-    expect(r.metricIsMean).toBe(true);
-    expect(r.band.label).toBe("Indicadores fortes e consistentes");
-    expect(r.subscales?.every((s) => s.mean === 5)).toBe(true);
+describe("AH/SD indicators (per-domain screening)", () => {
+  it("uses frequency / normative anchors — never agreement", () => {
+    // Nenhuma escala validada de superdotação usa "concordo/discordo".
+    for (const q of ahsdIndicadores.questions) {
+      const labels = (q.options ?? []).map((o) => o.label.toLowerCase());
+      expect(labels.some((l) => l.includes("concordo")), q.id).toBe(false);
+      // Todo item oferece a saída de não-conhecimento (valor sentinela).
+      expect(q.options?.some((o) => o.value === -1), q.id).toBe(true);
+    }
   });
-  it("returns low band at all ones", () => {
-    const r = ahsdIndicadores.score(answerAll(ahsdIndicadores.questions, 1));
-    expect(r.totalScore).toBe(1);
-    expect(r.band.label).toBe("Indicadores pouco presentes");
+
+  it("covers the five MEC areas plus creativity, task commitment and intensity", () => {
+    const keys = ahsdIndicadores.subscales!.map((s) => s.key);
+    for (const k of ["intelectual", "academica", "lideranca", "psicomotora", "artistica", "criatividade", "envolvimento", "emocional"]) {
+      expect(keys, `falta o domínio ${k}`).toContain(k);
+    }
+    // Todo item pertence a um domínio declarado.
+    for (const q of ahsdIndicadores.questions) expect(keys).toContain(q.subscale!);
+  });
+
+  it("counts domains at threshold, not a single average", () => {
+    const all5 = ahsdIndicadores.score(answerAll(ahsdIndicadores.questions, 5));
+    expect(all5.totalScore).toBe(8);
+    expect(all5.maxScore).toBe(8);
+    expect(all5.band.label).toBe("4 ou mais domínios no limiar");
+
+    const all1 = ahsdIndicadores.score(answerAll(ahsdIndicadores.questions, 1));
+    expect(all1.totalScore).toBe(0);
+    expect(all1.band.label).toBe("Nenhum domínio no limiar");
+  });
+
+  it("detects a spiky (2e-like) profile that a single mean would flatten", () => {
+    // Alto só em intelectual e envolvimento; baixo no resto.
+    const r: Responses = {};
+    for (const q of ahsdIndicadores.questions) {
+      r[q.id] = q.subscale === "intelectual" || q.subscale === "envolvimento" ? 5 : 1;
+    }
+    const res = ahsdIndicadores.score(r);
+    expect(res.totalScore).toBe(2); // dois domínios sinalizados...
+    const flatMean =
+      ahsdIndicadores.questions.reduce((a, q) => a + r[q.id], 0) / ahsdIndicadores.questions.length;
+    expect(flatMean).toBeLessThan(4); // ...que uma média única esconderia
+    const marcados = res.subscales!.filter((s) => s.band?.label === "no limiar de triagem");
+    expect(marcados.map((s) => s.key).sort()).toEqual(["envolvimento", "intelectual"]);
+  });
+
+  it("excludes 'não sei' from the mean instead of scoring it as low", () => {
+    const r: Responses = {};
+    for (const q of ahsdIndicadores.questions) r[q.id] = 1;
+    // No domínio psicomotor: um item alto e o resto "não se aplica" (-1).
+    const psico = ahsdIndicadores.questions.filter((q) => q.subscale === "psicomotora");
+    r[psico[0].id] = 5;
+    for (const q of psico.slice(1)) r[q.id] = -1;
+
+    const res = ahsdIndicadores.score(r);
+    const dom = res.subscales!.find((s) => s.key === "psicomotora")!;
+    expect(dom.mean).toBe(5); // média do único item respondido, não diluída por zeros
+    expect(res.totalScore).toBe(1);
+  });
+
+  it("reports 'sem resposta aplicável' when a whole domain is skipped", () => {
+    const r: Responses = {};
+    for (const q of ahsdIndicadores.questions) {
+      r[q.id] = q.subscale === "artistica" ? -1 : 3;
+    }
+    const res = ahsdIndicadores.score(r);
+    const art = res.subscales!.find((s) => s.key === "artistica")!;
+    expect(art.band?.label).toBe("sem resposta aplicável");
+    expect(res.totalScore).toBe(0);
+  });
+
+  it("states the limits of self-report in the notes", () => {
+    const res = ahsdIndicadores.score(answerAll(ahsdIndicadores.questions, 5));
+    const joined = (res.notes ?? []).join(" ");
+    expect(joined).toContain("não validado");
+    expect(joined.toLowerCase()).toContain("autorrelato");
   });
 });
 
