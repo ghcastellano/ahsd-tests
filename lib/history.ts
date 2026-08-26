@@ -32,12 +32,20 @@ export interface ResultRecord {
 const STORAGE_KEY = "ahsd:historico:v1";
 const MAX_LOCAL_RECORDS = 500;
 
-/** Id único com fallback: crypto.randomUUID só existe em contexto seguro (HTTPS). */
+/**
+ * Id único e CURTO (~14 caracteres). Ele viaja no link de compartilhamento,
+ * então um UUID de 36 caracteres custaria caro no tamanho da URL. A colisão
+ * é irrelevante aqui: o id só serve para não duplicar registros.
+ */
 export function makeRecordId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
+  const tempo = Date.now().toString(36);
+  let aleatorio = Math.random().toString(36).slice(2, 8);
+  if (typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function") {
+    const buf = new Uint32Array(1);
+    crypto.getRandomValues(buf);
+    aleatorio = buf[0].toString(36).padStart(6, "0").slice(0, 6);
   }
-  return `r-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `${tempo}${aleatorio}`;
 }
 
 /**
@@ -174,24 +182,50 @@ interface RemoteRow {
 /** Lista os registros centrais mediante a senha do painel (RPC segura). */
 export async function fetchRemoteRecords(password: string): Promise<ResultRecord[]> {
   if (!remoteEnabled()) throw new Error("Registro central não está ativado.");
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${ADMIN_RPC}`, {
-    method: "POST",
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ p_senha: password }),
-  });
+  // AbortSignal.timeout não existe no Safari < 16; lá seguimos sem prazo, o
+  // que é melhor do que quebrar a consulta inteira com um TypeError.
+  const prazo =
+    typeof AbortSignal !== "undefined" && typeof AbortSignal.timeout === "function"
+      ? AbortSignal.timeout(20_000)
+      : undefined;
+  let res: Response;
+  try {
+    res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${ADMIN_RPC}`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ p_senha: password }),
+      // Sem isso, uma rede que engasga deixa o painel em "Carregando…" para
+      // sempre, sem nada explicando o que houve.
+      signal: prazo,
+    });
+  } catch {
+    // "Failed to fetch" é a mensagem crua do navegador, em inglês e sem pista
+    // do que fazer — traduzimos para algo acionável.
+    throw new Error(
+      "Não foi possível falar com o banco central (sem conexão, VPN/firewall ou o projeto Supabase pausado). Os registros deste aparelho continuam na lista acima.",
+    );
+  }
   if (!res.ok) {
-    const body = await res.text();
+    const body = await res.text().catch(() => "");
     // A função SQL lança exatamente 'senha incorreta'; um substring mais curto
     // ("senha") também casaria com o erro PGRST202 de função-não-encontrada,
     // cuja mensagem ecoa o parâmetro "p_senha".
     if (body.includes("senha incorreta")) throw new Error("Senha incorreta.");
     throw new Error(`Falha ao consultar o registro central (${res.status}).`);
   }
-  const rows = (await res.json()) as RemoteRow[];
+  // A resposta pode ser interrompida no meio (prazo estourado, conexão caiu):
+  // sem isso escaparia um DOMException cru, em inglês, para a tela.
+  let rows: RemoteRow[];
+  try {
+    rows = (await res.json()) as RemoteRow[];
+  } catch {
+    throw new Error("A resposta do banco central veio incompleta. Tente novamente.");
+  }
+  if (!Array.isArray(rows)) throw new Error("Resposta inesperada do banco central.");
   return rows.map((r) => ({
     id: r.client_id ?? r.id ?? "",
     createdAt: r.created_at,

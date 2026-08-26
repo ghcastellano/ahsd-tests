@@ -180,10 +180,11 @@ export default function AdminPanel() {
 
   useEffect(() => {
     setLocal(loadLocalRecords());
-    // Link de compartilhamento: /painel-ahsd#add=CODIGO — o fragmento não passa
-    // por servidores; o registro chega pronto para confirmação. O listener de
-    // hashchange cobre um segundo link aberto na mesma aba (navegação
-    // same-document não remonta o componente).
+    // Hoje os links de compartilhamento apontam para /resultado#CODIGO, mas
+    // links antigos (/painel-ahsd#add=CODIGO) continuam funcionando aqui: o
+    // fragmento não passa por servidores e o registro chega pronto para
+    // confirmação. O listener de hashchange cobre um segundo link aberto na
+    // mesma aba (navegação same-document não remonta o componente).
     function handleHash() {
       const code = codeFromHash(window.location.hash);
       if (!code) return;
@@ -221,8 +222,9 @@ export default function AdminPanel() {
   }
 
   function importPasted() {
-    // extractCode aceita o código puro (v1.…) ou o link completo (…#add=v1.…)
-    // e ignora palavras soltas de uma mensagem colada junto.
+    // extractCode aceita o código puro (v2.…/v1.…) ou o link completo
+    // (…/resultado#v2.… e o antigo …#add=v1.…) e ignora palavras soltas de uma
+    // mensagem colada junto.
     const tokens = pasteValue.split(/\s+/).filter(Boolean);
     const codes = tokens.map(extractCode).filter((c): c is string => c !== null);
     let ok = 0;
@@ -374,15 +376,16 @@ export default function AdminPanel() {
           </summary>
           <p className="mt-2 text-xs text-slate-500">
             Cole aqui um ou mais links/códigos de resultado recebidos (um por linha). O código é a
-            parte que começa com <code className="rounded bg-slate-100 px-1">v1.</code> — pode
-            colar o link inteiro também.
+            parte que começa com <code className="rounded bg-slate-100 px-1">v2.</code> (ou{" "}
+            <code className="rounded bg-slate-100 px-1">v1.</code>, formato antigo) — pode colar o
+            link inteiro também.
           </p>
           <textarea
             value={pasteValue}
             onChange={(e) => setPasteValue(e.target.value)}
             rows={3}
             className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs focus:border-brand-500 focus:outline-none"
-            placeholder="https://…/painel-ahsd#add=v1.eyJ…  ou  v1.eyJ…"
+            placeholder="https://…/resultado#v2.YWhz…  ou  v2.YWhz…"
           />
           <button
             type="button"
@@ -403,9 +406,9 @@ export default function AdminPanel() {
             <p>
               O banco central (Supabase) <strong>não está ativado</strong> — mas você não precisa
               dele para receber resultados de outras pessoas: peça que usem o botão{" "}
-              <strong>&quot;Enviar este resultado ao avaliador&quot;</strong> na tela de resultado
-              e abra o link aqui neste aparelho — o resultado entra na lista acima, sem passar por
-              servidor nenhum.
+              <strong>&quot;Compartilhar este resultado&quot;</strong> na tela de resultado e cole
+              o link recebido no campo acima — o resultado entra na lista deste aparelho, sem
+              passar por servidor nenhum.
             </p>
             <p className="mt-2">
               Para gravação automática num banco central (sem depender de links), siga o{" "}

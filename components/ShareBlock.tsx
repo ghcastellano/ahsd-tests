@@ -5,9 +5,9 @@ import type { ResultRecord } from "@/lib/history";
 import { shareLink } from "@/lib/share";
 
 /**
- * Bloco "enviar ao avaliador": gera um link que carrega o resultado no próprio
- * endereço (fragmento #, que não passa por servidores). Quem abre o link vê o
- * registro entrar no painel do próprio aparelho.
+ * Bloco "enviar ao avaliador": gera um link curto para a página /resultado, com
+ * o registro codificado no fragmento (#) — que nunca é enviado a servidores.
+ * Quem abre o link vê o resultado formatado e pode guardá-lo no próprio painel.
  */
 export default function ShareBlock({ record }: { record: ResultRecord }) {
   const [copied, setCopied] = useState<"idle" | "ok" | "fail">("idle");
@@ -50,7 +50,7 @@ export default function ShareBlock({ record }: { record: ResultRecord }) {
     try {
       await navigator.share({
         title: `Resultado ${record.acronym}`,
-        text: `Resultado do teste ${record.acronym} para importar no painel:`,
+        text: `Resultado do rastreio ${record.acronym}: ${record.bandLabel}. Abra para ver o detalhamento.`,
         url,
       });
     } catch {
@@ -61,12 +61,12 @@ export default function ShareBlock({ record }: { record: ResultRecord }) {
   return (
     <div className="no-print mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
       <h2 className="text-lg font-semibold text-emerald-900">
-        Enviar este resultado ao avaliador
+        Compartilhar este resultado
       </h2>
       <p className="mt-1 text-sm text-emerald-900">
-        O link abaixo carrega o resultado dentro do próprio endereço — sem passar por nenhum
-        servidor. Envie por WhatsApp ou e-mail: quando o avaliador abrir, o resultado entra
-        automaticamente no painel do aparelho dele.
+        O link abaixo abre uma página com este resultado já formatado — pontuação, faixa e
+        detalhamento por dimensão. Ele carrega o resultado dentro do próprio endereço, sem passar
+        por nenhum servidor, e quem receber pode guardá-lo no painel dele com um clique.
       </p>
       <input
         readOnly
@@ -87,6 +87,14 @@ export default function ShareBlock({ record }: { record: ResultRecord }) {
               ? "Falhou — copie do campo acima"
               : "Copiar link do resultado"}
         </button>
+        <a
+          href={url || "#"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-lg border border-emerald-600 px-5 py-2.5 font-medium text-emerald-700 transition hover:bg-emerald-100"
+        >
+          Ver como o link abre
+        </a>
         {typeof navigator !== "undefined" && typeof navigator.share === "function" && (
           <button
             type="button"
