@@ -48,7 +48,7 @@ identificação opcional, pontuações, faixas e subescalas — **sem as respost
 individuais**) é salvo:
 
 - **Neste dispositivo** (localStorage) — sempre.
-- **No registro central** (Supabase) — quando ativado (ver abaixo).
+- **No registro central** (Supabase) — **ativo**, em projeto dedicado.
 
 O painel fica em **`/painel-ahsd`** (URL discreta, fora da navegação e com
 `noindex`): lista os registros com data e hora, detalhamento por subescala,
@@ -65,31 +65,29 @@ links/códigos manualmente ("Importar resultado(s) por código"). A decodificaç
 valida estritamente o formato (whitelist de campos, limites de tamanho) — links
 corrompidos ou forjados fora do formato são rejeitados.
 
-### Ativando o registro central (opcional, ~3 minutos)
+### Registro central (ativo)
 
-> Passo a passo detalhado (com o caminho em que o Claude faz quase tudo):
-> **[GUIA-SUPABASE.md](GUIA-SUPABASE.md)**
+Todo teste concluído, em qualquer aparelho, grava automaticamente no banco
+central; o painel `/painel-ahsd` lista os registros (até os 2.000 mais recentes)
+mediante a senha, e também sincroniza para lá os registros locais do aparelho ao
+ser aberto. O schema vive em [`supabase/setup.sql`](supabase/setup.sql).
 
-1. Crie um projeto gratuito em [supabase.com](https://supabase.com) (região São Paulo).
-2. Abra o **SQL Editor** do projeto e rode o conteúdo de [`supabase/setup.sql`](supabase/setup.sql)
-   — **troque a senha do painel** na linha indicada.
-3. No Vercel (Settings → Environment Variables), defina:
-   - `NEXT_PUBLIC_SUPABASE_URL` = `https://SEU-PROJETO.supabase.co`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = a *publishable/anon key* do projeto
-4. **Defina a senha do painel** (obrigatório — o script semeia `TROQUE-ESTA-SENHA`):
-   ```sql
-   update public.admin_config
-     set senha_hash = crypt('sua-senha-longa-e-unica', gen_salt('bf'))
-     where id = 1;
-   ```
-5. Faça um novo deploy. Pronto: todos os dispositivos passam a registrar no banco
-   central, e o painel `/painel-ahsd` mostra os registros (até os 2.000 mais
-   recentes) mediante a senha.
+**Segurança do desenho:**
 
-Segurança: a chave pública (anon) só permite **inserir** resultados; a leitura é
-bloqueada por RLS e só acontece por uma função do banco que valida a senha contra
-um hash bcrypt. A função é pública — a proteção é a senha, então use uma senha
-longa e única. Re-rodar o `setup.sql` não sobrescreve uma senha já definida.
+- A chave pública (publishable/anon) só permite **INSERIR** — não lê, não
+  atualiza, não apaga. Por isso a gravação usa `INSERT` simples: o modo *upsert*
+  do PostgREST exigiria política de `UPDATE`, o que deixaria qualquer visitante
+  sobrescrever resultados alheios.
+- A idempotência vem de `UNIQUE(client_id)`: reenviar o mesmo registro devolve
+  **409**, que o cliente trata como "já sincronizado".
+- A leitura só acontece pela função `admin_listar_resultados`, que valida a senha
+  do painel contra um hash **bcrypt**. A função é pública — a proteção é a senha,
+  então use uma senha longa e única.
+- `created_at` é carimbado pelo servidor: o cliente não envia data.
+
+**Apontar para outro projeto** (sem alterar código): defina no Vercel
+`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`, rode o
+`setup.sql` no projeto novo, defina a senha e faça um novo deploy.
 
 ## Guia educativo
 

@@ -39,3 +39,12 @@ select (select count(*) from public.resultados) as registros_migrados,
        exists (select 1 from public.admin_config
                 where senha_hash = extensions.crypt('l-eYnghPHg3yLidtBsEv8Nq_', senha_hash))
          as senha_ok;
+
+-- 4. Remove as linhas de teste criadas durante a validação da migração
+--    (o papel anônimo não pode apagar nada — por isso isto roda aqui).
+delete from public.resultados
+ where client_id in ('validacao-migracao', 't-diag-1', 't-diag-2',
+                     'teste-claude-1', 'prod-e2e-final');
+
+-- Devem sobrar apenas os 2 registros resgatados (AH/SD 4,88 e SE/OE 4,7).
+select client_id, acronym, total_score from public.resultados order by created_at desc;
