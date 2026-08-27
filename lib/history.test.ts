@@ -17,8 +17,9 @@ describe("recordFromResult", () => {
     const rec = recordFromResult(ahsdIndicadores, result, "  Gustavo  ", "id-1", AT);
     expect(rec.instrumentId).toBe("ahsd-indicadores");
     expect(rec.respondent).toBe("Gustavo"); // trimmed
-    expect(rec.totalScore).toBe(8); // domínios no limiar, não média
-    expect(rec.maxScore).toBe(8);
+    expect(rec.totalScore).toBe(4); // média do melhor domínio, não escore único
+    expect(rec.maxScore).toBe(5);
+    expect(rec.positive).toBe(true);
     expect(rec.subscales?.length).toBe(8);
     expect(rec.createdAt).toBe(AT);
     // no answers field of any kind
