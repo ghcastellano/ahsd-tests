@@ -21,6 +21,11 @@ registro central estiver ativado, também no banco da plataforma.
 |-------|-------------|------|------:|-----------|
 | AH/SD | Indicadores de Altas Habilidades/Superdotação *(autoral)* | Altas Habilidades | 34 | Perfil por área (média 1–5) |
 | SE/OE | Sobre-excitabilidades de Dabrowski *(autoral)* | Altas Habilidades | 35 | Perfil das 5 dimensões |
+| PERF-AHSD | Perfeccionismo e Autocrítica *(autoral)* | Altas Habilidades | 20 | Padrões elevados + 3 dimensões de custo |
+| IMP-AHSD | Impostor e Autossabotagem *(autoral)* | Altas Habilidades | 16 | Perfil de 4 dimensões |
+| SENSORIAL | Sensibilidade e Processamento Sensorial *(autoral)* | Altas Habilidades | 24 | Perfil de 6 dimensões |
+| 5F-AHSD | Personalidade — Cinco Grandes Fatores *(autoral)* | Altas Habilidades | 30 | Perfil dimensional, sem corte |
+| BE-AHSD | Bem-estar e Contexto em AH/SD *(autoral)* | Altas Habilidades | 20 | Recursos em 5 dimensões |
 | ASRS v1.1 | Autorrelato de TDAH no adulto (OMS) | TDAH | 18 | Marcas da Parte A (≥4 = positivo) |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
 | RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
@@ -35,7 +40,10 @@ registro central estiver ativado, também no banco da plataforma.
 **Módulos de AH/SD (autorais):** itens originais fundamentados na literatura
 brasileira de AH/SD (Delou; MEC/Virgolim; Fleith & Alencar), no modelo dos três
 anéis de Renzulli e na teoria das sobre-excitabilidades de Dabrowski/Piechowski.
-A leitura é **por perfil de forças** — não há nota de aprovação.
+Os módulos complementares acrescentam contexto de perfeccionismo, fenômeno do
+impostor, sensibilidade sensorial, personalidade e bem-estar. Eles não reproduzem
+escalas proprietárias ou instrumentos psicológicos privativos; a leitura é
+**descritiva e por perfil** — não há nota de aprovação nem diagnóstico.
 
 **Rastreios clínicos:** instrumentos validados e de uso livre para fins clínicos
 e de pesquisa, apresentados em versão em português com as referências originais
@@ -124,7 +132,7 @@ A lógica de pontuação de todos os instrumentos é coberta por testes automati
 (cortes, itens reversos, algoritmos, marcas de rastreio, médias de perfil):
 
 ```bash
-npm test          # roda a suíte de testes (46 testes)
+npm test          # roda a suíte automatizada
 ```
 
 ## Desenvolvimento

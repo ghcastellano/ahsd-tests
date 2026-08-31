@@ -13,12 +13,24 @@ import { pcl5 } from "./instruments/pcl5";
 import { ace } from "./instruments/ace";
 import { ahsdIndicadores } from "./instruments/ahsd-indicadores";
 import { sobreExcitabilidades } from "./instruments/sobre-excitabilidades";
+import { impostorAutossabotagem } from "./instruments/impostor-autossabotagem";
+import { perfeccionismoAutocritica } from "./instruments/perfeccionismo-autocritica";
+import { perfilSensorial } from "./instruments/perfil-sensorial";
+import { cincoGrandes } from "./instruments/cinco-grandes";
+import { bemEstarContexto } from "./instruments/bem-estar-contexto";
 import { raadsR } from "./instruments/raads-r";
 import { ders } from "./instruments/ders";
 
 /** Answer every question of an instrument with the same value. */
 function answerAll(questions: Question[], value: number): Responses {
   return Object.fromEntries(questions.map((q) => [q.id, value]));
+}
+
+/** Answer a 1..5 profile so its scored value is the same after reverse scoring. */
+function answerProfile(questions: Question[], scoredValue: number): Responses {
+  return Object.fromEntries(
+    questions.map((q) => [q.id, q.reverse ? 6 - scoredValue : scoredValue]),
+  );
 }
 
 describe("engine helpers", () => {
@@ -263,6 +275,66 @@ describe("Overexcitabilities (profile)", () => {
   });
 });
 
+describe("AH/SD complementary profiles", () => {
+  it("scores impostor/autossabotagem across four balanced dimensions", () => {
+    expect(impostorAutossabotagem.questions).toHaveLength(16);
+    expect(impostorAutossabotagem.questions.filter((q) => q.reverse)).toHaveLength(4);
+
+    const high = impostorAutossabotagem.score(answerProfile(impostorAutossabotagem.questions, 5));
+    const low = impostorAutossabotagem.score(answerProfile(impostorAutossabotagem.questions, 1));
+    expect(high.totalScore).toBe(5);
+    expect(high.band.label).toBe("Presença muito elevada");
+    expect(high.subscales).toHaveLength(4);
+    expect(low.totalScore).toBe(1);
+  });
+
+  it("separates high standards from rigid perfectionism costs", () => {
+    expect(perfeccionismoAutocritica.questions).toHaveLength(20);
+    const responses: Responses = {};
+    for (const question of perfeccionismoAutocritica.questions) {
+      const target = question.subscale === "padroes" ? 5 : 1;
+      responses[question.id] = question.reverse ? 6 - target : target;
+    }
+    const result = perfeccionismoAutocritica.score(responses);
+    expect(result.totalScore).toBe(1);
+    expect(result.band.label).toBe("Baixa carga rígida");
+    expect(result.subscales?.find((s) => s.key === "padroes")?.mean).toBe(5);
+  });
+
+  it("maps six sensory dimensions without a diagnostic cutoff", () => {
+    expect(perfilSensorial.questions).toHaveLength(24);
+    const result = perfilSensorial.score(answerProfile(perfilSensorial.questions, 4));
+    expect(result.totalScore).toBe(4);
+    expect(result.band.label).toBe("Sensibilidade elevada");
+    expect(result.subscales).toHaveLength(6);
+    expect(result.positive).toBeUndefined();
+  });
+
+  it("keeps the five personality factors separate and descriptive", () => {
+    expect(cincoGrandes.questions).toHaveLength(30);
+    const responses: Responses = {};
+    for (const question of cincoGrandes.questions) {
+      const target = question.subscale === "abertura" ? 5 : 3;
+      responses[question.id] = question.reverse ? 6 - target : target;
+    }
+    const result = cincoGrandes.score(responses);
+    expect(result.band.label).toBe("Perfil dimensional");
+    expect(result.subscales).toHaveLength(5);
+    expect(result.subscales?.find((s) => s.key === "abertura")?.mean).toBe(5);
+    expect(result.subscales?.every((s) => s.band === undefined)).toBe(true);
+  });
+
+  it("reads higher well-being scores as stronger contextual resources", () => {
+    expect(bemEstarContexto.questions).toHaveLength(20);
+    const high = bemEstarContexto.score(answerProfile(bemEstarContexto.questions, 5));
+    const low = bemEstarContexto.score(answerProfile(bemEstarContexto.questions, 1));
+    expect(high.band.label).toBe("Recursos fortes");
+    expect(high.band.severity).toBe("none");
+    expect(low.band.label).toBe("Recursos fragilizados");
+    expect(low.band.severity).toBe("high");
+  });
+});
+
 describe("RAADS-R reverse scoring and cutoff", () => {
   const REVERSE = [1, 6, 11, 18, 23, 26, 33, 37, 43, 47, 48, 53, 58, 62, 68, 72, 77];
 
@@ -334,7 +406,25 @@ describe("DERS reverse scoring and reference bands", () => {
 });
 
 describe("instrument integrity", () => {
-  const all = [phq9, gad7, asrs, aq50, mdq, hcl32, pcl5, ace, ahsdIndicadores, sobreExcitabilidades, raadsR, ders];
+  const all = [
+    phq9,
+    gad7,
+    asrs,
+    aq50,
+    mdq,
+    hcl32,
+    pcl5,
+    ace,
+    ahsdIndicadores,
+    sobreExcitabilidades,
+    impostorAutossabotagem,
+    perfeccionismoAutocritica,
+    perfilSensorial,
+    cincoGrandes,
+    bemEstarContexto,
+    raadsR,
+    ders,
+  ];
   it("every question id is unique within an instrument", () => {
     for (const inst of all) {
       const ids = inst.questions.map((q) => q.id);

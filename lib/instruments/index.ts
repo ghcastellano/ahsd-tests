@@ -1,6 +1,11 @@
 import type { CategoryMeta, Instrument } from "../types";
 import { ahsdIndicadores } from "./ahsd-indicadores";
 import { sobreExcitabilidades } from "./sobre-excitabilidades";
+import { impostorAutossabotagem } from "./impostor-autossabotagem";
+import { perfeccionismoAutocritica } from "./perfeccionismo-autocritica";
+import { perfilSensorial } from "./perfil-sensorial";
+import { cincoGrandes } from "./cinco-grandes";
+import { bemEstarContexto } from "./bem-estar-contexto";
 import { phq9 } from "./phq9";
 import { gad7 } from "./gad7";
 import { asrs } from "./asrs";
@@ -15,6 +20,11 @@ import { ders } from "./ders";
 export const instruments: Instrument[] = [
   ahsdIndicadores,
   sobreExcitabilidades,
+  perfeccionismoAutocritica,
+  impostorAutossabotagem,
+  perfilSensorial,
+  cincoGrandes,
+  bemEstarContexto,
   asrs,
   aq50,
   raadsR,
@@ -31,7 +41,7 @@ export const categories: CategoryMeta[] = [
   {
     key: "altas-habilidades",
     name: "Altas Habilidades / Superdotação",
-    description: "Indicadores de AH/SD e sobre-excitabilidades — o foco central da plataforma.",
+    description: "Indicadores, intensidades, personalidade e contexto — o foco central da plataforma.",
     accent: "brand",
   },
   {
