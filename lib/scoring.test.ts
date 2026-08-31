@@ -194,125 +194,63 @@ describe("ACE", () => {
   });
 });
 
-describe("AH/SD indicators (per-domain screening)", () => {
-  it("uses frequency / normative anchors — never agreement", () => {
-    // Nenhuma escala validada de superdotação usa "concordo/discordo".
-    for (const q of ahsdIndicadores.questions) {
-      const labels = (q.options ?? []).map((o) => o.label.toLowerCase());
-      expect(labels.some((l) => l.includes("concordo")), q.id).toBe(false);
-      // Todo item oferece a saída de não-conhecimento (valor sentinela).
-      expect(q.options?.some((o) => o.value === -1), q.id).toBe(true);
-    }
-  });
-
-  it("covers the five MEC areas plus creativity, task commitment and intensity", () => {
+describe("AH/SD indicators (profile of strengths)", () => {
+  it("cobre as seis áreas e liga todo item a uma delas", () => {
     const keys = ahsdIndicadores.subscales!.map((s) => s.key);
-    for (const k of ["intelectual", "academica", "lideranca", "psicomotora", "artistica", "criatividade", "envolvimento", "emocional"]) {
+    for (const k of ["intelectual", "criatividade", "motivacao", "lideranca", "artistica", "psicomotora"]) {
       expect(keys, `falta o domínio ${k}`).toContain(k);
     }
-    // Todo item pertence a um domínio declarado.
     for (const q of ahsdIndicadores.questions) expect(keys).toContain(q.subscale!);
   });
 
-  it("reports the best domain, not an overall average", () => {
+  it("não pergunta por frequência em janela de tempo", () => {
+    // O instrumento é de descrição habitual, não de contagem de episódios.
+    for (const q of ahsdIndicadores.questions) {
+      expect(q.text.toLowerCase(), q.id).not.toContain("últimos 12 meses");
+      expect(q.text.toLowerCase(), q.id).not.toContain("quantas vezes");
+    }
+  });
+
+  it("pontua a média geral 1–5 e as faixas dos extremos", () => {
     const all5 = ahsdIndicadores.score(answerAll(ahsdIndicadores.questions, 5));
     expect(all5.totalScore).toBe(5);
     expect(all5.maxScore).toBe(5);
-    expect(all5.positive).toBe(true);
-    expect(all5.band.label).toBe("Domínio bem acima do limiar");
+    expect(all5.metricIsMean).toBe(true);
+    expect(all5.band.label).toBe("Indicadores fortes e consistentes");
 
     const all1 = ahsdIndicadores.score(answerAll(ahsdIndicadores.questions, 1));
     expect(all1.totalScore).toBe(1);
-    expect(all1.positive).toBe(false);
-    expect(all1.band.label).toBe("Nenhum domínio próximo do limiar");
+    expect(all1.band.label).toBe("Indicadores pouco presentes");
   });
 
-  it("keeps a spiky (2e-like) profile visible instead of averaging it away", () => {
-    // Alto só em intelectual e envolvimento; baixo no resto.
+  it("dá uma média por área e ordena da mais forte para a mais fraca", () => {
     const r: Responses = {};
     for (const q of ahsdIndicadores.questions) {
-      r[q.id] = q.subscale === "intelectual" || q.subscale === "envolvimento" ? 5 : 1;
+      r[q.id] = q.subscale === "intelectual" ? 5 : q.subscale === "criatividade" ? 4 : 2;
     }
     const res = ahsdIndicadores.score(r);
-    const flatMean =
-      ahsdIndicadores.questions.reduce((a, q) => a + r[q.id], 0) / ahsdIndicadores.questions.length;
-    expect(flatMean).toBeLessThan(4); // a média geral esconderia o perfil...
-    expect(res.totalScore).toBe(5); // ...o melhor domínio não
-    expect(res.positive).toBe(true);
-    const marcados = res.subscales!.filter((s) => s.band?.label === "no limiar de triagem");
-    expect(marcados.map((s) => s.key).sort()).toEqual(["envolvimento", "intelectual"]);
-    expect((res.notes ?? []).join(" ")).toContain("2 de 8 domínios medidos");
+    expect(res.subscales).toHaveLength(6);
+    const means = res.subscales!.map((s) => s.mean ?? 0);
+    expect([...means].sort((a, b) => b - a)).toEqual(means); // já vem ordenado
+    expect(res.subscales![0].key).toBe("intelectual");
+    expect(res.subscales![0].mean).toBe(5);
+    expect(res.subscales![1].key).toBe("criatividade");
   });
 
-  it("distingue níveis que um corte dicotômico igualaria", () => {
-    const comMedia = (alvo: number) => {
-      const r: Responses = {};
-      for (const q of ahsdIndicadores.questions) r[q.id] = q.subscale === "criatividade" ? alvo : 1;
-      return ahsdIndicadores.score(r);
-    };
-    // 3,9 e 1,2 ficariam ambos "abaixo do limiar" numa contagem de domínios.
-    expect(comMedia(4).totalScore).toBeGreaterThan(comMedia(3).totalScore);
-    expect(comMedia(3).totalScore).toBeGreaterThan(comMedia(2).totalScore);
-  });
-
-  it("excludes 'não sei' from the mean instead of scoring it as low", () => {
-    const r: Responses = {};
-    for (const q of ahsdIndicadores.questions) r[q.id] = 1;
-    // Domínio artístico: metade dos itens alta, o resto "não se aplica" (-1).
-    const art = ahsdIndicadores.questions.filter((q) => q.subscale === "artistica");
-    for (const q of art.slice(0, 3)) r[q.id] = 5;
-    for (const q of art.slice(3)) r[q.id] = -1;
-
-    const res = ahsdIndicadores.score(r);
-    const dom = res.subscales!.find((s) => s.key === "artistica")!;
-    expect(dom.mean).toBe(5); // média dos respondidos, não diluída por zeros
-    expect(res.totalScore).toBe(5);
-  });
-
-  it("recusa medir um domínio sustentado por um único item", () => {
-    const r: Responses = {};
-    for (const q of ahsdIndicadores.questions) r[q.id] = 1;
-    const psico = ahsdIndicadores.questions.filter((q) => q.subscale === "psicomotora");
-    r[psico[0].id] = 5;
-    for (const q of psico.slice(1)) r[q.id] = -1;
-
-    const res = ahsdIndicadores.score(r);
-    const dom = res.subscales!.find((s) => s.key === "psicomotora")!;
-    expect(dom.band?.label).toBe("sem respostas suficientes");
-    expect(res.totalScore).toBe(1); // o item solto não vira "melhor domínio"
-    expect(res.positive).toBe(false);
-  });
-
-  it("reports 'sem respostas suficientes' when a whole domain is skipped", () => {
+  it("destaca as áreas mais fortes nas notas", () => {
     const r: Responses = {};
     for (const q of ahsdIndicadores.questions) {
-      r[q.id] = q.subscale === "artistica" ? -1 : 3;
+      r[q.id] = q.subscale === "artistica" ? 5 : 2;
     }
-    const res = ahsdIndicadores.score(r);
-    const art = res.subscales!.find((s) => s.key === "artistica")!;
-    expect(art.band?.label).toBe("sem respostas suficientes");
-    expect((res.notes ?? []).join(" ")).toContain("Sem respostas suficientes para medir");
-    expect(res.totalScore).toBe(3);
+    const joined = (ahsdIndicadores.score(r).notes ?? []).join(" ");
+    expect(joined).toContain("Talento artístico");
   });
 
-  it("dá a cada domínio pelo menos um item que não depende de oportunidade", () => {
-    // Itens de frequência ("quantas vezes…") pressupõem contexto: grupo,
-    // projeto, plateia. Sem um item normativo, quem passou o ano isolado
-    // pontuaria baixo por circunstância, não por capacidade.
-    for (const s of ahsdIndicadores.subscales!) {
-      const itens = ahsdIndicadores.questions.filter((q) => q.subscale === s.key);
-      const normativos = itens.filter((q) =>
-        q.options?.some((o) => o.label.includes("Muito acima da maioria")),
-      );
-      expect(normativos.length, `domínio ${s.key} só tem itens de frequência`).toBeGreaterThan(0);
-    }
-  });
-
-  it("states the limits of self-report in the notes", () => {
+  it("deixa claro que não é teste de QI nem diagnóstico", () => {
     const res = ahsdIndicadores.score(answerAll(ahsdIndicadores.questions, 5));
-    const joined = (res.notes ?? []).join(" ");
-    expect(joined).toContain("não validado");
-    expect(joined.toLowerCase()).toContain("autorrelato");
+    const joined = (res.notes ?? []).join(" ").toLowerCase();
+    expect(joined).toContain("não é um teste de qi");
+    expect(joined).toContain("diagnóstico");
   });
 });
 

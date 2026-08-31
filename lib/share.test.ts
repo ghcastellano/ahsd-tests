@@ -76,11 +76,11 @@ describe("share codec (v2)", () => {
       instrumentId: "ahsd-indicadores",
       acronym: "AH/SD",
       instrumentName: "x",
-      subscales: [{ name: "Criatividade / pensamento produtivo", raw: 4.5, max: 5, mean: 4.5 }],
+      subscales: [{ name: "Pensamento criador (Criatividade)", raw: 4.5, max: 5, mean: 4.5 }],
     };
     const code = encodeRecord(rec);
     expect(atob(code.slice(3).replace(/-/g, "+").replace(/_/g, "/"))).not.toContain("Criatividade");
-    expect(decodeRecord(code)!.subscales![0].name).toBe("Criatividade / pensamento produtivo");
+    expect(decodeRecord(code)!.subscales![0].name).toBe("Pensamento criador (Criatividade)");
   });
 
   it("gera links curtos (bem menores que o formato v1)", () => {
@@ -179,14 +179,12 @@ describe("acoplamento com o catálogo de instrumentos", () => {
   // formato (v3) em vez de só atualizar o teste.
   it("mantém a ordem das subescalas do AH/SD", () => {
     expect(getInstrument("ahsd-indicadores")?.subscales?.map((s) => s.name)).toEqual([
-      "Capacidade intelectual geral",
-      "Aptidão acadêmica específica",
-      "Criatividade / pensamento produtivo",
-      "Envolvimento com a tarefa",
-      "Liderança",
+      "Intelectual / Aprendizagem",
+      "Pensamento criador (Criatividade)",
+      "Comprometimento com a tarefa",
+      "Liderança / Social",
       "Talento artístico",
       "Capacidade psicomotora",
-      "Intensidade emocional e sensibilidade",
     ]);
   });
 
