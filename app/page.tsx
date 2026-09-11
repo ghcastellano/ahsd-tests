@@ -88,8 +88,8 @@ export default function HomePage() {
           href="/treino"
           className="group block rounded-xl border-2 border-brand-300 bg-brand-50 p-5 transition hover:border-brand-500 hover:shadow-md"
         >
-          <div className="flex items-center justify-between">
-            <span className="rounded-md bg-brand-600 px-2 py-0.5 text-xs font-semibold text-white">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className="shrink-0 whitespace-nowrap rounded-md bg-brand-600 px-2 py-0.5 text-xs font-semibold text-white">
               BATERIA
             </span>
             <span className="text-xs text-slate-500">4 treinos · 83 itens · 59 min</span>
@@ -125,12 +125,13 @@ export default function HomePage() {
           href="/treino/simulador"
           className="group mt-3 block rounded-xl border-2 border-violet-300 bg-violet-50 p-4 transition hover:border-violet-500"
         >
-          <div className="flex items-center justify-between">
-            <span className="rounded-md bg-violet-600 px-2 py-0.5 text-xs font-semibold text-white">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className="shrink-0 whitespace-nowrap rounded-md bg-violet-600 px-2 py-0.5 text-xs font-semibold text-white">
               SIMULADOR · 3 BLOCOS
             </span>
-            <span className="text-xs text-slate-500">Wechsler 130 → Stanford-Binet 133 → Cattell 149 · ~35 min</span>
+            <span className="text-xs text-slate-500">3 blocos · ~35 min</span>
           </div>
+          <p className="mt-1 text-xs text-slate-500">Wechsler 130 → Stanford-Binet 133 → Cattell 149</p>
           <h3 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-violet-800">
             Simulador de escalas completas
           </h3>
@@ -143,8 +144,8 @@ export default function HomePage() {
           href="/treino/go-nogo"
           className="group mt-3 block rounded-xl border border-amber-300 bg-amber-50 p-4 transition hover:border-amber-500"
         >
-          <div className="flex items-center justify-between">
-            <span className="rounded-md bg-amber-600 px-2 py-0.5 text-xs font-semibold text-white">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className="shrink-0 whitespace-nowrap rounded-md bg-amber-600 px-2 py-0.5 text-xs font-semibold text-white">
               TAREFA OBJETIVA · TDAH
             </span>
             <span className="text-xs text-slate-500">120 letras · ~2 min</span>
