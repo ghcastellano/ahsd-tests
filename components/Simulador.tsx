@@ -238,7 +238,7 @@ export default function Simulador() {
             <li><strong>Velocidade</strong> — 60 s: dois símbolos-alvo à esquerda; algum deles aparece IGUAL na fileira? Responda Sim/Não (teclas S/N). Erro desconta ponto.</li>
             <li><strong>Raciocínio</strong> — 4 matrizes 3×3 com tempo.</li>
           </ol>
-          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com pelo menos 60% de acerto nos domínios de precisão e 10 pontos na velocidade. Os blocos precisam ser fechados em ordem.</p>
+          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 18 / 22 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O bloco 1 já é a entrada do 2% superior: não fechar é o esperado para a maioria.</p>
         </div>
         <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="resp">Identificação (opcional)</label>
         <input id="resp" type="text" value={respondent} onChange={(e) => setRespondent(e.target.value)} className="mt-1 w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none" placeholder="Nome ou iniciais" />

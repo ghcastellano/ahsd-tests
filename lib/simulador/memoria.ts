@@ -23,9 +23,11 @@ const LETRAS = ["B", "D", "F", "G", "H", "K", "L", "M", "P", "R", "S", "T"];
 
 /** Amplitudes por nível: [direta, inversa, letras-números]. */
 export const AMPLITUDES: Record<Nivel, [number[], number[], number[]]> = {
-  1: [[5, 6], [4, 5], [3, 4]],
-  2: [[7, 8], [6, 6], [5, 5]],
-  3: [[9, 9], [7, 8], [6, 7]],
+  // A média adulta é ~6–7 dígitos na ordem direta e ~4–5 na inversa (WAIS-IV).
+  // O nível 1 já começa acima disso; o 3 chega ao teto de 9 dígitos distintos.
+  1: [[7, 8], [5, 6], [4, 5]],
+  2: [[8, 9], [6, 7], [5, 6]],
+  3: [[9, 9], [7, 8], [7, 8]],
 };
 
 function digitos(n: number, rnd: () => number): string[] {

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { ITENS_VERBAIS, itensVerbais } from "./verbal";
 import { AMPLITUDES, conferirMemoria, gerarItensMemoria, normalizar } from "./memoria";
 import { CONFIG, gerarTrials, pontuarVelocidade } from "./velocidade";
-import { blocos, blocoFechado, pontuarSimulador, type ResultadoBloco } from "./index";
+import { blocos, blocoFechado, pontuarSimulador, CORTES, type ResultadoBloco } from "./index";
 
 describe("simulador — verbal", () => {
   it("24 itens, 8 por nível, resposta dentro das opções, ids únicos, sem opções repetidas", () => {
@@ -86,8 +86,11 @@ describe("simulador — blocos e pontuação", () => {
     expect(b.map((x) => x.qiAlvo)).toEqual([130, 133, 149]);
     expect(b.map((x) => x.dp)).toEqual([15, 16, 24]);
     for (const x of b) { expect(x.verbal).toHaveLength(8); expect(x.raciocinio).toHaveLength(4); }
-    expect(b[0].raciocinio.every((i) => i.difficulty === "media")).toBe(true);
+    // Nenhum bloco usa matrizes de nível médio: "130" já é o 2% superior.
+    expect(b[0].raciocinio.every((i) => i.difficulty === "dificil")).toBe(true);
+    expect(b[1].raciocinio.every((i) => i.difficulty === "dificil")).toBe(true);
     expect(b[2].raciocinio.every((i) => i.difficulty === "extrema")).toBe(true);
+    expect(new Set([...b[0].raciocinio, ...b[1].raciocinio].map((i) => i.id)).size).toBe(8);
   });
   const r = (nivel: 1 | 2 | 3, ok: boolean): ResultadoBloco => ({
     nivel,
@@ -96,10 +99,20 @@ describe("simulador — blocos e pontuação", () => {
     velocidade: { respondidos: 30, acertos: ok ? 28 : 12, erros: ok ? 2 : 18, pontos: ok ? 26 : 0, rtMedio: 900 },
     raciocinio: { acertos: ok ? 3 : 1, total: 4 },
   });
-  it("bloco fecha com ≥60% de precisão e ≥10 pontos de velocidade", () => {
+  it("cortes sobem por bloco (precisão 70/75/80%, velocidade 18/22/26)", () => {
+    expect(CORTES[1]).toEqual({ precisao: 0.7, velocidade: 18 });
+    expect(CORTES[3].precisao).toBeGreaterThan(CORTES[1].precisao);
+    expect(CORTES[3].velocidade).toBeGreaterThan(CORTES[1].velocidade);
     expect(blocoFechado(r(1, true))).toBe(true);
     expect(blocoFechado(r(1, false))).toBe(false);
-    expect(blocoFechado({ ...r(1, true), velocidade: { ...r(1, true).velocidade, pontos: 9 } })).toBe(false);
+    expect(blocoFechado({ ...r(1, true), velocidade: { ...r(1, true).velocidade, pontos: 17 } })).toBe(false);
+    expect(blocoFechado({ ...r(3, true), velocidade: { ...r(3, true).velocidade, pontos: 25 } })).toBe(false);
+    // 7/8 + 5/6 + 3/4 = 0,82 de precisão média: fecha o 3 com ≥26 pontos.
+    expect(blocoFechado(r(3, true))).toBe(true);
+  });
+  it("amplitude de memória do nível 1 já está acima da média adulta (≥7 na direta)", () => {
+    expect(Math.min(...AMPLITUDES[1][0])).toBeGreaterThanOrEqual(7);
+    expect(Math.min(...AMPLITUDES[1][1])).toBeGreaterThanOrEqual(5);
   });
   it("bloco alcançado exige blocos consecutivos; faixa e domínios agregados", () => {
     expect(pontuarSimulador([r(1, true), r(2, true), r(3, true)]).blocoAlcancado).toBe(3);

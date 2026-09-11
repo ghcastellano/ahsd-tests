@@ -41,20 +41,23 @@ export const NOMES_DOMINIO: Record<Dominio, string> = {
 export function blocos(): Bloco[] {
   const matrizes = advancedMatrixItems();
   const escolher = (dif: Item["difficulty"], n: number) => matrizes.filter((i) => i.difficulty === dif).slice(0, n);
+  // Banco: 9 média, 4 XOR difíceis, 9 de dois componentes (difícil), 5 de
+  // distribuição de dois (difícil), 4 extrema. O bloco 1 pega os de dois
+  // componentes; o 2, os de distribuição de dois; o 3, os extremos.
   return [
     {
       nivel: 1, nome: "Bloco 1 — Wechsler", escala: "Wechsler (DP 15)", qiAlvo: 130, dp: 15,
-      descricao: "Formato das escalas Wechsler (WAIS/WISC): itens acessíveis, a barra sobe na precisão e no ritmo.",
-      verbal: itensVerbais(1), raciocinio: escolher("media", 4), segundosVelocidade: CONFIG[1].segundos, segundosRaciocinio: 4 * 60,
+      descricao: "Entrada do percentil 98 no formato Wechsler: vocabulário pouco comum, 7–8 dígitos, matrizes de dois componentes.",
+      verbal: itensVerbais(1), raciocinio: matrizes.filter((i) => i.difficulty === "dificil").slice(4, 8), segundosVelocidade: CONFIG[1].segundos, segundosRaciocinio: 4 * 60,
     },
     {
       nivel: 2, nome: "Bloco 2 — Stanford-Binet", escala: "Stanford-Binet (DP 16)", qiAlvo: 133, dp: 16,
-      descricao: "Vocabulário mais raro, sequências mais longas, distratores parecidos e matrizes com dois componentes.",
-      verbal: itensVerbais(2), raciocinio: escolher("dificil", 4), segundosVelocidade: CONFIG[2].segundos, segundosRaciocinio: 5 * 60,
+      descricao: "Vocabulário raro, 8–9 dígitos, distratores parecidos e matrizes de distribuição de dois — a regra de maior carga.",
+      verbal: itensVerbais(2), raciocinio: matrizes.filter((i) => i.difficulty === "dificil").slice(13, 17), segundosVelocidade: CONFIG[2].segundos, segundosRaciocinio: 5 * 60,
     },
     {
       nivel: 3, nome: "Bloco 3 — Cattell", escala: "Cattell (DP 24)", qiAlvo: 149, dp: 24,
-      descricao: "O topo: abstração verbal, amplitude de 9 dígitos, nove candidatos por fileira e matrizes de carga extrema.",
+      descricao: "O topo: abstração verbal, 9 dígitos e 7–8 na inversa, nove candidatos por fileira e matrizes de carga extrema.",
       verbal: itensVerbais(3), raciocinio: escolher("extrema", 4), segundosVelocidade: CONFIG[3].segundos, segundosRaciocinio: 6 * 60,
     },
   ];
@@ -70,21 +73,29 @@ export interface ResultadoBloco {
   raciocinio: Contagem;
 }
 
-/** Um bloco "fecha" com ≥60% de acerto nos três domínios de precisão E pontos mínimos de velocidade. */
-export const CORTE_PRECISAO = 0.6;
-export const CORTE_VELOCIDADE = 10;
+/**
+ * Cortes por bloco. Sobem com o nível porque cada bloco já é mais difícil e a
+ * meta é o 2% superior: exige-se mais precisão E mais pontos de velocidade.
+ * Sem norma para este formato — são convenções declaradas.
+ */
+export const CORTES: Record<Nivel, { precisao: number; velocidade: number }> = {
+  1: { precisao: 0.7, velocidade: 18 },
+  2: { precisao: 0.75, velocidade: 22 },
+  3: { precisao: 0.8, velocidade: 26 },
+};
 
 export function blocoFechado(b: ResultadoBloco): boolean {
   const pct = (c: Contagem) => (c.total ? c.acertos / c.total : 0);
   const precisao = (pct(b.verbal) + pct(b.memoria) + pct(b.raciocinio)) / 3;
-  return precisao >= CORTE_PRECISAO && b.velocidade.pontos >= CORTE_VELOCIDADE;
+  const corte = CORTES[b.nivel];
+  return precisao >= corte.precisao && b.velocidade.pontos >= corte.velocidade;
 }
 
 export interface Faixa { label: string; severity: "info" | "none" | "low" | "moderate" | "high"; description: string }
 
 export const FAIXAS: Faixa[] = [
-  { label: "Nenhum bloco fechado", severity: "info", description: "Nem o bloco 1 fechou. Isso costuma ser falta de familiaridade com o formato, não de capacidade: refaça depois de ler as explicações." },
-  { label: "Bloco 1 fechado (nível Wechsler ~130)", severity: "low", description: "Você fechou o bloco de entrada — o formato das escalas Wechsler no nível do percentil 98. O bloco 2 sobe a exigência." },
+  { label: "Nenhum bloco fechado", severity: "info", description: "O bloco 1 já é a entrada do 2% superior — não fechar é o esperado para a maioria das pessoas, e a primeira tentativa costuma ser prejudicada pela falta de familiaridade com o formato. Veja o domínio mais fraco e refaça." },
+  { label: "Bloco 1 fechado (nível Wechsler ~130)", severity: "low", description: "Você fechou a entrada do percentil 98 no formato Wechsler: ≥70% de precisão com vocabulário pouco comum, 7–8 dígitos e matrizes de dois componentes, mais 18 pontos de velocidade. O bloco 2 sobe a exigência." },
   { label: "Bloco 2 fechado (nível Stanford-Binet ~133)", severity: "moderate", description: "Dois blocos fechados: precisão e ritmo sustentados com vocabulário raro, sequências longas e matrizes de dois componentes." },
   { label: "Bloco 3 fechado (nível Cattell ~149)", severity: "high", description: "Os três blocos fechados, incluindo o de carga extrema. Lembre: os rótulos são dificuldades-alvo, não pontuações — nenhum simulador converte isso em QI." },
 ];
