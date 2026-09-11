@@ -122,6 +122,24 @@ export default function HomePage() {
           </p>
         </Link>
         <Link
+          href="/treino/simulador"
+          className="group mt-3 block rounded-xl border-2 border-violet-300 bg-violet-50 p-4 transition hover:border-violet-500"
+        >
+          <div className="flex items-center justify-between">
+            <span className="rounded-md bg-violet-600 px-2 py-0.5 text-xs font-semibold text-white">
+              SIMULADOR · 3 BLOCOS
+            </span>
+            <span className="text-xs text-slate-500">Wechsler 130 → Stanford-Binet 133 → Cattell 149 · ~35 min</span>
+          </div>
+          <h3 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-violet-800">
+            Simulador de escalas completas
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            O que o teste de matrizes não mede: compreensão verbal (inteligência cristalizada), memória
+            operacional e velocidade de processamento — mais raciocínio fluido — em três blocos crescentes.
+          </p>
+        </Link>
+        <Link
           href="/treino/go-nogo"
           className="group mt-3 block rounded-xl border border-amber-300 bg-amber-50 p-4 transition hover:border-amber-500"
         >

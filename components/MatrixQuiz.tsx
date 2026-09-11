@@ -327,6 +327,12 @@ export default function MatrixQuiz() {
 
         {savedRecord && <ShareBlock record={savedRecord} />}
 
+        <Link href="/treino/simulador" className="mt-6 block rounded-xl border-2 border-violet-300 bg-violet-50 p-5 transition hover:border-violet-500">
+          <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Continue — os domínios que as matrizes não medem</p>
+          <h2 className="mt-1 text-lg font-semibold text-slate-900">Simulador: compreensão verbal, memória operacional e velocidade de processamento</h2>
+          <p className="mt-1 text-sm text-slate-600">Três blocos crescentes — Wechsler (130) → Stanford-Binet (133) → Cattell (149) — com raciocínio fluido incluído.</p>
+        </Link>
+
         <div className="mt-6 rounded-xl border border-brand-200 bg-brand-50 p-5">
           <h2 className="text-lg font-semibold text-brand-900">Como entrar na Mensa Brasil</h2>
           <ol className="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-brand-900">

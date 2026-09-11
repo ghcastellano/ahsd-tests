@@ -37,6 +37,7 @@ registro central estiver ativado, também no banco da plataforma.
 | UPPS-P (curta) | Impulsividade em 5 facetas (Cyders 2014; Sediyama 2017) | TDAH | 20 | Média 1–4 por faceta, 12 invertidos |
 | VADPRS | Vanderbilt para pais (Wolraich 2003; NICHQ) | TDAH | 55 | ≥6 sintomas por domínio + prejuízo; comorbidades ≥4/≥3/≥3 |
 | Go/NoGo (tarefa) | Controle inibitório objetivo (`/treino/go-nogo`) | TDAH | 120 estímulos | % de comissão, omissões, TR médio, desvio e CV, d′ — faixas convencionais |
+| Simulador de escalas (`/treino/simulador`) | Wechsler 130 → Stanford-Binet 133 → Cattell 149: compreensão verbal, memória operacional, velocidade, raciocínio | Treino | 3 blocos | Blocos fechados em sequência (≥60% precisão + ≥10 pts velocidade); sem conversão para QI |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
 | RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
 | PHQ-9 | Saúde do Paciente – Depressão | Humor | 9 | 0–27 (5/10/15/20) |
@@ -234,4 +235,6 @@ número e a faixa exibidos são os que a função pura calcula:
 ```bash
 npm run build && npx next start -p 3111 &
 npx vitest run scripts/e2e && BASE_URL=http://localhost:3111 node scripts/e2e/verifica-todos.mjs
+# simulador de escalas (semente fixa 12345: jogada perfeita nos 3 blocos e jogada fraca)
+BASE_URL=http://localhost:3111 node scripts/e2e/verifica-simulador.mjs
 ```

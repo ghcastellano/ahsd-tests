@@ -43,6 +43,22 @@ export default function TreinoIndex() {
       </div>
 
       <Link
+        href="/treino/simulador"
+        className="group mt-8 block rounded-xl border-2 border-violet-300 bg-violet-50 p-5 transition hover:border-violet-500 hover:shadow-md"
+      >
+        <div className="flex items-center justify-between">
+          <span className="rounded-md bg-violet-600 px-2 py-0.5 text-xs font-semibold text-white">SIMULADOR · 3 BLOCOS</span>
+          <span className="text-xs text-slate-500">Wechsler 130 → Stanford-Binet 133 → Cattell 149</span>
+        </div>
+        <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-violet-800">Simulador de escalas completas</h3>
+        <p className="mt-1 text-sm text-slate-600">
+          Compreensão verbal, memória operacional, velocidade de processamento e raciocínio fluido, em três
+          blocos de dificuldade crescente. Os três números são o mesmo ponto (percentil 98) em escalas diferentes.
+        </p>
+        <p className="mt-3 text-sm font-medium text-violet-700">Fazer o simulador →</p>
+      </Link>
+
+      <Link
         href="/treino/go-nogo"
         className="group mt-8 block rounded-xl border-2 border-amber-300 bg-amber-50 p-5 transition hover:border-amber-500 hover:shadow-md"
       >
