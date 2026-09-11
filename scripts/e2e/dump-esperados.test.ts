@@ -12,8 +12,8 @@ import type { Responses } from "../../lib/types";
 // Uso: npx vitest run scripts/e2e && BASE_URL=http://localhost:3111 node scripts/e2e/verifica-todos.mjs
 it("gera esperados.json", () => {
   const out = instruments.map((inst) => {
-    const padroes: Record<string, { indices: number[]; total: number; max: number; faixa: string; positivo?: boolean }> = {};
-    const semSentinela = (vals: number[]) => vals.filter((x) => x !== -1 || vals.every((y) => y < 0));
+    const padroes: Record<string, { indices: number[]; total: number; max: number; faixa: string; positivo?: boolean; media?: boolean; semNumero?: boolean }> = {};
+    const semSentinela = (vals: number[]) => vals;
     const escolhas: Record<string, (vals: number[]) => number> = {
       minimo: (vals) => vals.indexOf(Math.min(...semSentinela(vals))),
       maximo: (vals) => vals.indexOf(Math.max(...vals)),
@@ -26,7 +26,7 @@ it("gera esperados.json", () => {
         indices.push(idx); r[q.id] = opts[idx].value;
       }
       const res = inst.score(r);
-      padroes[nome] = { indices, total: res.totalScore, max: res.maxScore, faixa: res.band.label, positivo: res.positive };
+      padroes[nome] = { indices, total: res.totalScore, max: res.maxScore, faixa: res.band.label, positivo: res.positive, media: res.metricIsMean, semNumero: res.hideScore };
     }
     return { id: inst.id, acronym: inst.acronym, n: inst.questions.length, padroes };
   });

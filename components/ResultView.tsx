@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { Instrument, InstrumentResult, Severity } from "@/lib/types";
 import type { ResultRecord } from "@/lib/history";
 import ShareBlock from "./ShareBlock";
-import { formatSubscaleValue, subscaleFraction } from "@/lib/subscale-format";
+import { fmt, formatSubscaleValue, subscaleFraction } from "@/lib/subscale-format";
 
 const severityStyles: Record<Severity, { badge: string; bar: string; text: string }> = {
   info: { badge: "bg-slate-100 text-slate-700", bar: "bg-slate-400", text: "text-slate-700" },
@@ -29,7 +29,12 @@ export default function ResultView({
 }) {
   const sev = severityStyles[result.band.severity];
   const isMean = result.metricIsMean ?? false;
-  const scorePct = Math.min(100, Math.round((result.totalScore / result.maxScore) * 100));
+  const alertas = (result.notes ?? []).filter((n) => n.startsWith("⚠️"));
+  const minScore = result.minScore ?? 0;
+  const amplitude = result.maxScore - minScore;
+  const scorePct = amplitude > 0
+    ? Math.min(100, Math.max(0, Math.round(((result.totalScore - minScore) / amplitude) * 100)))
+    : 0;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -50,17 +55,28 @@ export default function ResultView({
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm text-slate-500">{inst.primaryMetricLabel}</p>
-            <p className="mt-1 text-4xl font-bold text-slate-900">
-              {formatNumber(result.totalScore)}
-              <span className="text-lg font-normal text-slate-400"> / {formatNumber(result.maxScore)}</span>
-            </p>
+            {result.hideScore ? (
+              <p className="mt-1 text-2xl font-bold text-slate-900">{result.positive ? "Positivo" : "Negativo"}</p>
+            ) : isMean ? (
+              <p className="mt-1 text-4xl font-bold text-slate-900">
+                {formatNumber(result.totalScore)}
+                <span className="text-lg font-normal text-slate-400">
+                  {" "}média · escala de {formatNumber(result.minScore ?? 1)} a {formatNumber(result.maxScore)}
+                </span>
+              </p>
+            ) : (
+              <p className="mt-1 text-4xl font-bold text-slate-900">
+                {formatNumber(result.totalScore)}
+                <span className="text-lg font-normal text-slate-400"> / {formatNumber(result.maxScore)}</span>
+              </p>
+            )}
           </div>
           <span className={`rounded-full px-3 py-1 text-sm font-semibold ${sev.badge}`}>
             {result.band.label}
           </span>
         </div>
 
-        {!isMean && (
+        {!isMean && !result.hideScore && (
           <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
             <div className={`h-full rounded-full ${sev.bar}`} style={{ width: `${scorePct}%` }} />
           </div>
@@ -72,8 +88,20 @@ export default function ResultView({
           <p className={`mt-3 text-sm font-medium ${result.positive ? "text-orange-700" : "text-emerald-700"}`}>
             {result.positive
               ? `● ${result.positiveLabel ?? "Rastreio positivo"}`
-              : "● Rastreio negativo / abaixo do limiar"}
+              : `○ ${result.negativeLabel ?? "Rastreio negativo (abaixo do ponto de corte)"}`}
           </p>
+        )}
+
+        <p className="mt-4 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
+          <strong>O que fazer agora:</strong> {result.nextStep ?? proximoPasso(result)}
+        </p>
+
+        {alertas.length > 0 && (
+          <div className="mt-3 rounded-lg border-2 border-rose-300 bg-rose-50 p-4 text-sm font-medium text-rose-900" role="alert">
+            {alertas.map((n, i) => (
+              <p key={i}>{n}</p>
+            ))}
+          </div>
         )}
       </div>
 
@@ -110,7 +138,7 @@ export default function ResultView({
         <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4">
           <h2 className="mb-2 text-sm font-semibold text-slate-700">Observações</h2>
           <ul className="space-y-1.5 text-sm text-slate-600">
-            {result.notes.map((n, i) => (
+            {result.notes.filter((n) => !n.startsWith("⚠️")).map((n, i) => (
               <li key={i}>{n}</li>
             ))}
           </ul>
@@ -130,7 +158,7 @@ export default function ResultView({
                   return (
                     <tr key={i} className={`border-b border-slate-100 last:border-0 ${active ? "bg-brand-50" : "bg-white"}`}>
                       <td className="whitespace-nowrap px-3 py-2 align-top text-slate-500">
-                        {formatNumber(b.min)}–{formatNumber(b.max)}
+                        {b.min === b.max ? `exatamente ${formatNumber(b.min)}` : `${formatNumber(b.min)} a ${formatNumber(b.max)}`}
                       </td>
                       <td className="px-3 py-2 align-top">
                         <span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${bsev.badge}`}>
@@ -211,6 +239,20 @@ export default function ResultView({
   );
 }
 
+/** Conduta em uma frase, derivada da gravidade quando o instrumento não define a sua. */
+function proximoPasso(result: InstrumentResult): string {
+  const sev = result.band.severity;
+  if (result.positive === false && (sev === "none" || sev === "info" || sev === "low"))
+    return "Resultado abaixo do ponto de corte. Isso não descarta nada: se houver sofrimento ou prejuízo no dia a dia, converse com um profissional (psicólogo, psiquiatra ou médico).";
+  if (sev === "none" || sev === "info")
+    return "Nada aqui pede providência. Se algo no seu dia a dia preocupa, o resultado não substitui uma conversa com um profissional.";
+  if (sev === "low" || sev === "mild")
+    return "Vale observar ao longo do tempo. Se houver prejuízo no trabalho, nos estudos ou nas relações, procure avaliação com um profissional.";
+  if (sev === "moderate")
+    return "Resultado que justifica conversar com um profissional (psicólogo, psiquiatra ou médico) para uma avaliação. Leve este relatório.";
+  return "Procure avaliação com um profissional qualificado e leve este relatório. Este resultado é um rastreio, não um diagnóstico — mas é um sinal para não deixar passar.";
+}
+
 function formatNumber(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
+  return fmt(n);
 }

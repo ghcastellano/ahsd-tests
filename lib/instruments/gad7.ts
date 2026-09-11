@@ -46,6 +46,6 @@ export const gad7: Instrument = {
     const band = bandFor(total, bands);
     const notes: string[] = [];
     if (total >= 10) notes.push("Pontuação ≥ 10: rastreio positivo para ansiedade clinicamente significativa.");
-    return { totalScore: total, maxScore: 21, band, positive: total >= 10, positiveLabel: "Rastreio positivo (≥10)", notes };
+    return { totalScore: total, maxScore: 21, band, positive: total >= 10, positiveLabel: "Rastreio positivo para ansiedade generalizada (10 ou mais)", negativeLabel: "Rastreio negativo para ansiedade generalizada (abaixo de 10)", notes };
   },
 };

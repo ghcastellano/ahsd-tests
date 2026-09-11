@@ -122,6 +122,7 @@ export const ders: Instrument = {
     return {
       totalScore: total,
       maxScore: 180,
+      minScore: 36,
       band,
       subscales: subs,
       notes,

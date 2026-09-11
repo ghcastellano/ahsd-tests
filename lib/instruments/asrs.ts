@@ -31,7 +31,7 @@ const questions: Question[] = [
 ];
 
 const bands = [
-  { min: 0, max: 3, label: "Abaixo do limiar", severity: "none" as const, description: "Menos de 4 marcas na Parte A. Sintomas atuais pouco consistentes com TDAH no adulto pelo rastreio da OMS." },
+  { min: 0, max: 3, label: "Abaixo do limiar", severity: "none" as const, description: "Menos de 4 marcas na Parte A: rastreio negativo. Isso NÃO exclui TDAH — o rastreador de 6 itens deixa passar cerca de 30% dos casos (sensibilidade de 68,7% em Kessler et al., 2005). Se houver prejuízo no dia a dia, procure avaliação." },
   { min: 4, max: 6, label: "Rastreio positivo", severity: "high" as const, description: "4 ou mais marcas na Parte A: os sintomas são altamente consistentes com TDAH no adulto. Recomenda-se avaliação clínica especializada." },
 ];
 
@@ -71,24 +71,31 @@ export const asrs: Instrument = {
   interpretationBands: bands,
   primaryMetricLabel: "Marcas na Parte A (0–6)",
   references: [
-    { label: "Kessler RC, et al. The World Health Organization Adult ADHD Self-Report Scale (ASRS). Psychol Med. 2005;35(2):245-256." },
+    { label: "Kessler RC, Adler L, Ames M, et al. The World Health Organization Adult ADHD Self-Report Scale (ASRS): a short screening scale for use in the general population. Psychol Med. 2005;35(2):245-256." },
+    { label: "Adult ADHD Self-Report Scale (ASRS-v1.1) Symptom Checklist — WHO/Harvard, 2003 (regra das caixas sombreadas)." },
     { label: "Escala da OMS, de uso livre para fins clínicos e de pesquisa." },
   ],
   score: (r: Responses) => {
     const marks = partAMarks(r);
     const band = bands.find((b) => marks >= b.min && marks <= b.max) ?? bands[0];
-    // Supplementary: how many Part B items are in the high-frequency range (>=3, or >=2 for the "inattention" style items).
-    const partBHigh = questions.filter((q) => q.subscale === "B" && (r[q.id] ?? 0) >= 3).length;
+    // Parte B, caixas sombreadas do checklist da OMS/Harvard: os itens 9, 12,
+    // 16 e 18 marcam a partir de "Às vezes" (≥2); os demais, de "Frequentemente" (≥3).
+    const partBHigh = questions.filter((q) => {
+      if (q.subscale !== "B") return false;
+      const n = Number(q.id.slice(1));
+      return (r[q.id] ?? 0) >= ([9, 12, 16, 18].includes(n) ? 2 : 3);
+    }).length;
     const notes = [
       `Parte A: ${marks} de 6 marcas.`,
-      `Parte B: ${partBHigh} de 12 itens na faixa de alta frequência (informação complementar, não define o rastreio).`,
+      `Parte B: ${partBHigh} de 12 itens nas caixas sombreadas do checklist (informação complementar, não define o rastreio).`,
     ];
     return {
       totalScore: marks,
       maxScore: 6,
       band,
       positive: marks >= 4,
-      positiveLabel: "Rastreio positivo (≥4 marcas na Parte A)",
+      positiveLabel: "Rastreio positivo para TDAH no adulto (4 ou mais marcas na Parte A)",
+      negativeLabel: "Rastreio negativo para TDAH no adulto (menos de 4 marcas) — não exclui o diagnóstico",
       subscales: [
         { key: "A", name: "Parte A — Rastreador", raw: marks, max: 6 },
         { key: "B", name: "Parte B — Itens em alta frequência", raw: partBHigh, max: 12 },

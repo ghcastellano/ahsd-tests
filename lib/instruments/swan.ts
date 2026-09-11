@@ -81,7 +81,7 @@ export const swan: Instrument = {
   primaryMetricLabel: "Média do domínio mais baixo (-3 a +3; maior = melhor)",
   references: [
     { label: "Swanson JM, et al. Categorical and dimensional definitions and evaluations of symptoms of ADHD: history of the SNAP and the SWAN rating scales. Int J Educ Psychol Assess. 2012;10(1):51-70." },
-    { label: "Lakes KD, Swanson JM, Riggs M. The reliability and validity of the English and Spanish Strengths and Weaknesses of ADHD and Normal behavior rating scales in a preschool sample. J Atten Disord. 2012;16(5):415-422." },
+    { label: "Lakes KD, Swanson JM, Riggs M. The reliability and validity of the English and Spanish Strengths and Weaknesses of ADHD and Normal behavior rating scales in a preschool sample: continuum measures of hyperactivity and inattention. J Atten Disord. 2012;16(6):510-516." },
   ],
   score: (r: Responses) => {
     const soma = (chave: string) =>
@@ -96,10 +96,12 @@ export const swan: Instrument = {
     return {
       totalScore: menor,
       maxScore: 3,
+      minScore: -3,
       band,
       metricIsMean: true,
       positive: menor <= -1.5,
       positiveLabel: "Domínio bem abaixo da média (≤ -1,5)",
+      negativeLabel: "Dentro do esperado para a idade (nenhum domínio bem abaixo da média)",
       subscales: [
         { key: "atencao", name: "Atenção (itens 1–9)", raw: sAt, max: 27, mean: mAt },
         { key: "controle", name: "Controle da atividade e da impulsividade (itens 10–18)", raw: sCo, max: 27, mean: mCo },
@@ -108,6 +110,7 @@ export const swan: Instrument = {
         `Média geral: ${geral} · Atenção: ${mAt} · Controle: ${mCo} (escala de -3 a +3; zero = média das pessoas da mesma idade).`,
         "Leitura dimensional: o SWAN não diz 'tem' ou 'não tem' — diz onde a pessoa está no espectro. Um domínio bem abaixo da média com prejuízo no dia a dia justifica um rastreio de sintomas (SNAP-IV ou ASRS) e avaliação.",
         "As faixas são convencionais (não há ponto de corte validado no Brasil). Preencher por pais E professores, e comparar, é o uso recomendado.",
+        "Sinal da escala: no formulário original de Swanson, +3 = 'muito abaixo da média' (mais sintoma). Aqui a escala está ESPELHADA — +3 = força. Para comparar com estudos que usam o original, inverta o sinal.",
       ],
     };
   },

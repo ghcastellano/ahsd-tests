@@ -51,8 +51,9 @@ const bands = [
   { min: 6, max: 9, label: "Mais sintomas que o esperado", severity: "high" as const, description: "6 ou mais sintomas em um domínio: há mais sintomas de desatenção e/ou hiperatividade-impulsividade do que o esperado numa criança ou adolescente. Atende só ao critério A — o diagnóstico exige avaliação médica especializada." },
 ];
 
-// Pontos de corte do MTA por média de item (Swanson et al., 2001) — só como
-// referência complementar; a regra principal é a contagem da ABDA.
+// Cortes por média de item do SNAP-IV (percentil 95 da amostra normativa
+// americana; instruções de correção de Swanson, reproduzidas em Bussing et
+// al., 2008) — referência complementar; a regra principal é a contagem da ABDA.
 const CORTE_MTA = {
   pais: { desatencao: 1.78, hiperatividade: 1.44 },
   professores: { desatencao: 2.56, hiperatividade: 1.78 },
@@ -64,7 +65,7 @@ export const snapIv: Instrument = {
   name: "SNAP-IV — sintomas de TDAH em crianças e adolescentes (pais/professores)",
   originalName: "Swanson, Nolan and Pelham Rating Scale — versão MTA (Swanson et al., 2001); tradução GEDA-UFRJ / UFRGS (Mattos et al., 2006)",
   category: "tdah",
-  summary: "Os 18 sintomas de TDAH do DSM, para pais ou professores avaliarem uma criança ou adolescente. Tradução validada no Brasil, publicada pela ABDA.",
+  summary: "Os 18 sintomas de TDAH do DSM, para pais ou professores avaliarem uma criança ou adolescente. Versão brasileira publicada pela ABDA e validada por Costa et al. (2019).",
   audience: "Pais ou professores, sobre crianças e adolescentes (até 18 anos)",
   estMinutes: 5,
   intro:
@@ -82,6 +83,8 @@ export const snapIv: Instrument = {
   primaryMetricLabel: "Sintomas presentes no domínio mais alto (0–9)",
   references: [
     { label: "Mattos P, Serra-Pinheiro MA, Rohde LA, Pinto D. Apresentação de uma versão em português para uso no Brasil do instrumento MTA-SNAP-IV de avaliação de sintomas de TDAH e TOD. Rev Psiquiatr RS. 2006;28(3):290-297." },
+    { label: "Costa DS, de Paula JJ, Malloy-Diniz LF, Romano-Silva MA, Miranda DM. Parent SNAP-IV rating of ADHD: accuracy in a clinical sample of ADHD, validity, and reliability in a Brazilian sample. J Pediatr (Rio J). 2019;95(6):736-743." },
+    { label: "Bussing R, et al. Parent and teacher SNAP-IV ratings of ADHD symptoms: psychometric properties and normative ratings from a school district sample. Assessment. 2008;15(3):317-328." },
     { label: "Swanson JM, et al. Clinical relevance of the primary findings of the MTA. J Am Acad Child Adolesc Psychiatry. 2001;40(2):168-179." },
     { label: "ABDA — Associação Brasileira do Déficit de Atenção. Diagnóstico em crianças.", url: "https://tdah.org.br/diagnostico-criancas/" },
   ],
@@ -97,6 +100,7 @@ export const snapIv: Instrument = {
     const hip = conta("hiperatividade");
     const mDes = media("desatencao");
     const mHip = media("hiperatividade");
+    const v = (n: number) => String(n).replace(".", ",");
     const topo = Math.max(des, hip);
     const band = bands.find((b) => topo >= b.min && topo <= b.max) ?? bands[0];
 
@@ -105,11 +109,12 @@ export const snapIv: Instrument = {
     if (hip >= LIMIAR) dominios.push("hiperatividade-impulsividade");
 
     const notes = [
-      `Desatenção: ${des} de 9 sintomas presentes (média ${mDes}) · Hiperatividade-impulsividade: ${hip} de 9 (média ${mHip}).`,
+      `Desatenção: ${des} de 9 sintomas presentes (média ${v(mDes)}) · Hiperatividade-impulsividade: ${hip} de 9 (média ${v(mHip)}).`,
       dominios.length
         ? `Regra da ABDA (≥6 por domínio) atingida em: ${dominios.join(" e ")}.`
         : "Regra da ABDA (≥6 sintomas 'bastante/demais' por domínio) não atingida.",
-      `Referência complementar (MTA, média por item): acima do corte para PAIS quando desatenção ≥ ${CORTE_MTA.pais.desatencao} ou hiperatividade ≥ ${CORTE_MTA.pais.hiperatividade}; para PROFESSORES, ≥ ${CORTE_MTA.professores.desatencao} e ≥ ${CORTE_MTA.professores.hiperatividade}.`,
+      `Cortes por média de item (percentil 95 da amostra americana do SNAP-IV) — se quem respondeu foi PAI/MÃE: desatenção ${v(mDes)} ${mDes >= CORTE_MTA.pais.desatencao ? "≥" : "<"} ${v(CORTE_MTA.pais.desatencao)} (${mDes >= CORTE_MTA.pais.desatencao ? "acima" : "abaixo"} do corte), hiperatividade ${v(mHip)} ${mHip >= CORTE_MTA.pais.hiperatividade ? "≥" : "<"} ${v(CORTE_MTA.pais.hiperatividade)} (${mHip >= CORTE_MTA.pais.hiperatividade ? "acima" : "abaixo"}). Se foi PROFESSOR(A): desatenção corte ${v(CORTE_MTA.professores.desatencao)} (${mDes >= CORTE_MTA.professores.desatencao ? "acima" : "abaixo"}), hiperatividade corte ${v(CORTE_MTA.professores.hiperatividade)} (${mHip >= CORTE_MTA.professores.hiperatividade ? "acima" : "abaixo"}). Cada domínio é comparado ao seu próprio corte.`,
+      "Para adolescentes de 17 anos ou mais, o DSM-5 usa 5 sintomas por domínio (não 6).",
       "O SNAP-IV avalia só o critério A (sintomas). O diagnóstico exige também início precoce, prejuízo em pelo menos 2 contextos, prejuízo evidente e exclusão de outra causa — e só um profissional médico pode fazê-lo.",
     ];
 
@@ -118,7 +123,8 @@ export const snapIv: Instrument = {
       maxScore: 9,
       band,
       positive: topo >= LIMIAR,
-      positiveLabel: "Mais sintomas do que o esperado (≥6 em um domínio)",
+      positiveLabel: "Mais sintomas de TDAH do que o esperado (6 ou mais em um domínio)",
+      negativeLabel: "Sintomas de TDAH dentro do esperado para a idade (menos de 6 por domínio)",
       subscales: [
         { key: "desatencao", name: "Desatenção (itens 1–9)", raw: des, max: 9 },
         { key: "hiperatividade", name: "Hiperatividade-impulsividade (itens 10–18)", raw: hip, max: 9 },

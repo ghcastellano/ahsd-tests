@@ -72,6 +72,14 @@ export interface InstrumentResult {
   /** For screen-positive/negative instruments. */
   positive?: boolean;
   positiveLabel?: string;
+  /** Texto do estado negativo quando "abaixo do limiar" não descreve (ex.: BSCS, onde positivo = baixo). */
+  negativeLabel?: string;
+  /** Menor total alcançável quando não é 0 (BIS-11 = 30, BSCS = 13, DERS = 36): a barra parte daqui. */
+  minScore?: number;
+  /** "O que fazer agora", em uma frase, mostrado dentro do card principal. Se ausente, a tela deriva da gravidade. */
+  nextStep?: string;
+  /** Esconde o número principal quando ele não significa nada (MDQ: 0/1). */
+  hideScore?: boolean;
   /** True when totalScore is a per-item mean (1–5) rather than a summed total. */
   metricIsMean?: boolean;
   subscales?: SubscaleResult[];

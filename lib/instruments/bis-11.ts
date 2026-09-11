@@ -78,7 +78,7 @@ export const bis11: Instrument = {
   audience: "Adultos e adolescentes",
   estMinutes: 5,
   intro:
-    "A BIS-11 é a medida de impulsividade mais usada no mundo. Ela não rastreia TDAH diretamente: mede um traço — a tendência a agir sem pensar, a dificuldade de sustentar atenção e a pouca orientação para o futuro — que é central no TDAH, mas aparece também em outros quadros. Onze itens são formulados 'ao contrário' (descrevem controle) e são invertidos na correção. O total vai de 30 a 120; a faixa típica é 52 a 71.",
+    "A BIS-11 é a medida de impulsividade mais citada na literatura. Ela não rastreia TDAH diretamente: mede um traço — a tendência a agir sem pensar, a dificuldade de sustentar atenção e a pouca orientação para o futuro — que é central no TDAH, mas aparece também em outros quadros. Onze itens são formulados 'ao contrário' (descrevem controle) e são invertidos na correção. O total vai de 30 a 120; a faixa típica é 52 a 71.",
   instructions:
     "As pessoas diferem no modo como pensam e agem em situações diferentes. Para cada afirmação, indique com que frequência ela se aplica a você. Não pense demais em cada item: responda de forma rápida e honesta.",
   scaleType: "likert",
@@ -90,6 +90,7 @@ export const bis11: Instrument = {
   references: [
     { label: "Patton JH, Stanford MS, Barratt ES. Factor structure of the Barratt Impulsiveness Scale. J Clin Psychol. 1995;51(6):768-774." },
     { label: "Malloy-Diniz LF, et al. Tradução e adaptação cultural da Barratt Impulsiveness Scale (BIS-11) para aplicação em adultos brasileiros. J Bras Psiquiatr. 2010;59(2):99-105." },
+    { label: "Malloy-Diniz LF, et al. Normative data of the Barratt Impulsiveness Scale 11 (BIS-11) for Brazilian adults. Braz J Psychiatry. 2015;37(3):245-248." },
     { label: "Stanford MS, et al. Fifty years of the Barratt Impulsiveness Scale: an update and review. Pers Individ Dif. 2009;47(5):385-395." },
   ],
   score: (r: Responses) => {
@@ -100,12 +101,15 @@ export const bis11: Instrument = {
     return {
       totalScore: total,
       maxScore: 120,
+      minScore: 30,
       band,
       positive: total >= 72,
-      positiveLabel: "Impulsividade alta (total ≥ 72)",
+      positiveLabel: "Impulsividade alta (72 ou mais)",
+      negativeLabel: "Impulsividade dentro do esperado (abaixo de 72)",
       subscales: subs,
       notes: [
-        `Dimensão mais elevada: ${maior.name} (média ${maior.mean} por item, de 1 a 4).`,
+        `Dimensão mais elevada: ${maior.name} (média ${String(maior.mean).replace(".", ",")} por item, de 1 a 4).`,
+        "As faixas (52–71 / ≥72) são as americanas de Stanford et al. (2009). Há normas brasileiras por percentil (Malloy-Diniz et al., 2015, n = 3.053), em que só a estrutura de DOIS fatores teve consistência interna aceitável — leia as três subescalas acima como indicativas, não como medidas separadas.",
         "Impulsividade é um traço, não um diagnóstico. No TDAH costuma vir acompanhada de desatenção — se o seu perfil for alto aqui, faça também um rastreio de sintomas (ASRS) e o retrospectivo de infância (WURS-25).",
       ],
     };

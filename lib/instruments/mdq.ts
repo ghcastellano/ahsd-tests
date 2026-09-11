@@ -72,17 +72,24 @@ export const mdq: Instrument = {
     const problemLevel = r["q15"] ?? 0;
     const positive = yesCount >= 7 && sameTime && problemLevel >= 2;
     const band = positive ? bands[1] : bands[0];
+    const c1 = yesCount >= 7;
+    const c3 = problemLevel >= 2;
     const notes = [
-      `Sintomas marcados como "Sim": ${yesCount} de 13 (critério: ≥7).`,
-      `Ocorreram no mesmo período: ${sameTime ? "Sim" : "Não"}.`,
-      `Grau de problema: ${problemOptions[problemLevel]?.label ?? "—"} (critério: moderado ou grave).`,
+      `Critério 1 — pelo menos 7 dos 13 sintomas: ${c1 ? "atendido" : "NÃO atendido"} (${yesCount} marcado${yesCount === 1 ? "" : "s"}).`,
+      `Critério 2 — vários sintomas no mesmo período: ${sameTime ? "atendido" : "NÃO atendido"}.`,
+      `Critério 3 — problema moderado ou grave: ${c3 ? "atendido" : "NÃO atendido"} (${problemOptions[problemLevel]?.label ?? "—"}).`,
+      positive
+        ? "Os três critérios foram atendidos ao mesmo tempo — por isso o rastreio é positivo."
+        : "O rastreio do MDQ só é positivo quando os três critérios são atendidos juntos; basta um faltar para ser negativo.",
     ];
     return {
       totalScore: positive ? 1 : 0,
       maxScore: 1,
       band,
       positive,
-      positiveLabel: "Rastreio positivo (3 critérios atendidos)",
+      positiveLabel: "Rastreio positivo para transtorno bipolar (os 3 critérios atendidos)",
+      negativeLabel: "Rastreio negativo para transtorno bipolar (algum dos 3 critérios não atendido)",
+      hideScore: true,
       subscales: [{ key: "sintomas", name: "Sintomas endossados", raw: yesCount, max: 13 }],
       notes,
     };

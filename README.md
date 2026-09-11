@@ -34,6 +34,9 @@ registro central estiver ativado, também no banco da plataforma.
 | SWAN | Forças e fraquezas, espectro -3..+3 (Swanson) | TDAH | 18 | Média do domínio mais baixo |
 | CFQ | Falhas cognitivas cotidianas (Broadbent 1982) | TDAH | 25 | Total 0–100 (faixas por DP populacional) |
 | BSCS | Autocontrole breve (Tangney 2004) | TDAH | 13 | Total 13–65, 9 invertidos (baixo = positivo) |
+| UPPS-P (curta) | Impulsividade em 5 facetas (Cyders 2014; Sediyama 2017) | TDAH | 20 | Média 1–4 por faceta, 12 invertidos |
+| VADPRS | Vanderbilt para pais (Wolraich 2003; NICHQ) | TDAH | 55 | ≥6 sintomas por domínio + prejuízo; comorbidades ≥4/≥3/≥3 |
+| Go/NoGo (tarefa) | Controle inibitório objetivo (`/treino/go-nogo`) | TDAH | 120 estímulos | % de comissão, omissões, TR médio, desvio e CV, d′ — faixas convencionais |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
 | RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
 | PHQ-9 | Saúde do Paciente – Depressão | Humor | 9 | 0–27 (5/10/15/20) |
@@ -183,14 +186,16 @@ de AH/SD não reproduzem nenhuma escala comercial e não têm norma externa.
 |---|---|---|---|
 | PHQ-9 | 0–4 mínimo · 5–9 leve · 10–14 moderado · 15–19 mod. grave · 20–27 grave; item 9 dispara alerta | Kroenke, Spitzer & Williams 2001 | padrão |
 | GAD-7 | 0–4 · 5–9 · 10–14 · 15–21; positivo ≥10 | Spitzer et al. 2006 | padrão |
-| ASRS v1.1 (OMS) | Parte A, caixas sombreadas: itens 1–3 marcam com ≥"às vezes", 4–6 com ≥"frequentemente"; positivo ≥4 marcas | Kessler et al. 2005 (WHO) | padrão |
-| ASRS-18 (ABDA) | ≥4 sintomas "frequentemente/muito frequentemente" por domínio (ABDA); mostra também ≥5 (DSM-5) e a leitura da OMS | Mattos et al. 2006; ABDA | padrão |
+| ASRS v1.1 (OMS) | Parte A, caixas sombreadas: itens 1–3 marcam com ≥"às vezes", 4–6 com ≥"frequentemente"; positivo ≥4 marcas. Parte B (complementar) com as caixas do checklist (9, 12, 16, 18 a partir de "às vezes"). Negativo NÃO exclui (sensibilidade 68,7%) | Kessler et al. 2005; checklist WHO/Harvard 2003 | padrão |
+| ASRS-18 (ABDA) | ≥4 sintomas "frequentemente/muito frequentemente" por domínio (orientação da ABDA, sem corte validado em estudo); mostra também ≥5 (leitura numérica do DSM-5) e a leitura da OMS | Mattos et al. 2006 (adaptação transcultural); ABDA | padrão (regra da ABDA) |
 | WURS-25 | soma 0–100; cortes 36 (sens. 96%) e 46 (sens. 86%, espec. 99%) | Ward, Wender & Reimherr 1993 | padrão |
-| BIS-11 | soma 30–120 com 11 itens invertidos; <52 · 52–71 típica · ≥72 alta; 3 fatores (8/11/11) | Patton et al. 1995; Stanford et al. 2009; Malloy-Diniz 2010 | padrão |
-| SNAP-IV | ≥6 itens "bastante/demais" por domínio (ABDA); cortes MTA por média como referência | Mattos et al. 2006; Swanson et al. 2001 | padrão |
-| SWAN | média por domínio, −3..+3; destaque = domínio mais baixo | Swanson et al. 2012 | convencional (sem corte validado no Brasil) |
-| CFQ | soma 0–100; faixas por DP da média populacional (≈40 ± 13) | Broadbent et al. 1982; Bridger et al. 2013 | convencional (sem corte diagnóstico) |
+| BIS-11 | soma 30–120 com 11 itens invertidos; <52 · 52–71 típica · ≥72 alta (faixas americanas); 3 fatores (8/11/11), lidos como indicativos — nas normas brasileiras só 2 fatores tiveram consistência aceitável | Patton et al. 1995; Stanford et al. 2009; Malloy-Diniz 2010 e 2015 | padrão |
+| SNAP-IV | ≥6 itens "bastante/demais" por domínio (ABDA; 5 para 17+); comparação automática de cada domínio com os cortes por média (percentil 95 americano) para pais e para professores | Mattos et al. 2006; Costa et al. 2019 (validação BR); Bussing et al. 2008 | padrão |
+| SWAN | média por domínio, −3..+3 (sinal ESPELHADO em relação ao formulário original, e o resultado avisa); destaque = domínio mais baixo | Swanson et al. 2012; Lakes et al. 2012 | convencional (sem corte validado no Brasil) |
+| CFQ | soma 0–100; faixas por DP de uma referência aproximada (≈40 ± 13; as médias variam entre amostras) | Broadbent et al. 1982; de Paula et al. 2018 (versão BR validada); Bridger et al. 2013 | convencional (sem corte diagnóstico) |
 | BSCS | soma 13–65 com 9 invertidos; positivo = baixo (≤31, −1 DP) | Tangney, Baumeister & Boone 2004 | convencional |
+| UPPS-P (curta) | média 1–4 por faceta (maior = mais impulsivo); 12 itens invertidos; faixas 2 / 3 | Cyders et al. 2014; Sediyama et al. 2017 | convencional (dimensional, sem corte) |
+| VADPRS | ≥6 de 9 sintomas "frequentemente/muito" por domínio E ≥1 item de desempenho problemático; TOD ≥4, conduta ≥3, ansiedade-depressão ≥3 | Wolraich et al. 2003; NICHQ | padrão |
 | AQ-50 | soma 0–50 por direção do item; ≥32 clínico, 26–31 intermediário | Baron-Cohen et al. 2001; Woodbury-Smith et al. 2005 | padrão |
 | RAADS-R | soma 0–240 com 17 itens normativos invertidos; positivo ≥65 | Ritvo et al. 2011 | padrão |
 | MDQ | positivo = ≥7 sintomas E mesmo período E problema moderado/grave | Hirschfeld et al. 2000 | padrão |
@@ -201,6 +206,20 @@ de AH/SD não reproduzem nenhuma escala comercial e não têm norma externa.
 | AH/SD (indicadores) | média 1–5 por área e índice geral; faixas 3,0 / 3,7 / 4,3 | Delou; Virgolim/MEC; Renzulli | autoral |
 | Sobre-excitabilidades | perfil por média nas 5 áreas, sem corte | Dabrowski; Piechowski | autoral |
 | PERF / IMP / SENSORIAL / 5F / BE (AHSD) | perfil por média 1–5, faixas 2,5 / 3,5 / 4,2 | literatura citada em cada módulo | autoral, sem norma |
+
+**Revisão por comitê (set/2026).** Três revisores independentes — psicometria,
+código e UX no navegador — auditaram os instrumentos de TDAH. Decisões
+incorporadas: faixa negativa da ASRS reescrita como "não exclui" (sensibilidade
+68,7%); Parte B com as caixas sombreadas do checklist; ASRS-ABDA sem afirmar
+"atende ao critério A do DSM-5" e com a regra de 4 declarada como orientação da
+ABDA; SNAP-IV comparando cada domínio ao seu corte, para pais e professores;
+BIS-11 citando as normas brasileiras de 2015 e a cautela sobre as subescalas;
+SWAN declarando o espelhamento do sinal; CFQ citando a versão brasileira
+validada; `bandFor` devolvendo a faixa mais próxima (não a última) quando o
+valor cai fora de todas; formatação numérica única nas três telas; barra do
+resultado partindo do mínimo real da escala (BIS-11 = 30, BSCS = 13, DERS = 36);
+e rótulo próprio do estado "negativo" nos instrumentos em que o positivo é a
+pontuação baixa (BSCS, SWAN).
 
 **Como isso é testado.** `lib/instruments/todos.test.ts` percorre todos os
 instrumentos registrados (qualquer instrumento novo entra sozinho) e verifica:

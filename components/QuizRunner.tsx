@@ -130,6 +130,21 @@ export default function QuizRunner({ id }: { id: string }) {
         <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
           <div className="h-full rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} />
         </div>
+        {showError && !complete && (
+          <p className="mt-2 text-sm font-medium text-rose-700" role="alert">
+            {total - answered === 1 ? "Falta 1 questão" : `Faltam ${total - answered} questões`} —{" "}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => {
+                const primeira = inst.questions.find((q) => responses[q.id] === undefined);
+                if (primeira) document.getElementById(`q-${primeira.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+            >
+              ir até a primeira em branco
+            </button>
+          </p>
+        )}
       </div>
 
       <ol className="mt-6 space-y-5">
@@ -149,6 +164,9 @@ export default function QuizRunner({ id }: { id: string }) {
                 <span className="mr-1 text-slate-400">{idx + 1}.</span>
                 {q.text}
               </p>
+              {unanswered && (
+                <p className="mt-1 text-xs font-medium text-rose-700">Falta responder esta questão.</p>
+              )}
               <div className="mt-3 flex flex-wrap gap-2">
                 {opts.map((o) => {
                   const active = chosen === o.value;

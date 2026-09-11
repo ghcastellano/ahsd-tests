@@ -73,7 +73,8 @@ export const hcl32: Instrument = {
       maxScore: 32,
       band,
       positive: total >= 14,
-      positiveLabel: "Rastreio positivo (≥14)",
+      positiveLabel: "Rastreio positivo para hipomania (14 ou mais itens marcados)",
+      negativeLabel: "Rastreio negativo para hipomania (menos de 14 itens marcados)",
     };
   },
 };

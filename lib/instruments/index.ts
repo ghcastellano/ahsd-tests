@@ -23,6 +23,8 @@ import { bis11 } from "./bis-11";
 import { swan } from "./swan";
 import { cfq } from "./cfq";
 import { bscs } from "./bscs";
+import { uppsP } from "./upps-p";
+import { vadprs } from "./vadprs";
 
 export const instruments: Instrument[] = [
   ahsdIndicadores,
@@ -40,6 +42,8 @@ export const instruments: Instrument[] = [
   swan,
   cfq,
   bscs,
+  uppsP,
+  vadprs,
   aq50,
   raadsR,
   phq9,
@@ -61,7 +65,7 @@ export const categories: CategoryMeta[] = [
   {
     key: "tdah",
     name: "TDAH",
-    description: "Sintomas atuais (ASRS/OMS e ASRS-ABDA), infância retrospectiva (WURS-25), impulsividade (BIS-11), lapsos cotidianos (CFQ), autocontrole (BSCS) e as escalas para crianças e adolescentes (SNAP-IV e SWAN).",
+    description: "Sintomas atuais (ASRS/OMS e ASRS-ABDA), infância retrospectiva (WURS-25), impulsividade (BIS-11), lapsos cotidianos (CFQ), autocontrole (BSCS), impulsividade em facetas (UPPS-P) e as escalas para crianças e adolescentes (SNAP-IV, SWAN e Vanderbilt).",
     accent: "amber",
   },
   {

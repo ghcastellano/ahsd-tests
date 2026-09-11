@@ -8,7 +8,7 @@ import { bandFor, sumScore } from "../scoring";
 // brasileiro a partir do original em inglês.
 
 const OPCOES: QuestionOption[] = [
-  { label: "Nem um pouco", value: 0 },
+  { label: "Nem um pouco / muito pouco", value: 0 },
   { label: "Um pouco", value: 1 },
   { label: "Moderadamente", value: 2 },
   { label: "Bastante", value: 3 },
@@ -47,7 +47,7 @@ const questions: Question[] = itens.map((text, i) => ({ id: `q${i + 1}`, text })
 
 const bands = [
   { min: 0, max: 35, label: "Abaixo do corte", severity: "none" as const, description: "Pontuação abaixo de 36: o relato da infância não é sugestivo de TDAH. No estudo original, 96% dos adultos com TDAH pontuaram 36 ou mais." },
-  { min: 36, max: 45, label: "Sugestivo (corte de 36)", severity: "moderate" as const, description: "36 a 45: sugestivo de sintomas de TDAH na infância (corte de maior sensibilidade). Vale confirmar com relato de terceiros — pais, boletins escolares." },
+  { min: 36, max: 45, label: "Sugestivo (corte de 36)", severity: "moderate" as const, description: "36 a 45: sugestivo de sintomas de TDAH na infância (corte de maior sensibilidade). Atenção: neste corte a escala separa mal TDAH de depressão — foi por isso que os autores propuseram o corte de 46. Vale confirmar com relato de terceiros — pais, boletins escolares." },
   { min: 46, max: 100, label: "Fortemente sugestivo (corte de 46)", severity: "high" as const, description: "46 ou mais: corte de maior especificidade (no estudo original, identificou 86% dos adultos com TDAH e excluiu 99% dos controles). Sustenta o critério de início na infância — combine com um rastreio de sintomas atuais." },
 ];
 
@@ -58,7 +58,7 @@ export const wurs25: Instrument = {
   originalName: "Wender Utah Rating Scale, 25-item version (Ward, Wender & Reimherr, 1993)",
   category: "tdah",
   summary: "Como você era na infância: os 25 itens que melhor separam adultos com TDAH de controles. Cobre o critério de início precoce, que a ASRS não avalia.",
-  audience: "Adultos, recordando a própria infância (6 a 12 anos)",
+  audience: "Adultos, recordando a própria infância",
   estMinutes: 5,
   intro:
     "O diagnóstico de TDAH no adulto exige que os sintomas tenham começado na infância. A WURS-25 pede que você avalie, em retrospectiva, como era quando criança. Os 25 itens foram selecionados dos 61 originais por serem os que melhor separaram adultos com TDAH de pessoas sem o transtorno e de pessoas com depressão. Há dois cortes clássicos: 36 (mais sensível) e 46 (mais específico). Alguns itens tocam humor e conduta — por isso o instrumento não distingue sozinho TDAH de outras condições da infância.",
@@ -82,9 +82,10 @@ export const wurs25: Instrument = {
       maxScore: 100,
       band,
       positive: total >= 36,
-      positiveLabel: "Acima do corte de 36 (relato de infância sugestivo de TDAH)",
+      positiveLabel: total >= 46 ? "Acima do corte mais rigoroso (46): relato de infância fortemente sugestivo de TDAH" : "Acima do corte de 36: relato de infância sugestivo de TDAH",
+      negativeLabel: "Abaixo do corte de 36: relato de infância não sugestivo de TDAH",
       notes: [
-        `${altos} de 25 itens marcados como 'bastante' ou 'muitíssimo'.`,
+        altos > 0 ? `${altos} de 25 itens no grau 'bastante' ou 'muitíssimo'.` : "Nenhum item no grau mais alto: a pontuação vem de itens em grau médio.",
         "Relato retrospectivo: a memória da infância é influenciada pelo estado atual. Sempre que possível, confira com quem conviveu com você na época (pais, irmãos, professores) ou com boletins e registros escolares.",
         "A WURS-25 complementa um rastreio de sintomas atuais (ASRS): TDAH no adulto exige as duas coisas — sintomas hoje e início na infância.",
       ],

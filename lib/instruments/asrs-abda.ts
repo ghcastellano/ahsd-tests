@@ -51,8 +51,8 @@ const LIMIAR_DSM5 = 5;
 
 const bands = [
   { min: 0, max: 3, label: "Abaixo do limiar", severity: "none" as const, description: "Menos de 4 sintomas frequentes em cada domínio. Pela regra da ABDA, o padrão atual não sugere TDAH — o que não exclui o diagnóstico se houver prejuízo claro." },
-  { min: 4, max: 4, label: "Limiar da ABDA atingido", severity: "moderate" as const, description: "Pelo menos 4 sintomas frequentes em um domínio: pela leitura da ABDA, 'existe chance de ser portador de TDAH'. O DSM-5 exige 5 no adulto — o resultado fica na zona de atenção." },
-  { min: 5, max: 9, label: "Limiar do DSM-5 atingido", severity: "high" as const, description: "5 ou mais sintomas frequentes em um domínio: atende ao critério A do DSM-5 para adultos. Recomenda-se avaliação clínica, que precisa confirmar início na infância, prejuízo em 2+ contextos e excluir outras causas." },
+  { min: 4, max: 4, label: "Limiar da ABDA atingido", severity: "moderate" as const, description: "Pelo menos 4 sintomas frequentes em um domínio: pela leitura da ABDA, 'existe chance de ser portador de TDAH'. Essa regra é uma orientação da ABDA, sem ponto de corte validado em estudo. O DSM-5 usa 5 no adulto — o resultado fica na zona de atenção." },
+  { min: 5, max: 9, label: "Limiar do DSM-5 atingido", severity: "high" as const, description: "5 ou mais sintomas frequentes em um domínio: aproxima-se do limiar numérico do critério A do DSM-5 para adultos (os itens da ASRS não são os do DSM palavra por palavra, e 'frequentemente' em autorrelato não é o julgamento de um clínico). Recomenda-se avaliação, que precisa confirmar início na infância, prejuízo em 2+ contextos e excluir outras causas." },
 ];
 
 /**
@@ -73,7 +73,7 @@ export const asrsAbda: Instrument = {
   name: "ASRS-18 — versão brasileira da ABDA (Mattos et al., 2006)",
   originalName: "Adult Self-Report Scale v1.1 — adaptação transcultural para o português (Mattos, Segenreich, Saboya, Louzã, Dias & Romano, 2006)",
   category: "tdah",
-  summary: "Os 18 sintomas de TDAH do adulto na tradução validada no Brasil, com a regra de contagem por domínio usada pela ABDA.",
+  summary: "Os 18 sintomas de TDAH do adulto na adaptação brasileira de Mattos et al. (2006), com a regra de contagem por domínio usada pela ABDA.",
   audience: "Adultos (18+)",
   estMinutes: 5,
   intro:
@@ -84,15 +84,15 @@ export const asrsAbda: Instrument = {
   defaultOptions: OPCOES,
   questions,
   subscales: [
-    { key: "desatencao", name: "Parte A — Desatenção", description: "9 sintomas de desatenção do DSM." },
-    { key: "hiperatividade", name: "Parte B — Hiperatividade-impulsividade", description: "9 sintomas de hiperatividade e impulsividade do DSM." },
+    { key: "desatencao", name: "Desatenção (itens 1–9 da ABDA)", description: "9 sintomas de desatenção do DSM." },
+    { key: "hiperatividade", name: "Hiperatividade-impulsividade (itens 10–18 da ABDA)", description: "9 sintomas de hiperatividade e impulsividade do DSM." },
   ],
   interpretationBands: bands,
   primaryMetricLabel: "Sintomas frequentes no domínio mais alto (0–9)",
   references: [
-    { label: "Mattos P, Segenreich D, Saboya E, Louzã M, Dias G, Romano M. Adaptação transcultural para o português da escala Adult Self-Report Scale (ASRS-18, versão 1.1) para avaliação do TDAH em adultos. Rev Psiquiatr Clín. 2006;33(4):188-194." },
+    { label: "Mattos P, Segenreich D, Saboya E, Louzã M, Dias G, Romano M. Adaptação transcultural para o português da escala Adult Self-Report Scale para avaliação do transtorno de déficit de atenção/hiperatividade (TDAH). Rev Psiquiatr Clín. 2006;33(4):188-194." },
     { label: "ABDA — Associação Brasileira do Déficit de Atenção. Diagnóstico em adultos.", url: "https://tdah.org.br/diagnostico-adultos/" },
-    { label: "Kessler RC, et al. The World Health Organization Adult ADHD Self-Report Scale (ASRS). Psychol Med. 2005;35(2):245-256." },
+    { label: "Kessler RC, Adler L, Ames M, et al. The World Health Organization Adult ADHD Self-Report Scale (ASRS): a short screening scale for use in the general population. Psychol Med. 2005;35(2):245-256." },
   ],
   score: (r: Responses) => {
     const conta = (chave: string) =>
@@ -112,7 +112,8 @@ export const asrsAbda: Instrument = {
       dominios.length
         ? `Regra da ABDA (≥4 por domínio) atingida em: ${dominios.join(" e ")}.`
         : "Regra da ABDA (≥4 sintomas frequentes por domínio) não atingida.",
-      `Regra do DSM-5 para adultos (≥5 por domínio): ${topo >= LIMIAR_DSM5 ? "atingida" : "não atingida"}.`,
+      "A regra de 4 é a orientação publicada pela ABDA; a adaptação de Mattos et al. (2006) é transcultural e não estabeleceu ponto de corte com sensibilidade/especificidade.",
+      `Regra do DSM-5 para adultos (≥5 por domínio): ${topo >= LIMIAR_DSM5 ? "atingida" : "não atingida"} — leitura numérica; o critério A de verdade é julgado por clínico.`,
       `Conferência com o rastreador de 6 itens da OMS: ${oms} de 6 marcas (${oms >= 4 ? "positivo" : "negativo"}; positivo a partir de 4).`,
       "Este questionário cobre apenas o critério A (sintomas). O diagnóstico exige ainda: sintomas presentes antes dos 12 anos, prejuízo em pelo menos 2 contextos, prejuízo evidente e exclusão de outra causa.",
     ];
@@ -122,10 +123,11 @@ export const asrsAbda: Instrument = {
       maxScore: 9,
       band,
       positive: topo >= LIMIAR_ABDA,
-      positiveLabel: "Rastreio positivo pela regra da ABDA (≥4 sintomas frequentes em um domínio)",
+      positiveLabel: "Rastreio positivo para TDAH pela regra da ABDA (4 ou mais sintomas frequentes em um domínio)",
+      negativeLabel: "Rastreio negativo para TDAH pela regra da ABDA (menos de 4 sintomas frequentes por domínio)",
       subscales: [
-        { key: "desatencao", name: "Parte A — Desatenção", raw: des, max: 9 },
-        { key: "hiperatividade", name: "Parte B — Hiperatividade-impulsividade", raw: hip, max: 9 },
+        { key: "desatencao", name: "Desatenção (itens 1–9 da ABDA)", raw: des, max: 9 },
+        { key: "hiperatividade", name: "Hiperatividade-impulsividade (itens 10–18 da ABDA)", raw: hip, max: 9 },
       ],
       notes,
     };

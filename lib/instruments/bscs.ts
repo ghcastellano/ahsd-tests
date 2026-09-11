@@ -41,7 +41,7 @@ const questions: Question[] = raw.map(([text, reverse], i) => ({
 // Faixas convencionais a partir das médias em amostras adultas e universitárias
 // (≈ 39–42, DP ≈ 8; Tangney et al., 2004). Não há ponto de corte diagnóstico.
 const bands = [
-  { min: 13, max: 31, label: "Autocontrole baixo", severity: "high" as const, description: "Abaixo de 1 desvio-padrão da média: dificuldade marcada para regular impulsos e sustentar esforço em direção a metas. É o padrão típico do TDAH — mas autocontrole baixo também acompanha impulsividade de outras origens." },
+  { min: 13, max: 31, label: "Autocontrole baixo", severity: "high" as const, description: "Abaixo de 1 desvio-padrão da média: dificuldade marcada para regular impulsos e sustentar esforço em direção a metas. Frequente no TDAH — mas autocontrole baixo também acompanha impulsividade de outras origens, e a correlação com sintomas de TDAH é moderada." },
   { min: 32, max: 47, label: "Faixa típica", severity: "none" as const, description: "Em torno da média populacional (≈40)." },
   { min: 48, max: 65, label: "Autocontrole alto", severity: "info" as const, description: "Acima de 1 desvio-padrão: autodisciplina acima do esperado." },
 ];
@@ -52,7 +52,7 @@ export const bscs: Instrument = {
   name: "Escala Breve de Autocontrole",
   originalName: "Brief Self-Control Scale (Tangney, Baumeister & Boone, 2004)",
   category: "tdah",
-  summary: "13 itens sobre resistir a impulsos, largar hábitos e sustentar esforço rumo a metas — a face executiva do TDAH.",
+  summary: "13 itens sobre resistir a impulsos, largar hábitos e sustentar esforço rumo a metas. Traço frequente no TDAH, sem ser um rastreio dele.",
   audience: "Adultos e adolescentes",
   estMinutes: 3,
   intro:
@@ -73,12 +73,14 @@ export const bscs: Instrument = {
     return {
       totalScore: total,
       maxScore: 65,
+      minScore: 13,
       band,
       positive: total <= 31,
-      positiveLabel: "Autocontrole baixo (total ≤ 31)",
+      positiveLabel: "Autocontrole baixo (31 ou menos) — aqui o 'positivo' é a pontuação baixa",
+      negativeLabel: "Autocontrole dentro ou acima do esperado (total > 31)",
       notes: [
         "Maior pontuação = mais autocontrole. Aqui, diferente dos outros rastreios, o 'positivo' é a pontuação BAIXA.",
-        "Autocontrole baixo é a face executiva do TDAH, mas não o define: combine com um rastreio de sintomas (ASRS-5 ou ASRS-18) e, se for o caso, com a impulsividade da BIS-11.",
+        "Autocontrole baixo é frequente no TDAH, mas a BSCS não rastreia TDAH: combine com um rastreio de sintomas (ASRS v1.1 ou ASRS-18 da ABDA) e, se for o caso, com a impulsividade da BIS-11.",
       ],
     };
   },

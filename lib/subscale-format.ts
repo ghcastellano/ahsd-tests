@@ -12,7 +12,9 @@ export interface SubscaleLike {
   mean?: number;
 }
 
-function fmt(n: number): string {
+/** Formatação numérica única do site: inteiro sem casas, decimal com até 2 casas, vírgula. */
+export function fmt(n: number): string {
+  if (!Number.isFinite(n)) return "—";
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, "").replace(".", ",");
 }
 

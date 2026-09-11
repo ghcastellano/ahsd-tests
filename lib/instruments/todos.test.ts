@@ -17,11 +17,7 @@ function responder(inst: Instrument, escolha: (valores: number[]) => number): Re
   return r;
 }
 const maximo = (vals: number[]) => Math.max(...vals);
-/** Maior valor válido (ignora sentinelas negativas como o "não sei" = -1 do AH/SD). */
-const minValido = (vals: number[]) => {
-  const validos = vals.filter((v) => v !== -1 || vals.every((x) => x < 0));
-  return Math.min(...validos);
-};
+const minValido = (vals: number[]) => Math.min(...vals);
 
 describe("todos os instrumentos", () => {
   for (const inst of instruments) {
@@ -32,9 +28,10 @@ describe("todos os instrumentos", () => {
           expect(b[i].min, `faixa ${i} tem min > max`).toBeLessThanOrEqual(b[i].max);
           if (i > 0) {
             // A próxima faixa começa logo depois da anterior (inteiros: +1; decimais: +0,01).
-            const salto = b[i].min - b[i - 1].max;
-            expect(salto, `buraco/sobreposição entre "${b[i - 1].label}" e "${b[i].label}"`).toBeGreaterThan(0);
-            expect(salto).toBeLessThanOrEqual(1);
+            const salto = Math.round((b[i].min - b[i - 1].max) * 100) / 100;
+            const inteiros = Number.isInteger(b[i].min) && Number.isInteger(b[i - 1].max);
+            // Inteiros: exatamente +1. Decimais (2 casas): exatamente +0,01.
+            expect(salto, `buraco/sobreposição entre "${b[i - 1].label}" e "${b[i].label}"`).toBe(inteiros ? 1 : 0.01);
           }
         }
       });

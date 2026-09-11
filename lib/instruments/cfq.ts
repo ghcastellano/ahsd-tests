@@ -47,14 +47,14 @@ const itens = [
 
 const questions: Question[] = itens.map((text, i) => ({ id: `q${i + 1}`, text }));
 
-// Faixas convencionais a partir das normas populacionais (média ≈ 40, DP ≈ 13
-// em amostras adultas; Bridger et al., 2013). Não há ponto de corte
-// diagnóstico: o CFQ mede um contínuo.
+// Faixas CONVENCIONAIS. As médias do CFQ variam bastante entre amostras
+// (≈30 a ≈45); tomamos ≈40 (DP ≈13) como referência aproximada de adultos da
+// população geral. Não há ponto de corte diagnóstico: o CFQ mede um contínuo.
 const bands = [
   { min: 0, max: 26, label: "Poucos lapsos", severity: "none" as const, description: "Abaixo de 1 desvio-padrão da média populacional: menos falhas cotidianas do que a maioria das pessoas." },
-  { min: 27, max: 53, label: "Faixa típica", severity: "low" as const, description: "Em torno da média populacional (≈40). Lapsos ocasionais fazem parte da vida de todo mundo." },
-  { min: 54, max: 66, label: "Lapsos frequentes", severity: "moderate" as const, description: "Acima de 1 desvio-padrão da média: falhas de atenção e memória mais frequentes do que o esperado. Padrão comum no TDAH adulto — mas também em privação de sono, ansiedade, depressão e sobrecarga." },
-  { min: 67, max: 100, label: "Lapsos muito frequentes", severity: "high" as const, description: "Acima de 2 desvios-padrão: interferência importante no dia a dia. Vale um rastreio de sintomas (ASRS) e avaliação, sobretudo se o padrão vem desde sempre." },
+  { min: 27, max: 53, label: "Faixa típica", severity: "low" as const, description: "Em torno da média aproximada de adultos da população geral (≈40; varia entre amostras). Lapsos ocasionais fazem parte da vida de todo mundo." },
+  { min: 54, max: 66, label: "Lapsos frequentes", severity: "moderate" as const, description: "Acima de 1 desvio-padrão da referência: falhas de atenção e memória mais frequentes do que o esperado. Na validação brasileira, o CFQ correlaciona r ≈ 0,70 com a desatenção da ASRS — mas lapsos frequentes também vêm de privação de sono, ansiedade, depressão e sobrecarga. Limiar convencional." },
+  { min: 67, max: 100, label: "Lapsos muito frequentes", severity: "high" as const, description: "Acima de 2 desvios-padrão da referência: lapsos muito acima do esperado. Vale um rastreio de sintomas (ASRS) e avaliação, sobretudo se o padrão vem desde sempre. Limiar convencional." },
 ];
 
 export const cfq: Instrument = {
@@ -77,7 +77,8 @@ export const cfq: Instrument = {
   primaryMetricLabel: "Pontuação total (0–100)",
   references: [
     { label: "Broadbent DE, Cooper PF, FitzGerald P, Parkes KR. The Cognitive Failures Questionnaire (CFQ) and its correlates. Br J Clin Psychol. 1982;21(1):1-16." },
-    { label: "Bridger RS, Johnsen SÅK, Brasher K. Psychometric properties of the Cognitive Failures Questionnaire. Ergonomics. 2013;56(10):1515-1524." },
+    { label: "de Paula JJ, Costa DS, Miranda DM, Romano-Silva MA. Brazilian version of the Cognitive Failures Questionnaire (CFQ): cross-cultural adaptation and evidence of validity and reliability. Braz J Psychiatry. 2018;40(3):312-315." },
+    { label: "Bridger RS, Johnsen SÅK, Brasher K. Psychometric properties of the Cognitive Failures Questionnaire. Ergonomics. 2013;56(10):1515-1524 (fidedignidade teste-reteste)." },
   ],
   score: (r: Responses) => {
     const total = sumScore(questions, r, OPCOES);
@@ -88,10 +89,11 @@ export const cfq: Instrument = {
       maxScore: 100,
       band,
       positive: total >= 54,
-      positiveLabel: "Lapsos acima de 1 desvio-padrão da média (≥ 54)",
+      positiveLabel: "Lapsos mais frequentes do que a maioria das pessoas (54 ou mais)",
+      negativeLabel: "Lapsos dentro da faixa comum (abaixo de 54)",
       notes: [
         `${frequentes} de 25 falhas marcadas como 'com bastante frequência' ou 'muito frequentemente'.`,
-        "O CFQ mede um contínuo, sem ponto de corte diagnóstico. A pergunta que diferencia TDAH de cansaço é temporal: esses lapsos vêm desde a infância e acontecem mesmo quando você está descansado(a)?",
+        "O CFQ mede um contínuo, sem ponto de corte diagnóstico; as faixas são convencionais. Existe versão brasileira validada (de Paula et al., 2018; alfa 0,91) — a tradução aqui é autoral. A pergunta que diferencia TDAH de cansaço é temporal: esses lapsos vêm desde a infância e acontecem mesmo quando você está descansado(a)?",
       ],
     };
   },

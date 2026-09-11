@@ -19,6 +19,8 @@ import { bis11 } from "./instruments/bis-11";
 import { swan } from "./instruments/swan";
 import { cfq } from "./instruments/cfq";
 import { bscs } from "./instruments/bscs";
+import { uppsP } from "./instruments/upps-p";
+import { vadprs } from "./instruments/vadprs";
 import { sobreExcitabilidades } from "./instruments/sobre-excitabilidades";
 import { impostorAutossabotagem } from "./instruments/impostor-autossabotagem";
 import { perfeccionismoAutocritica } from "./instruments/perfeccionismo-autocritica";
@@ -57,6 +59,17 @@ describe("engine helpers", () => {
     expect(sumScore(qs, { a: 0, b: 0 }, FREQ_0_3)).toBe(3);
     // a=3 -> 3; b=3 reversed -> 0
     expect(sumScore(qs, { a: 3, b: 3 }, FREQ_0_3)).toBe(3);
+  });
+
+  it("fora de todas as faixas, devolve a MAIS PRÓXIMA (não a última)", () => {
+    const bands = [
+      { min: 30, max: 51, label: "baixa", severity: "info" as const, description: "" },
+      { min: 52, max: 71, label: "típica", severity: "none" as const, description: "" },
+      { min: 72, max: 120, label: "alta", severity: "high" as const, description: "" },
+    ];
+    expect(bandFor(0, bands).label).toBe("baixa"); // antes devolvia "alta"
+    expect(bandFor(200, bands).label).toBe("alta");
+    expect(bandFor(51.5, bands).label).toBe("baixa"); // buraco decimal: a mais próxima
   });
 
   it("finds the containing band", () => {
@@ -569,6 +582,149 @@ describe("BSCS", () => {
   });
 });
 
+
+describe("UPPS-P curta", () => {
+  it("tem 5 facetas de 4 itens e inverte os 12 itens de impulsividade", () => {
+    expect(uppsP.questions).toHaveLength(20);
+    for (const s of uppsP.subscales!) expect(uppsP.questions.filter((q) => q.subscale === s.key)).toHaveLength(4);
+    const inv = uppsP.questions.filter((q) => q.reverse).map((q) => Number(q.id.slice(1)));
+    expect(inv).toEqual([3, 6, 8, 9, 10, 13, 14, 15, 16, 17, 19, 20]);
+  });
+  it("maior = mais impulsivo em todas as facetas", () => {
+    // Concordar com tudo (1): itens de controle valem 1, itens impulsivos invertidos valem 4.
+    const r: Responses = {};
+    for (const q of uppsP.questions) r[q.id] = q.reverse ? 1 : 4; // máximo de impulsividade
+    const max = uppsP.score(r);
+    expect(max.totalScore).toBe(4);
+    expect(max.band.label).toBe("Impulsividade alta");
+    expect(max.positive).toBe(true);
+    for (const q of uppsP.questions) r[q.id] = q.reverse ? 4 : 1; // mínimo
+    const min = uppsP.score(r);
+    expect(min.totalScore).toBe(1);
+    expect(min.band.label).toBe("Impulsividade baixa");
+  });
+});
+
+describe("Vanderbilt (pais)", () => {
+  it("tem 47 sintomas + 8 de desempenho e exige prejuízo para o positivo", () => {
+    expect(vadprs.questions).toHaveLength(55);
+    const por = (k: string) => vadprs.questions.filter((q) => q.subscale === k).length;
+    expect([por("desatencao"), por("hiperatividade"), por("oposicao"), por("conduta"), por("ansiedade"), por("desempenho")]).toEqual([9, 9, 8, 14, 7, 8]);
+    // 6 sintomas de desatenção "frequentemente", desempenho todo "excelente" → sintomas sim, positivo NÃO.
+    const r: Responses = {};
+    for (const q of vadprs.questions) r[q.id] = q.subscale === "desempenho" ? 1 : 0;
+    vadprs.questions.filter((q) => q.subscale === "desatencao").slice(0, 6).forEach((q) => (r[q.id] = 2));
+    const semPrej = vadprs.score(r);
+    expect(semPrej.totalScore).toBe(6);
+    expect(semPrej.positive).toBe(false);
+    expect((semPrej.notes ?? []).join(" ")).toContain("SEM prejuízo");
+    // Um item de desempenho "problemático" → positivo.
+    r.p1 = 5;
+    const comPrej = vadprs.score(r);
+    expect(comPrej.positive).toBe(true);
+    expect((comPrej.notes ?? []).join(" ")).toContain("predominantemente desatenta");
+    // 5 sintomas não bastam.
+    r[vadprs.questions.filter((q) => q.subscale === "desatencao")[5].id] = 1;
+    expect(vadprs.score(r).positive).toBe(false);
+  });
+  it("rastreia as comorbidades com os cortes da NICHQ (≥4 TOD, ≥3 conduta, ≥3 ansiedade)", () => {
+    const r: Responses = {};
+    for (const q of vadprs.questions) r[q.id] = q.subscale === "desempenho" ? 3 : 0;
+    vadprs.questions.filter((q) => q.subscale === "oposicao").slice(0, 4).forEach((q) => (r[q.id] = 3));
+    vadprs.questions.filter((q) => q.subscale === "conduta").slice(0, 3).forEach((q) => (r[q.id] = 2));
+    vadprs.questions.filter((q) => q.subscale === "ansiedade").slice(0, 2).forEach((q) => (r[q.id] = 3));
+    const n = (vadprs.score(r).notes ?? []).join(" ");
+    expect(n).toContain("oposição-desafio 4/8 (positivo ≥4: sim)");
+    expect(n).toContain("conduta 3/14 (positivo ≥3: sim)");
+    expect(n).toContain("ansiedade-depressão 2/7 (positivo ≥3: não)");
+  });
+});
+
+
+describe("limites exatos das faixas (achados do comitê)", () => {
+  const comTotal = (inst: typeof cfq, t: number, max: number) => {
+    const r: Responses = {}; let resto = t;
+    for (const q of inst.questions) { const v = Math.min(max, resto); r[q.id] = v; resto -= v; }
+    return inst.score(r);
+  };
+  it("CFQ: 26/27, 53/54, 66/67", () => {
+    expect(comTotal(cfq, 26, 4).band.label).toBe("Poucos lapsos");
+    expect(comTotal(cfq, 27, 4).band.label).toBe("Faixa típica");
+    expect(comTotal(cfq, 53, 4).band.label).toBe("Faixa típica");
+    expect(comTotal(cfq, 54, 4).band.label).toBe("Lapsos frequentes");
+    expect(comTotal(cfq, 54, 4).positive).toBe(true);
+    expect(comTotal(cfq, 66, 4).band.label).toBe("Lapsos frequentes");
+    expect(comTotal(cfq, 67, 4).band.label).toBe("Lapsos muito frequentes");
+  });
+  it("WURS-25: 45 não, 46 sim (corte específico)", () => {
+    expect(comTotal(wurs25, 45, 4).band.label).toBe("Sugestivo (corte de 36)");
+    expect(comTotal(wurs25, 46, 4).band.label).toBe("Fortemente sugestivo (corte de 46)");
+  });
+  it("BIS-11: 51/52 e 71/72", () => {
+    const total = (t: number) => {
+      // diretos (19) e invertidos (11): monta um total exato ajustando os diretos.
+      const r: Responses = {}; for (const q of bis11.questions) r[q.id] = q.reverse ? 4 : 1; // = 30
+      let resto = t - 30;
+      for (const q of bis11.questions) { if (q.reverse) continue; const add = Math.min(3, resto); r[q.id] = 1 + add; resto -= add; }
+      return bis11.score(r);
+    };
+    expect(total(51).band.label).toBe("Abaixo da faixa típica");
+    expect(total(52).band.label).toBe("Faixa típica");
+    expect(total(71).band.label).toBe("Faixa típica");
+    expect(total(72).band.label).toBe("Impulsividade alta");
+    expect(total(72).positive).toBe(true);
+  });
+  it("BSCS: 31/32 e 47/48", () => {
+    const total = (t: number) => {
+      const r: Responses = {}; for (const q of bscs.questions) r[q.id] = q.reverse ? 5 : 1; // = 13
+      let resto = t - 13;
+      for (const q of bscs.questions) { const add = Math.min(4, resto); r[q.id] = q.reverse ? 5 - add : 1 + add; resto -= add; }
+      return bscs.score(r);
+    };
+    expect(total(31).positive).toBe(true);
+    expect(total(31).band.label).toBe("Autocontrole baixo");
+    expect(total(32).positive).toBe(false);
+    expect(total(32).band.label).toBe("Faixa típica");
+    expect(total(47).band.label).toBe("Faixa típica");
+    expect(total(48).band.label).toBe("Autocontrole alto");
+    expect(total(60).negativeLabel).toContain("acima do esperado");
+  });
+  it("SWAN: limites em -1,5 / -0,5 / 0,5 (somas -14/-13, -5/-4, 4/5 no domínio mais baixo)", () => {
+    const comSoma = (soma: number) => {
+      const r: Responses = {}; let resto = soma;
+      for (const q of swan.questions) {
+        if (q.subscale === "atencao") { r[q.id] = 3; continue; }
+        const v = Math.max(-3, Math.min(3, resto)); r[q.id] = v; resto -= v;
+      }
+      return swan.score(r);
+    };
+    expect(comSoma(-14).band.label).toBe("Bem abaixo da média"); // -1,56
+    expect(comSoma(-13).band.label).toBe("Abaixo da média"); // -1,44
+    expect(comSoma(-5).band.label).toBe("Abaixo da média"); // -0,56
+    expect(comSoma(-4).band.label).toBe("Na média"); // -0,44
+    expect(comSoma(4).band.label).toBe("Na média"); // 0,44
+    expect(comSoma(5).band.label).toBe("Acima da média"); // 0,56
+  });
+  it("ASRS-ABDA e SNAP-IV: cada domínio sozinho e os dois juntos", () => {
+    const abda = (des: number, hip: number) => {
+      const r: Responses = {};
+      asrsAbda.questions.forEach((q, i) => { r[q.id] = (q.subscale === "desatencao" && i < des) || (q.subscale === "hiperatividade" && i - 9 < hip) ? 3 : 0; });
+      return asrsAbda.score(r);
+    };
+    expect((abda(0, 4).notes ?? []).join(" ")).toContain("atingida em: hiperatividade-impulsividade");
+    expect((abda(4, 4).notes ?? []).join(" ")).toContain("atingida em: desatenção e hiperatividade-impulsividade");
+    expect(abda(2, 5).totalScore).toBe(5);
+    const snap = (des: number, hip: number) => {
+      const r: Responses = {};
+      snapIv.questions.forEach((q, i) => { r[q.id] = (q.subscale === "desatencao" && i < des) || (q.subscale === "hiperatividade" && i - 9 < hip) ? 2 : 0; });
+      return snapIv.score(r);
+    };
+    expect((snap(6, 0).notes ?? []).join(" ")).toContain("atingida em: desatenção.");
+    expect(snap(3, 7).totalScore).toBe(7);
+    expect((snap(6, 6).notes ?? []).join(" ")).toContain("desatenção e hiperatividade-impulsividade");
+  });
+});
+
 describe("instrument integrity", () => {
   const all = [
     phq9,
@@ -595,6 +751,8 @@ describe("instrument integrity", () => {
     swan,
     cfq,
     bscs,
+    uppsP,
+    vadprs,
   ];
   it("every question id is unique within an instrument", () => {
     for (const inst of all) {

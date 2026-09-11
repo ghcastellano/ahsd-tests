@@ -165,7 +165,8 @@ export const raadsR: Instrument = {
       maxScore: 240,
       band,
       positive: total >= 65,
-      positiveLabel: "Rastreio positivo (≥65)",
+      positiveLabel: "Rastreio positivo para transtorno do espectro autista (65 ou mais)",
+      negativeLabel: "Rastreio negativo para transtorno do espectro autista (abaixo de 65)",
       subscales: subs,
       notes: [
         "O RAADS-R considera o histórico de vida: traços presentes 'agora e na juventude' pesam mais, refletindo a natureza do neurodesenvolvimento.",

@@ -12,7 +12,7 @@ import {
 } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
 import type { Severity } from "@/lib/types";
-import { formatSubscaleValue, subscaleFraction } from "@/lib/subscale-format";
+import { fmt, formatSubscaleValue, subscaleFraction } from "@/lib/subscale-format";
 
 const cor: Record<Severity, { badge: string; bar: string }> = {
   info: { badge: "bg-slate-100 text-slate-700", bar: "bg-slate-400" },
@@ -24,9 +24,6 @@ const cor: Record<Severity, { badge: string; bar: string }> = {
   severe: { badge: "bg-rose-100 text-rose-800", bar: "bg-rose-500" },
 };
 
-function fmt(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
-}
 
 type Estado = "carregando" | "invalido" | "ok";
 
@@ -127,7 +124,7 @@ export default function SharedResult() {
         )}
         {rec.positive !== undefined && (
           <p className={`mt-3 text-sm font-medium ${rec.positive ? "text-orange-700" : "text-emerald-700"}`}>
-            ● {rec.positive ? "Rastreio positivo" : "Rastreio negativo / abaixo do limiar"}
+            {rec.positive ? "● Rastreio positivo" : "○ Rastreio negativo"}
           </p>
         )}
       </div>

@@ -14,7 +14,7 @@ import {
 } from "@/lib/history";
 import { codeFromHash, decodeRecord, extractCode } from "@/lib/share";
 import { remoteEnabled } from "@/lib/remote-config";
-import { formatSubscaleValue } from "@/lib/subscale-format";
+import { fmt, formatSubscaleValue } from "@/lib/subscale-format";
 import type { Severity } from "@/lib/types";
 
 const severityBadge: Record<Severity, string> = {
@@ -90,7 +90,7 @@ function RowGroup({ r, open, onToggle }: { r: ResultRecord; open: boolean; onTog
         </td>
         <td className="px-3 py-2 text-slate-600">{r.respondent ?? <span className="text-slate-300">—</span>}</td>
         <td className="whitespace-nowrap px-3 py-2 font-medium text-slate-800">
-          {formatScore(r.totalScore)}/{formatScore(r.maxScore)}
+          {fmt(r.totalScore)}/{fmt(r.maxScore)}
           {r.positive !== undefined && (
             <span className={`ml-2 text-xs ${r.positive ? "text-orange-600" : "text-emerald-600"}`}>
               {r.positive ? "positivo" : "negativo"}
@@ -139,9 +139,6 @@ function RowGroup({ r, open, onToggle }: { r: ResultRecord; open: boolean; onTog
   );
 }
 
-function formatScore(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
-}
 
 export default function AdminPanel() {
   const [local, setLocal] = useState<ResultRecord[]>([]);
@@ -297,7 +294,7 @@ export default function AdminPanel() {
             <strong>{pendingImport.acronym}</strong> — {pendingImport.instrumentName}
             {pendingImport.respondent ? ` · ${pendingImport.respondent}` : ""} ·{" "}
             {formatDateTimeBR(pendingImport.createdAt)} ·{" "}
-            {pendingImport.totalScore}/{pendingImport.maxScore} ({pendingImport.bandLabel})
+            {fmt(pendingImport.totalScore)}/{fmt(pendingImport.maxScore)} ({pendingImport.bandLabel})
           </p>
           <div className="mt-3 flex gap-2">
             <button

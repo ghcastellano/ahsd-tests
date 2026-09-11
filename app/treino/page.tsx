@@ -42,6 +42,26 @@ export default function TreinoIndex() {
         </Link>
       </div>
 
+      <Link
+        href="/treino/go-nogo"
+        className="group mt-8 block rounded-xl border-2 border-amber-300 bg-amber-50 p-5 transition hover:border-amber-500 hover:shadow-md"
+      >
+        <div className="flex items-center justify-between">
+          <span className="rounded-md bg-amber-600 px-2 py-0.5 text-xs font-semibold text-white">
+            TAREFA OBJETIVA · TDAH
+          </span>
+          <span className="text-xs text-slate-500">120 letras · ~2 min</span>
+        </div>
+        <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-amber-800">
+          Go/NoGo — controle inibitório
+        </h3>
+        <p className="mt-1 text-sm text-slate-600">
+          Responda a cada letra, segure no X. Mede erros de comissão (o freio) e a variabilidade
+          do tempo de reação — os marcadores objetivos mais ligados ao TDAH. Sem autorrelato.
+        </p>
+        <p className="mt-3 text-sm font-medium text-amber-700">Fazer a tarefa →</p>
+      </Link>
+
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {tests.map((t) => (
           <Link

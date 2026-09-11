@@ -62,8 +62,19 @@ export function maxScore(questions: Question[], defaults: QuestionOption[]): num
 export function bandFor(value: number, bands: InterpretationBand[]): InterpretationBand {
   const found = bands.find((b) => value >= b.min && value <= b.max);
   if (found) return found;
-  // Fallback to the closest band to avoid crashing on edge values.
-  return bands[bands.length - 1];
+  // Fora de todas as faixas (valor abaixo da primeira, buraco decimal): a
+  // faixa MAIS PRÓXIMA. Devolver a última, como antes, fazia um total 0 da
+  // BIS-11 virar "Impulsividade alta".
+  let melhor = bands[0];
+  let dist = Number.POSITIVE_INFINITY;
+  for (const b of bands) {
+    const d = value < b.min ? b.min - value : value > b.max ? value - b.max : 0;
+    if (d < dist) {
+      dist = d;
+      melhor = b;
+    }
+  }
+  return melhor;
 }
 
 /** Whether every question in the list has a recorded answer. */

@@ -18,7 +18,13 @@ for (const inst of esperados) {
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await page.getByRole("button", { name: /Ver resultado/i }).click(); await page.waitForTimeout(700);
       const txt = await page.locator("body").innerText();
-      const reTotal = new RegExp(`(^|\\s)${esc(fmt(p.total))}\\s*/\\s*${esc(fmt(p.max))}(\\s|$)`);
+      // Três formas de mostrar o número principal: soma "T / M", média "T média · escala…",
+      // ou sem número (MDQ): "Positivo"/"Negativo".
+      const reTotal = p.semNumero
+        ? new RegExp(p.positivo ? "\\bPositivo\\b" : "\\bNegativo\\b")
+        : p.media
+          ? new RegExp(`(^|\\s)${esc(fmt(p.total))}0?\\s+média`)
+          : new RegExp(`(^|\\s)${esc(fmt(p.total))}0?\\s*/\\s*${esc(fmt(p.max))}0?(\\s|$)`);
       const okTotal = reTotal.test(txt);
       const okFaixa = txt.includes(p.faixa);
       if (okTotal && okFaixa) pass++; else { fail++; falhas.push(`${inst.acronym} [${nome}]: esperado ${fmt(p.total)}/${fmt(p.max)} "${p.faixa}" — total ${okTotal ? "ok" : "NÃO achado"}, faixa ${okFaixa ? "ok" : "NÃO achada"}`); }

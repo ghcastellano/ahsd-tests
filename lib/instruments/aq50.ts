@@ -106,7 +106,8 @@ export const aq50: Instrument = {
       maxScore: 50,
       band,
       positive: total >= 32,
-      positiveLabel: "Rastreio positivo (≥32)",
+      positiveLabel: "Rastreio positivo para traços do espectro autista (32 ou mais)",
+      negativeLabel: total >= 26 ? "Abaixo do corte de 32 (rastreio negativo para autismo), mas acima da média da população" : "Rastreio negativo para traços do espectro autista (abaixo de 32)",
     };
   },
 };

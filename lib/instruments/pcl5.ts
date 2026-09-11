@@ -90,7 +90,8 @@ export const pcl5: Instrument = {
       maxScore: 80,
       band,
       positive: total >= 33,
-      positiveLabel: "TEPT provável (≥33)",
+      positiveLabel: "Estresse pós-traumático (TEPT) provável (33 ou mais)",
+      negativeLabel: "Abaixo do corte de 33 para estresse pós-traumático (TEPT)",
       subscales: subs,
       notes,
     };

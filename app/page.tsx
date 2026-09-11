@@ -13,7 +13,7 @@ export default function HomePage() {
         </h1>
         <p className="mt-4 max-w-3xl text-slate-600">
           Rastreios clínicos validados (PHQ-9, GAD-7, ASRS, ASRS-18 da ABDA, WURS-25, BIS-11,
-          SNAP-IV, SWAN, CFQ, BSCS, AQ-50, RAADS-R, MDQ, HCL-32, PCL-5, ACE e DERS) e módulos autorais de
+          SNAP-IV, SWAN, CFQ, BSCS, UPPS-P, Vanderbilt, AQ-50, RAADS-R, MDQ, HCL-32, PCL-5, ACE e DERS) e módulos autorais de
           AH/SD sobre indicadores, intensidades, perfeccionismo, impostor, sensorialidade,
           personalidade e bem-estar — com correção automática, pontuação e detalhamento. Feito
           para autoavaliação e para que profissionais
@@ -119,6 +119,24 @@ export default function HomePage() {
           </h3>
           <p className="mt-1 text-sm text-slate-600">
             Versão mais leve, para o primeiro contato com o formato.
+          </p>
+        </Link>
+        <Link
+          href="/treino/go-nogo"
+          className="group mt-3 block rounded-xl border border-amber-300 bg-amber-50 p-4 transition hover:border-amber-500"
+        >
+          <div className="flex items-center justify-between">
+            <span className="rounded-md bg-amber-600 px-2 py-0.5 text-xs font-semibold text-white">
+              TAREFA OBJETIVA · TDAH
+            </span>
+            <span className="text-xs text-slate-500">120 letras · ~2 min</span>
+          </div>
+          <h3 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-amber-800">
+            Go/NoGo — controle inibitório
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Erros de comissão e variabilidade do tempo de reação: os marcadores objetivos do TDAH,
+            sem autorrelato.
           </p>
         </Link>
       </section>
