@@ -12,3 +12,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 coverage
+scripts/e2e/esperados.json

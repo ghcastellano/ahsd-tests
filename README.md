@@ -171,3 +171,48 @@ necessária configuração adicional.
 Ferramenta educativa e de triagem. Não substitui avaliação, diagnóstico ou
 tratamento profissional. Em caso de crise ou pensamentos de morte, procure ajuda
 imediata — **CVV: 188** (24h, gratuito) — cvv.org.br.
+
+## Pontuação padrão por instrumento — fonte e regra
+
+Cada resultado é calculado pela regra publicada na fonte citada. Onde não existe
+ponto de corte oficial, as faixas são **convencionais** (derivadas de médias e
+desvios-padrão populacionais) e o próprio resultado diz isso. Os módulos autorais
+de AH/SD não reproduzem nenhuma escala comercial e não têm norma externa.
+
+| Instrumento | Regra implementada | Fonte da regra | Status |
+|---|---|---|---|
+| PHQ-9 | 0–4 mínimo · 5–9 leve · 10–14 moderado · 15–19 mod. grave · 20–27 grave; item 9 dispara alerta | Kroenke, Spitzer & Williams 2001 | padrão |
+| GAD-7 | 0–4 · 5–9 · 10–14 · 15–21; positivo ≥10 | Spitzer et al. 2006 | padrão |
+| ASRS v1.1 (OMS) | Parte A, caixas sombreadas: itens 1–3 marcam com ≥"às vezes", 4–6 com ≥"frequentemente"; positivo ≥4 marcas | Kessler et al. 2005 (WHO) | padrão |
+| ASRS-18 (ABDA) | ≥4 sintomas "frequentemente/muito frequentemente" por domínio (ABDA); mostra também ≥5 (DSM-5) e a leitura da OMS | Mattos et al. 2006; ABDA | padrão |
+| WURS-25 | soma 0–100; cortes 36 (sens. 96%) e 46 (sens. 86%, espec. 99%) | Ward, Wender & Reimherr 1993 | padrão |
+| BIS-11 | soma 30–120 com 11 itens invertidos; <52 · 52–71 típica · ≥72 alta; 3 fatores (8/11/11) | Patton et al. 1995; Stanford et al. 2009; Malloy-Diniz 2010 | padrão |
+| SNAP-IV | ≥6 itens "bastante/demais" por domínio (ABDA); cortes MTA por média como referência | Mattos et al. 2006; Swanson et al. 2001 | padrão |
+| SWAN | média por domínio, −3..+3; destaque = domínio mais baixo | Swanson et al. 2012 | convencional (sem corte validado no Brasil) |
+| CFQ | soma 0–100; faixas por DP da média populacional (≈40 ± 13) | Broadbent et al. 1982; Bridger et al. 2013 | convencional (sem corte diagnóstico) |
+| BSCS | soma 13–65 com 9 invertidos; positivo = baixo (≤31, −1 DP) | Tangney, Baumeister & Boone 2004 | convencional |
+| AQ-50 | soma 0–50 por direção do item; ≥32 clínico, 26–31 intermediário | Baron-Cohen et al. 2001; Woodbury-Smith et al. 2005 | padrão |
+| RAADS-R | soma 0–240 com 17 itens normativos invertidos; positivo ≥65 | Ritvo et al. 2011 | padrão |
+| MDQ | positivo = ≥7 sintomas E mesmo período E problema moderado/grave | Hirschfeld et al. 2000 | padrão |
+| HCL-32 | positivo ≥14 | Angst et al. 2005 | padrão |
+| PCL-5 | soma 0–80; TEPT provável ≥33; leitura por cluster DSM-5 | Weathers et al. 2013 | padrão |
+| ACE | soma de "sim" 0–10; ≥4 exposição elevada | Felitti et al. 1998 | padrão |
+| DERS-36 | soma 36–180 com 11 invertidos; faixas em ≈ média (80) e ≈ +1 DP (100) de amostras comunitárias | Gratz & Roemer 2004 | convencional |
+| AH/SD (indicadores) | média 1–5 por área e índice geral; faixas 3,0 / 3,7 / 4,3 | Delou; Virgolim/MEC; Renzulli | autoral |
+| Sobre-excitabilidades | perfil por média nas 5 áreas, sem corte | Dabrowski; Piechowski | autoral |
+| PERF / IMP / SENSORIAL / 5F / BE (AHSD) | perfil por média 1–5, faixas 2,5 / 3,5 / 4,2 | literatura citada em cada módulo | autoral, sem norma |
+
+**Como isso é testado.** `lib/instruments/todos.test.ts` percorre todos os
+instrumentos registrados (qualquer instrumento novo entra sozinho) e verifica:
+faixas contíguas e sem sobreposição; extremos de resposta dentro de uma faixa e
+≤ `maxScore`; correção sem quebrar com respostas incompletas; "positivo"
+coerente com a gravidade da faixa; ids únicos; referência e rótulo presentes.
+`lib/scoring.test.ts` fixa os pontos de corte de cada instrumento e as listas
+de itens invertidos. Por fim, `scripts/e2e/` traz um roteiro Playwright que responde cada
+instrumento no navegador em três padrões (mínimo, máximo e meio) e confere que o
+número e a faixa exibidos são os que a função pura calcula:
+
+```bash
+npm run build && npx next start -p 3111 &
+npx vitest run scripts/e2e && BASE_URL=http://localhost:3111 node scripts/e2e/verifica-todos.mjs
+```
