@@ -2,7 +2,9 @@ import { chromium } from "playwright";
 import { readFileSync } from "node:fs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const esperado = JSON.parse(readFileSync(new URL("./simulador-esperado.json", import.meta.url), "utf8"));
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+// Fora do localhost, respeita o proxy do ambiente (HTTPS_PROXY), se houver.
+const proxy = process.env.HTTPS_PROXY && !/localhost|127\.0\.0\.1/.test(B) ? { server: process.env.HTTPS_PROXY, bypass: "localhost,127.0.0.1" } : undefined;
+const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", proxy });
 const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
 
 async function jogarBloco(p, bloco, perfeito) {
