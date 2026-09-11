@@ -32,6 +32,8 @@ registro central estiver ativado, também no banco da plataforma.
 | BIS-11 | Impulsividade de Barratt (Patton 1995; Malloy-Diniz 2010) | TDAH | 30 | Total 30–120 (52–71 típica, ≥72 alta) |
 | SNAP-IV | Pais/professores, crianças e adolescentes (Mattos 2006, ABDA) | TDAH | 18 | Sintomas 'bastante/demais' por domínio (≥6) |
 | SWAN | Forças e fraquezas, espectro -3..+3 (Swanson) | TDAH | 18 | Média do domínio mais baixo |
+| CFQ | Falhas cognitivas cotidianas (Broadbent 1982) | TDAH | 25 | Total 0–100 (faixas por DP populacional) |
+| BSCS | Autocontrole breve (Tangney 2004) | TDAH | 13 | Total 13–65, 9 invertidos (baixo = positivo) |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
 | RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
 | PHQ-9 | Saúde do Paciente – Depressão | Humor | 9 | 0–27 (5/10/15/20) |

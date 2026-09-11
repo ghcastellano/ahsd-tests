@@ -61,7 +61,7 @@ export default function SobrePage() {
 
       <h2 className="mt-8 text-lg font-semibold text-slate-900">Origem dos instrumentos</h2>
       <p className="mt-2 text-slate-600">
-        Os rastreios clínicos (PHQ-9, GAD-7, ASRS, ASRS-18 da ABDA, WURS-25, BIS-11, SNAP-IV, SWAN, AQ, RAADS-R, MDQ, HCL-32, PCL-5, ACE, DERS) são
+        Os rastreios clínicos (PHQ-9, GAD-7, ASRS, ASRS-18 da ABDA, WURS-25, BIS-11, SNAP-IV, SWAN, CFQ, BSCS, AQ, RAADS-R, MDQ, HCL-32, PCL-5, ACE, DERS) são
         instrumentos validados, de uso livre para fins clínicos e de pesquisa, apresentados aqui em
         versão em português com as devidas referências. Os módulos de Altas
         Habilidades/Superdotação — indicadores e sobre-excitabilidades — são instrumentos{" "}

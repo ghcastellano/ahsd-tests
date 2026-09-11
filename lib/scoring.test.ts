@@ -17,6 +17,8 @@ import { snapIv } from "./instruments/snap-iv";
 import { wurs25 } from "./instruments/wurs-25";
 import { bis11 } from "./instruments/bis-11";
 import { swan } from "./instruments/swan";
+import { cfq } from "./instruments/cfq";
+import { bscs } from "./instruments/bscs";
 import { sobreExcitabilidades } from "./instruments/sobre-excitabilidades";
 import { impostorAutossabotagem } from "./instruments/impostor-autossabotagem";
 import { perfeccionismoAutocritica } from "./instruments/perfeccionismo-autocritica";
@@ -534,6 +536,39 @@ describe("SWAN (espectro -3 a +3)", () => {
   });
 });
 
+
+describe("CFQ", () => {
+  it("soma 0–100 e usa faixas por desvio-padrão populacional", () => {
+    expect(cfq.questions).toHaveLength(25);
+    expect(cfq.score(answerAll(cfq.questions, 0)).totalScore).toBe(0);
+    expect(cfq.score(answerAll(cfq.questions, 4)).totalScore).toBe(100);
+    expect(cfq.score(answerAll(cfq.questions, 4)).band.label).toBe("Lapsos muito frequentes");
+    const r = cfq.score(answerAll(cfq.questions, 2)); // 50 → típica
+    expect(r.totalScore).toBe(50);
+    expect(r.band.label).toBe("Faixa típica");
+    expect(r.positive).toBe(false);
+  });
+});
+
+describe("BSCS", () => {
+  it("inverte os 9 itens de falta de autocontrole", () => {
+    expect(bscs.questions).toHaveLength(13);
+    expect(bscs.questions.filter((q) => q.reverse).map((q) => Number(q.id.slice(1)))).toEqual([2, 3, 4, 5, 7, 9, 10, 12, 13]);
+    // Tudo "nada a ver" (1): 4 diretos valem 1, 9 invertidos valem 5 → 49 (alto).
+    expect(bscs.score(answerAll(bscs.questions, 1)).totalScore).toBe(49);
+    // Tudo "tudo a ver" (5): 4×5 + 9×1 = 29 → baixo, e é o "positivo".
+    const r = bscs.score(answerAll(bscs.questions, 5));
+    expect(r.totalScore).toBe(29);
+    expect(r.band.label).toBe("Autocontrole baixo");
+    expect(r.positive).toBe(true);
+    // Extremos reais: 65 e 13.
+    const max: Responses = {}; for (const q of bscs.questions) max[q.id] = q.reverse ? 1 : 5;
+    expect(bscs.score(max).totalScore).toBe(65);
+    const min: Responses = {}; for (const q of bscs.questions) min[q.id] = q.reverse ? 5 : 1;
+    expect(bscs.score(min).totalScore).toBe(13);
+  });
+});
+
 describe("instrument integrity", () => {
   const all = [
     phq9,
@@ -558,6 +593,8 @@ describe("instrument integrity", () => {
     wurs25,
     bis11,
     swan,
+    cfq,
+    bscs,
   ];
   it("every question id is unique within an instrument", () => {
     for (const inst of all) {
