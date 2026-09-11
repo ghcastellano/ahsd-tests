@@ -27,6 +27,11 @@ registro central estiver ativado, também no banco da plataforma.
 | 5F-AHSD | Personalidade — Cinco Grandes Fatores *(autoral)* | Altas Habilidades | 30 | Perfil dimensional, sem corte |
 | BE-AHSD | Bem-estar e Contexto em AH/SD *(autoral)* | Altas Habilidades | 20 | Recursos em 5 dimensões |
 | ASRS v1.1 | Autorrelato de TDAH no adulto (OMS) | TDAH | 18 | Marcas da Parte A (≥4 = positivo) |
+| ASRS-18 (ABDA) | Tradução brasileira de Mattos et al. 2006, regra da ABDA | TDAH | 18 | Sintomas frequentes por domínio (≥4 ABDA / ≥5 DSM-5) |
+| WURS-25 | Infância retrospectiva (Ward 1993) | TDAH | 25 | Total 0–100 (cortes 36 e 46) |
+| BIS-11 | Impulsividade de Barratt (Patton 1995; Malloy-Diniz 2010) | TDAH | 30 | Total 30–120 (52–71 típica, ≥72 alta) |
+| SNAP-IV | Pais/professores, crianças e adolescentes (Mattos 2006, ABDA) | TDAH | 18 | Sintomas 'bastante/demais' por domínio (≥6) |
+| SWAN | Forças e fraquezas, espectro -3..+3 (Swanson) | TDAH | 18 | Média do domínio mais baixo |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
 | RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
 | PHQ-9 | Saúde do Paciente – Depressão | Humor | 9 | 0–27 (5/10/15/20) |

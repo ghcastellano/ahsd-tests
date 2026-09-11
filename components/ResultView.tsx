@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Instrument, InstrumentResult, Severity } from "@/lib/types";
 import type { ResultRecord } from "@/lib/history";
 import ShareBlock from "./ShareBlock";
+import { formatSubscaleValue, subscaleFraction } from "@/lib/subscale-format";
 
 const severityStyles: Record<Severity, { badge: string; bar: string; text: string }> = {
   info: { badge: "bg-slate-100 text-slate-700", bar: "bg-slate-400", text: "text-slate-700" },
@@ -82,16 +83,14 @@ export default function ResultView({
           <h2 className="mb-3 text-lg font-semibold text-slate-900">Detalhamento por dimensão</h2>
           <div className="space-y-3">
             {result.subscales.map((s) => {
-              const denom = s.mean !== undefined ? 5 : s.max || 1;
-              const value = s.mean !== undefined ? s.mean : s.raw;
-              const barPct = Math.min(100, Math.round((value / denom) * 100));
+              const barPct = Math.min(100, Math.max(0, Math.round(subscaleFraction(inst.id, s) * 100)));
               const ssev = s.band ? severityStyles[s.band.severity] : severityStyles.info;
               return (
                 <div key={s.key} className="rounded-lg border border-slate-200 bg-white p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-slate-800">{s.name}</span>
                     <span className="text-sm text-slate-500">
-                      {s.mean !== undefined ? `média ${formatNumber(s.mean)}/5` : `${s.raw}/${s.max}`}
+                      {formatSubscaleValue(inst.id, s)}
                     </span>
                   </div>
                   {s.description && <p className="mt-0.5 text-xs text-slate-400">{s.description}</p>}

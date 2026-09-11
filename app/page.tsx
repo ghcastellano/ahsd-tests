@@ -12,10 +12,11 @@ export default function HomePage() {
           Mapa de testes de Altas Habilidades/Superdotação e neurodivergências
         </h1>
         <p className="mt-4 max-w-3xl text-slate-600">
-          Rastreios clínicos validados (PHQ-9, GAD-7, ASRS, AQ-50, RAADS-R, MDQ, HCL-32, PCL-5,
-          ACE e DERS) e módulos autorais de AH/SD sobre indicadores, intensidades, perfeccionismo,
-          impostor, sensorialidade, personalidade e bem-estar — com correção automática, pontuação
-          e detalhamento. Feito para autoavaliação e para que profissionais
+          Rastreios clínicos validados (PHQ-9, GAD-7, ASRS, ASRS-18 da ABDA, WURS-25, BIS-11,
+          SNAP-IV, SWAN, AQ-50, RAADS-R, MDQ, HCL-32, PCL-5, ACE e DERS) e módulos autorais de
+          AH/SD sobre indicadores, intensidades, perfeccionismo, impostor, sensorialidade,
+          personalidade e bem-estar — com correção automática, pontuação e detalhamento. Feito
+          para autoavaliação e para que profissionais
           e familiares possam aplicar e interpretar. Os resultados são calculados no seu
           navegador; um registro do resultado (data/hora, identificação opcional e pontuações —
           sem as respostas de cada questão) é guardado para o painel de acompanhamento.

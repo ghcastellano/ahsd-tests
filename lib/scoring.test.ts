@@ -12,6 +12,11 @@ import { hcl32 } from "./instruments/hcl32";
 import { pcl5 } from "./instruments/pcl5";
 import { ace } from "./instruments/ace";
 import { ahsdIndicadores } from "./instruments/ahsd-indicadores";
+import { asrsAbda } from "./instruments/asrs-abda";
+import { snapIv } from "./instruments/snap-iv";
+import { wurs25 } from "./instruments/wurs-25";
+import { bis11 } from "./instruments/bis-11";
+import { swan } from "./instruments/swan";
 import { sobreExcitabilidades } from "./instruments/sobre-excitabilidades";
 import { impostorAutossabotagem } from "./instruments/impostor-autossabotagem";
 import { perfeccionismoAutocritica } from "./instruments/perfeccionismo-autocritica";
@@ -405,6 +410,130 @@ describe("DERS reverse scoring and reference bands", () => {
   });
 });
 
+
+describe("ASRS-18 ABDA (contagem por domínio)", () => {
+  it("tem 9 + 9 itens e a regra da ABDA (≥4 frequentes) por domínio", () => {
+    expect(asrsAbda.questions.filter((q) => q.subscale === "desatencao")).toHaveLength(9);
+    expect(asrsAbda.questions.filter((q) => q.subscale === "hiperatividade")).toHaveLength(9);
+    const all4 = asrsAbda.score(answerAll(asrsAbda.questions, 4));
+    expect(all4.totalScore).toBe(9);
+    expect(all4.positive).toBe(true);
+    expect(all4.band.label).toBe("Limiar do DSM-5 atingido");
+    const all2 = asrsAbda.score(answerAll(asrsAbda.questions, 2)); // "algumas vezes" não conta
+    expect(all2.totalScore).toBe(0);
+    expect(all2.positive).toBe(false);
+  });
+
+  it("distingue o corte da ABDA (4) do corte do DSM-5 (5)", () => {
+    const comN = (n: number) => {
+      const r: Responses = {};
+      asrsAbda.questions.forEach((q, i) => { r[q.id] = q.subscale === "desatencao" && i < n ? 3 : 0; });
+      return asrsAbda.score(r);
+    };
+    expect(comN(3).positive).toBe(false);
+    expect(comN(4).positive).toBe(true);
+    expect(comN(4).band.label).toBe("Limiar da ABDA atingido");
+    expect(comN(5).band.label).toBe("Limiar do DSM-5 atingido");
+    expect((comN(5).notes ?? []).join(" ")).toContain("DSM-5 para adultos (≥5 por domínio): atingida");
+  });
+
+  it("calcula a conferência da OMS a partir dos itens mapeados", () => {
+    const r: Responses = {};
+    for (const q of asrsAbda.questions) r[q.id] = 0;
+    // Só os 6 itens do rastreador da OMS, no mínimo que marca cada um.
+    r.a4 = 2; r.a5 = 2; r.a9 = 2; r.a6 = 3; r.b1 = 3; r.b5 = 3;
+    const res = asrsAbda.score(r);
+    expect((res.notes ?? []).join(" ")).toContain("6 de 6 marcas (positivo");
+    // Pela regra da ABDA só a6 (desatenção) e b1, b5 (hiperatividade) contam: máximo por domínio = 2.
+    expect(res.totalScore).toBe(2);
+    expect(res.positive).toBe(false); // positivo na OMS, negativo na ABDA: as regras diferem de propósito
+  });
+});
+
+describe("SNAP-IV (ABDA, pais/professores)", () => {
+  it("conta sintomas 'bastante/demais' e aplica o corte de 6 por domínio", () => {
+    const tudo3 = snapIv.score(answerAll(snapIv.questions, 3));
+    expect(tudo3.totalScore).toBe(9);
+    expect(tudo3.positive).toBe(true);
+    const tudo1 = snapIv.score(answerAll(snapIv.questions, 1)); // "só um pouco" não conta
+    expect(tudo1.totalScore).toBe(0);
+    expect(tudo1.band.label).toBe("Dentro do esperado");
+    const comN = (n: number) => {
+      const r: Responses = {};
+      snapIv.questions.forEach((q, i) => { r[q.id] = q.subscale === "hiperatividade" && i - 9 < n ? 2 : 0; });
+      return snapIv.score(r);
+    };
+    expect(comN(5).positive).toBe(false);
+    expect(comN(6).positive).toBe(true);
+    expect((comN(6).notes ?? []).join(" ")).toContain("atingida em: hiperatividade-impulsividade");
+  });
+});
+
+describe("WURS-25", () => {
+  it("soma 0–100 e aplica os cortes de 36 e 46", () => {
+    expect(wurs25.questions).toHaveLength(25);
+    expect(wurs25.score(answerAll(wurs25.questions, 0)).totalScore).toBe(0);
+    expect(wurs25.score(answerAll(wurs25.questions, 4)).totalScore).toBe(100);
+    const comTotal = (t: number) => {
+      const r: Responses = {};
+      let resto = t;
+      for (const q of wurs25.questions) { const v = Math.min(4, resto); r[q.id] = v; resto -= v; }
+      return wurs25.score(r);
+    };
+    expect(comTotal(35).band.label).toBe("Abaixo do corte");
+    expect(comTotal(35).positive).toBe(false);
+    expect(comTotal(36).band.label).toBe("Sugestivo (corte de 36)");
+    expect(comTotal(36).positive).toBe(true);
+    expect(comTotal(46).band.label).toBe("Fortemente sugestivo (corte de 46)");
+  });
+});
+
+describe("BIS-11", () => {
+  it("tem 30 itens em 8/11/11 por fator e 11 invertidos", () => {
+    expect(bis11.questions).toHaveLength(30);
+    const por = (k: string) => bis11.questions.filter((q) => q.subscale === k).length;
+    expect(por("atencional")).toBe(8);
+    expect(por("motora")).toBe(11);
+    expect(por("nao-planejamento")).toBe(11);
+    const invertidos = bis11.questions.filter((q) => q.reverse).map((q) => Number(q.id.slice(1)));
+    expect(invertidos).toEqual([1, 7, 8, 9, 10, 12, 13, 15, 20, 29, 30]);
+  });
+  it("inverte os 11 itens e aplica as faixas de Stanford (52–71 típica, ≥72 alta)", () => {
+    // Tudo "raramente" (1): 19 itens diretos valem 1, 11 invertidos valem 4 → 63.
+    const tudo1 = bis11.score(answerAll(bis11.questions, 1));
+    expect(tudo1.totalScore).toBe(63);
+    expect(tudo1.band.label).toBe("Faixa típica");
+    // Tudo "sempre" (4): 19×4 + 11×1 = 87 → alta.
+    const tudo4 = bis11.score(answerAll(bis11.questions, 4));
+    expect(tudo4.totalScore).toBe(87);
+    expect(tudo4.positive).toBe(true);
+    // Máximo real: diretos em 4, invertidos em 1 → 120; mínimo real → 30.
+    const r: Responses = {};
+    for (const q of bis11.questions) r[q.id] = q.reverse ? 1 : 4;
+    expect(bis11.score(r).totalScore).toBe(120);
+    for (const q of bis11.questions) r[q.id] = q.reverse ? 4 : 1;
+    expect(bis11.score(r).totalScore).toBe(30);
+    expect(bis11.score(r).band.label).toBe("Abaixo da faixa típica");
+  });
+});
+
+describe("SWAN (espectro -3 a +3)", () => {
+  it("usa a média do domínio mais baixo como destaque", () => {
+    expect(swan.score(answerAll(swan.questions, 3)).totalScore).toBe(3);
+    expect(swan.score(answerAll(swan.questions, 3)).band.label).toBe("Acima da média");
+    expect(swan.score(answerAll(swan.questions, -3)).totalScore).toBe(-3);
+    expect(swan.score(answerAll(swan.questions, -3)).positive).toBe(true);
+    expect(swan.score(answerAll(swan.questions, 0)).band.label).toBe("Na média");
+    // Atenção forte, controle fraco: o destaque é o fraco.
+    const r: Responses = {};
+    for (const q of swan.questions) r[q.id] = q.subscale === "atencao" ? 2 : -2;
+    const res = swan.score(r);
+    expect(res.totalScore).toBe(-2);
+    expect(res.band.label).toBe("Bem abaixo da média");
+    expect(res.subscales!.find((s) => s.key === "atencao")!.mean).toBe(2);
+  });
+});
+
 describe("instrument integrity", () => {
   const all = [
     phq9,
@@ -424,6 +553,11 @@ describe("instrument integrity", () => {
     bemEstarContexto,
     raadsR,
     ders,
+    asrsAbda,
+    snapIv,
+    wurs25,
+    bis11,
+    swan,
   ];
   it("every question id is unique within an instrument", () => {
     for (const inst of all) {

@@ -14,6 +14,7 @@ import {
 } from "@/lib/history";
 import { codeFromHash, decodeRecord, extractCode } from "@/lib/share";
 import { remoteEnabled } from "@/lib/remote-config";
+import { formatSubscaleValue } from "@/lib/subscale-format";
 import type { Severity } from "@/lib/types";
 
 const severityBadge: Record<Severity, string> = {
@@ -117,7 +118,7 @@ function RowGroup({ r, open, onToggle }: { r: ResultRecord; open: boolean; onTog
                 {r.subscales.map((s, i) => (
                   <p key={i} className="text-xs text-slate-600">
                     <span className="font-medium text-slate-700">{s.name}:</span>{" "}
-                    {s.mean !== undefined ? `média ${formatScore(s.mean)}/5` : `${formatScore(s.raw)}/${formatScore(s.max)}`}
+                    {formatSubscaleValue(r.instrumentId, s)}
                   </p>
                 ))}
               </div>

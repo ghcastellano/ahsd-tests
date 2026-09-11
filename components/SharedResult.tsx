@@ -12,6 +12,7 @@ import {
 } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
 import type { Severity } from "@/lib/types";
+import { formatSubscaleValue, subscaleFraction } from "@/lib/subscale-format";
 
 const cor: Record<Severity, { badge: string; bar: string }> = {
   info: { badge: "bg-slate-100 text-slate-700", bar: "bg-slate-400" },
@@ -136,25 +137,15 @@ export default function SharedResult() {
           <h2 className="mb-3 text-lg font-semibold text-slate-900">Detalhamento por dimensão</h2>
           <div className="space-y-3">
             {rec.subscales.map((s, i) => {
-              // A barra tem que medir o MESMO número que o rótulo mostra: usar
-              // a média contra o máximo bruto (DERS: média 3, máximo 30)
-              // desenharia 10% ao lado de um rótulo de 60%.
-              const usaMedia = s.mean !== undefined && s.max <= 5;
-              const val = usaMedia ? s.mean! : s.raw;
-              const denom = s.max || 1;
+              const pct = Math.min(100, Math.max(0, Math.round(subscaleFraction(rec.instrumentId, s) * 100)));
               return (
                 <div key={i} className="rounded-lg border border-slate-200 bg-white p-4">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-slate-800">{s.name}</span>
-                    <span className="text-sm text-slate-500">
-                      {s.max <= 5 && s.mean !== undefined ? `média ${fmt(s.mean)}/${fmt(s.max)}` : `${fmt(s.raw)}/${fmt(s.max)}`}
-                    </span>
+                    <span className="text-sm text-slate-500">{formatSubscaleValue(rec.instrumentId, s)}</span>
                   </div>
                   <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className={`h-full rounded-full ${c.bar}`}
-                      style={{ width: `${Math.min(100, Math.round((val / denom) * 100))}%` }}
-                    />
+                    <div className={`h-full rounded-full ${c.bar}`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
