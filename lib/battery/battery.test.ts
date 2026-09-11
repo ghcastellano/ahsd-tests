@@ -4,6 +4,7 @@ import { advancedMatrixItems } from "./advanced-matrices";
 import { figureSeriesItems } from "./figure-series";
 import { classificationItems } from "./classification";
 import { numericSeriesItems } from "./numeric-series";
+import type { Item } from "./types";
 import { mulberry32, buildOptions, shuffle } from "./rng";
 import type { Cell } from "./types";
 
@@ -233,5 +234,48 @@ describe("séries numéricas", () => {
       const answer = Number(it.textOptions![it.answerIndex]);
       expect(answer, it.id).not.toBe(nums[nums.length - 1]);
     }
+  });
+});
+
+describe("variação por semente", () => {
+  const geradores = [
+    ["matrizes", advancedMatrixItems], ["séries de figuras", figureSeriesItems],
+    ["classificação", classificationItems], ["séries numéricas", numericSeriesItems],
+  ] as const;
+  for (const [nome, gen] of geradores) {
+    it(`${nome}: mesma semente → mesmos itens; sementes diferentes → itens diferentes; estrutura preservada`, () => {
+      const a = gen(1), b = gen(1), c = gen(2);
+      expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+      expect(JSON.stringify(a)).not.toBe(JSON.stringify(c));
+      expect(c.length).toBe(gen().length);
+      const dist = (xs: Item[]) => xs.map((x) => x.difficulty).join();
+      // a distribuição/ordem de dificuldade é a mesma em qualquer semente
+      expect(dist(c)).toBe(dist(a));
+      for (const it of c) {
+        const n = (it.options ?? it.textOptions ?? it.set ?? []).length;
+        expect(it.answerIndex).toBeGreaterThanOrEqual(0);
+        expect(it.answerIndex).toBeLessThan(n);
+      }
+    });
+  }
+  it("matrizes: invariantes de estrutura valem em várias sementes", () => {
+    for (const seed of [0, 1, 7, 12345, 999999]) {
+      for (const it of advancedMatrixItems(seed)) {
+        const rows = it.grid!.map((r) => JSON.stringify(r));
+        expect(new Set(rows).size, `linhas repetidas (semente ${seed}, ${it.id})`).toBe(3);
+        expect(new Set(it.options!.map((o) => JSON.stringify(o))).size).toBe(it.options!.length);
+      }
+    }
+  });
+  it("numéricas: 40 no banco, 20 por tentativa (6/12/2), sem repetição na tentativa", () => {
+    const a = numericSeriesItems(3);
+    expect(a).toHaveLength(20);
+    const cont = a.reduce((acc, x) => ({ ...acc, [x.difficulty]: (acc[x.difficulty] ?? 0) + 1 }), {} as Record<string, number>);
+    expect(cont).toEqual({ media: 6, dificil: 12, extrema: 2 });
+    expect(new Set(a.map((x) => x.prompt)).size).toBe(20);
+    // duas sementes cobrem itens que uma só não cobre
+    const prompts = new Set([...numericSeriesItems(3), ...numericSeriesItems(4)].map((x) => x.prompt));
+    expect(prompts.size).toBeGreaterThan(20);
+    for (const it of a) expect(it.textOptions!.filter((o) => o === it.textOptions![it.answerIndex])).toHaveLength(1);
   });
 });

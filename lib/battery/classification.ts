@@ -84,7 +84,8 @@ function build(rule: ClassRule, seed: number): Built {
   return { set: all, oddIndex: all.findIndex((c) => c === odd), why, difficulty };
 }
 
-export function classificationItems(): Item[] {
+export function classificationItems(seed = 0): Item[] {
+  const k = (seed >>> 0) * 1_000_003;
   const rules: ClassRule[] = [
     "mesma-forma-um-diferente", "mesmo-preenchimento", "mesma-quantidade",
     "curva-vs-reta", "mesma-forma-um-diferente", "mesmo-preenchimento",
@@ -92,7 +93,7 @@ export function classificationItems(): Item[] {
     "simetria-rotacional", "mesma-quantidade", "curva-vs-reta", "simetria-rotacional",
   ];
   return rules.map((rule, i) => {
-    const { set, oddIndex, why, difficulty } = build(rule, 8000 + i * 67);
+    const { set, oddIndex, why, difficulty } = build(rule, 8000 + i * 67 + k);
     return {
       id: `cl${String(i + 1).padStart(2, "0")}`,
       difficulty,

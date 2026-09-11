@@ -10,7 +10,7 @@ import { gerarTrials } from "../../lib/simulador/velocidade";
 // verifica-simulador.mjs abre /treino/simulador?seed=12345 e joga perfeito.
 it("gera simulador-esperado.json", () => {
   const SEED = 12345;
-  const out = blocos().map((b, idx) => ({
+  const out = blocos(SEED).map((b, idx) => ({
     nivel: b.nivel,
     verbal: b.verbal.map((q) => ({ id: q.id, resposta: q.resposta })),
     memoria: gerarItensMemoria(b.nivel, SEED + idx).map((m) => ({ formato: m.formato, sequencia: m.sequencia, resposta: m.resposta })),

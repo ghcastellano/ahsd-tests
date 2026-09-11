@@ -1,14 +1,21 @@
 import { describe, it, expect } from "vitest";
-import { ITENS_VERBAIS, itensVerbais } from "./verbal";
+import { ITENS_VERBAIS, itensVerbais, bancoVerbal, POR_FORMATO } from "./verbal";
 import { AMPLITUDES, conferirMemoria, gerarItensMemoria, normalizar } from "./memoria";
 import { CONFIG, gerarTrials, pontuarVelocidade } from "./velocidade";
 import { blocos, blocoFechado, pontuarSimulador, CORTES, type ResultadoBloco } from "./index";
 
 describe("simulador — verbal", () => {
-  it("24 itens, 8 por nível, resposta dentro das opções, ids únicos, sem opções repetidas", () => {
-    expect(ITENS_VERBAIS).toHaveLength(24);
-    for (const n of [1, 2, 3] as const) expect(itensVerbais(n)).toHaveLength(8);
-    expect(new Set(ITENS_VERBAIS.map((i) => i.id)).size).toBe(24);
+  it("banco de 60 (20 por nível: 8 vocabulário, 6 semelhanças, 6 analogias), ids únicos, chaves válidas", () => {
+    expect(ITENS_VERBAIS).toHaveLength(60);
+    expect(new Set(ITENS_VERBAIS.map((i) => i.id)).size).toBe(60);
+    for (const n of [1, 2, 3] as const) {
+      const banco = bancoVerbal(n);
+      expect(banco).toHaveLength(20);
+      expect(banco.filter((i) => i.formato === "vocabulario")).toHaveLength(8);
+      expect(banco.filter((i) => i.formato === "semelhancas")).toHaveLength(6);
+      expect(banco.filter((i) => i.formato === "analogia")).toHaveLength(6);
+      expect(itensVerbais(n)).toHaveLength(8);
+    }
     for (const i of ITENS_VERBAIS) {
       expect(i.resposta).toBeGreaterThanOrEqual(0);
       expect(i.resposta).toBeLessThan(i.opcoes.length);
@@ -16,11 +23,26 @@ describe("simulador — verbal", () => {
       expect(i.explicacao.length).toBeGreaterThan(5);
     }
   });
-  it("cada nível cobre os três formatos", () => {
+  it("cada tentativa amostra 3 vocabulário + 2 semelhanças + 3 analogias; sementes diferentes trazem itens diferentes", () => {
     for (const n of [1, 2, 3] as const) {
-      const f = new Set(itensVerbais(n).map((i) => i.formato));
-      expect([...f].sort()).toEqual(["analogia", "semelhancas", "vocabulario"]);
+      const a = itensVerbais(n, 11), b = itensVerbais(n, 11), c = itensVerbais(n, 12);
+      expect(a.map((i) => i.id)).toEqual(b.map((i) => i.id));
+      expect(a.map((i) => i.id)).not.toEqual(c.map((i) => i.id));
+      expect(new Set(a.map((i) => i.id)).size).toBe(8);
+      for (const fmt of Object.keys(POR_FORMATO) as (keyof typeof POR_FORMATO)[]) {
+        expect(a.filter((i) => i.formato === fmt)).toHaveLength(POR_FORMATO[fmt]);
+      }
     }
+    // dez sementes cobrem bem mais que 8 itens do nível 1
+    const vistos = new Set<string>();
+    for (let s = 1; s <= 10; s++) for (const i of itensVerbais(1, s)) vistos.add(i.id);
+    expect(vistos.size).toBeGreaterThan(14);
+  });
+  it("blocos variam com a semente: verbal e matrizes diferentes, mesma estrutura", () => {
+    const a = blocos(1), b = blocos(2);
+    expect(a[0].verbal.map((i) => i.id)).not.toEqual(b[0].verbal.map((i) => i.id));
+    expect(JSON.stringify(a[0].raciocinio)).not.toBe(JSON.stringify(b[0].raciocinio));
+    expect(b[0].raciocinio.map((i) => i.difficulty)).toEqual(a[0].raciocinio.map((i) => i.difficulty));
   });
 });
 

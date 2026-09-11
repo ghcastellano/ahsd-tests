@@ -74,5 +74,6 @@ export interface TestDef {
   instructions: string;
   /** Regime: potência (tempo folgado, itens complexos) ou velocidade. */
   regime: "potencia" | "velocidade";
-  items: () => Item[];
+  /** Itens da tentativa. A semente varia a superfície (valores, ordem, formas) mantendo a estrutura de regras e a dificuldade. */
+  items: (seed?: number) => Item[];
 }

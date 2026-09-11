@@ -243,21 +243,24 @@ function dualItem(id: string, seed: number, difficulty: Difficulty): Item {
 // Banco: 36 itens em dificuldade crescente (formato APM Set II)
 // ---------------------------------------------------------------------------
 
-export function advancedMatrixItems(): Item[] {
+// `seed` desloca a semente de cada item: outra tentativa, outras figuras,
+// mesmas regras e mesma escalada de dificuldade (a taxonomia é fixa).
+export function advancedMatrixItems(seed = 0): Item[] {
   const items: Item[] = [];
+  const k = (seed >>> 0) * 1_000_003;
   let n = 0;
   const next = () => `am${String(++n).padStart(2, "0")}`;
 
   // Bloco 1 (1–9): distribuição de três em dois atributos.
-  for (let i = 0; i < 9; i++) items.push(d3Item(next(), 1000 + i * 37, "media"));
+  for (let i = 0; i < 9; i++) items.push(d3Item(next(), 1000 + i * 37 + k, "media"));
   // Bloco 2 (10–18): operações lógicas — OR e AND primeiro.
-  for (let i = 0; i < 5; i++) items.push(logicItem(next(), 2000 + i * 41, i % 2 ? "and" : "or", "media"));
-  for (let i = 0; i < 4; i++) items.push(logicItem(next(), 2500 + i * 43, "xor", "dificil"));
+  for (let i = 0; i < 5; i++) items.push(logicItem(next(), 2000 + i * 41 + k, i % 2 ? "and" : "or", "media"));
+  for (let i = 0; i < 4; i++) items.push(logicItem(next(), 2500 + i * 43 + k, "xor", "dificil"));
   // Bloco 3 (19–27): dois componentes sem pista de separação.
-  for (let i = 0; i < 9; i++) items.push(dualItem(next(), 3000 + i * 47, "dificil"));
+  for (let i = 0; i < 9; i++) items.push(dualItem(next(), 3000 + i * 47 + k, "dificil"));
   // Bloco 4 (28–36): distribuição de dois (a regra de maior carga).
-  for (let i = 0; i < 5; i++) items.push(d2Item(next(), 4000 + i * 53, "dificil"));
-  for (let i = 0; i < 4; i++) items.push(logicItem(next(), 4500 + i * 59, "xor", "extrema"));
+  for (let i = 0; i < 5; i++) items.push(d2Item(next(), 4000 + i * 53 + k, "dificil"));
+  for (let i = 0; i < 4; i++) items.push(logicItem(next(), 4500 + i * 59 + k, "xor", "extrema"));
 
   return items;
 }

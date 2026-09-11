@@ -14,3 +14,4 @@ next-env.d.ts
 coverage
 scripts/e2e/esperados.json
 scripts/e2e/simulador-esperado.json
+scripts/e2e/variacao-esperado.json

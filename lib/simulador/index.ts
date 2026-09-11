@@ -38,8 +38,8 @@ export const NOMES_DOMINIO: Record<Dominio, string> = {
   raciocinio: "Raciocínio fluido (matrizes)",
 };
 
-export function blocos(): Bloco[] {
-  const matrizes = advancedMatrixItems();
+export function blocos(seed = 0): Bloco[] {
+  const matrizes = advancedMatrixItems(seed);
   const escolher = (dif: Item["difficulty"], n: number) => matrizes.filter((i) => i.difficulty === dif).slice(0, n);
   // Banco: 9 média, 4 XOR difíceis, 9 de dois componentes (difícil), 5 de
   // distribuição de dois (difícil), 4 extrema. O bloco 1 pega os de dois
@@ -48,17 +48,17 @@ export function blocos(): Bloco[] {
     {
       nivel: 1, nome: "Bloco 1 — Wechsler", escala: "Wechsler (DP 15)", qiAlvo: 130, dp: 15,
       descricao: "Entrada do percentil 98 no formato Wechsler: vocabulário pouco comum, 7–8 dígitos, matrizes de dois componentes.",
-      verbal: itensVerbais(1), raciocinio: matrizes.filter((i) => i.difficulty === "dificil").slice(4, 8), segundosVelocidade: CONFIG[1].segundos, segundosRaciocinio: 4 * 60,
+      verbal: itensVerbais(1, seed), raciocinio: matrizes.filter((i) => i.difficulty === "dificil").slice(4, 8), segundosVelocidade: CONFIG[1].segundos, segundosRaciocinio: 4 * 60,
     },
     {
       nivel: 2, nome: "Bloco 2 — Stanford-Binet", escala: "Stanford-Binet (DP 16)", qiAlvo: 133, dp: 16,
       descricao: "Vocabulário raro, 8–9 dígitos, distratores parecidos e matrizes de distribuição de dois — a regra de maior carga.",
-      verbal: itensVerbais(2), raciocinio: matrizes.filter((i) => i.difficulty === "dificil").slice(13, 17), segundosVelocidade: CONFIG[2].segundos, segundosRaciocinio: 5 * 60,
+      verbal: itensVerbais(2, seed), raciocinio: matrizes.filter((i) => i.difficulty === "dificil").slice(13, 17), segundosVelocidade: CONFIG[2].segundos, segundosRaciocinio: 5 * 60,
     },
     {
       nivel: 3, nome: "Bloco 3 — Cattell", escala: "Cattell (DP 24)", qiAlvo: 149, dp: 24,
       descricao: "O topo: abstração verbal, 9 dígitos e 7–8 na inversa, nove candidatos por fileira e matrizes de carga extrema.",
-      verbal: itensVerbais(3), raciocinio: escolher("extrema", 4), segundosVelocidade: CONFIG[3].segundos, segundosRaciocinio: 6 * 60,
+      verbal: itensVerbais(3, seed), raciocinio: escolher("extrema", 4), segundosVelocidade: CONFIG[3].segundos, segundosRaciocinio: 6 * 60,
     },
   ];
 }

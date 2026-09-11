@@ -107,19 +107,54 @@ const SPECS: Spec[] = [
     seq: [1, 2, 4, 7, 11, 16, 22], answer: 29, distractors: [26, 27, 28, 30, 33],
     why: "As diferenças formam a sequência natural: +1, +2, +3, +4, +5, +6, +7.", difficulty: "dificil",
   },
+  // --- Banco adicional (mesmos critérios de autoria), para variar por tentativa ---
+  { seq: [5, 8, 11, 14, 17], answer: 20, distractors: [18, 19, 21, 22, 23], why: "Progressão aritmética: soma 3 a cada passo.", difficulty: "media" },
+  { seq: [3, 6, 12, 24, 48], answer: 96, distractors: [72, 84, 92, 100, 144], why: "Progressão geométrica: multiplica por 2 a cada passo.", difficulty: "media" },
+  { seq: [2, 5, 10, 17, 26], answer: 37, distractors: [35, 36, 38, 40, 50], why: "Quadrados mais um: 1²+1, 2²+1, 3²+1, 4²+1, 5²+1, 6²+1.", difficulty: "media" },
+  { seq: [7, 14, 21, 28, 35], answer: 42, distractors: [40, 41, 43, 45, 49], why: "Múltiplos de 7: soma 7 a cada passo.", difficulty: "media" },
+  { seq: [1, 3, 6, 10, 15], answer: 21, distractors: [18, 19, 20, 22, 25], why: "Números triangulares: as diferenças crescem de um em um (+2, +3, +4, +5, +6).", difficulty: "media" },
+  { seq: [64, 32, 16, 8, 4], answer: 2, distractors: [0, 1, 3, 5, 6], why: "Divide por 2 a cada passo.", difficulty: "media" },
+  { seq: [2, 4, 8, 14, 22, 32], answer: 44, distractors: [40, 42, 43, 46, 48], why: "Diferenças de segunda ordem: +2, +4, +6, +8, +10, +12.", difficulty: "dificil" },
+  { seq: [1, 4, 10, 22, 46], answer: 94, distractors: [70, 90, 92, 96, 100], why: "Cada termo é o dobro do anterior mais 2.", difficulty: "dificil" },
+  { seq: [4, 5, 7, 11, 19, 35], answer: 67, distractors: [51, 59, 63, 69, 70], why: "As diferenças dobram: +1, +2, +4, +8, +16, +32.", difficulty: "dificil" },
+  { seq: [2, 9, 4, 12, 6, 15, 8], answer: 18, distractors: [10, 12, 16, 17, 21], why: "Duas séries intercaladas: 2, 4, 6, 8 (+2) e 9, 12, 15, 18 (+3).", difficulty: "dificil" },
+  { seq: [1, 10, 2, 20, 4, 40, 8], answer: 80, distractors: [16, 60, 70, 90, 160], why: "Duas séries intercaladas, ambas dobrando: 1, 2, 4, 8 e 10, 20, 40, 80.", difficulty: "dificil" },
+  { seq: [3, 4, 7, 11, 18, 29], answer: 47, distractors: [40, 44, 46, 48, 58], why: "Cada termo é a soma dos dois anteriores (18 + 29 = 47).", difficulty: "dificil" },
+  { seq: [5, 6, 8, 11, 15, 20], answer: 26, distractors: [24, 25, 27, 28, 30], why: "As diferenças crescem de um em um: +1, +2, +3, +4, +5, +6.", difficulty: "dificil" },
+  { seq: [2, 6, 12, 20, 30], answer: 42, distractors: [36, 40, 41, 44, 48], why: "Produto de inteiros consecutivos: 1·2, 2·3, 3·4, 4·5, 5·6, 6·7.", difficulty: "dificil" },
+  { seq: [1, 8, 9, 64, 25, 216], answer: 49, distractors: [36, 48, 50, 81, 512], why: "Duas séries intercaladas: quadrados dos ímpares (1, 9, 25, 49) e cubos (8, 64, 216).", difficulty: "dificil" },
+  { seq: [9, 8, 16, 15, 30, 29], answer: 58, distractors: [28, 44, 56, 57, 60], why: "Operações alternadas: −1, depois ×2, repetidamente.", difficulty: "dificil" },
+  { seq: [1, 4, 13, 40, 121], answer: 364, distractors: [242, 360, 363, 365, 484], why: "Cada termo é o triplo do anterior mais 1.", difficulty: "dificil" },
+  { seq: ["Z", "X", "U", "Q"], answer: "L", distractors: ["K", "M", "N", "O", "P"], why: "Saltos decrescentes no alfabeto: −2, −3, −4, −5 posições (Z→X→U→Q→L).", difficulty: "dificil" },
+  { seq: ["A", "B", "D", "G", "K", "P"], answer: "V", distractors: ["T", "U", "W", "X", "Y"], why: "Saltos crescentes: +1, +2, +3, +4, +5, +6 posições (P = 16 → V = 22).", difficulty: "extrema" },
+  { seq: [1, 2, 6, 15, 31], answer: 56, distractors: [46, 50, 52, 57, 60], why: "As diferenças são os quadrados: +1, +4, +9, +16, +25.", difficulty: "extrema" },
 ];
 
-export function numericSeriesItems(): Item[] {
-  return SPECS.map((s, i) => {
-    const rand = mulberry32(9000 + i * 71);
-    const { options, answerIndex } = buildOptions(
-      String(s.answer),
-      s.distractors.map(String),
-      (v) => v,
-      rand,
-    );
+/** Quantos itens de cada dificuldade entram numa tentativa (a distribuição original de 20). */
+export const POR_DIFICULDADE: Record<Difficulty, number> = { media: 6, dificil: 12, extrema: 2 };
+
+/**
+ * 20 itens por tentativa, amostrados do banco de 40 por dificuldade, com a
+ * semente. Mesma distribuição de dificuldade sempre; itens diferentes a cada
+ * semente, agrupados média → difícil → extrema (ordem do banco dentro do grupo).
+ */
+export function numericSeriesItems(seed = 0): Item[] {
+  const rand = mulberry32(9000 + (seed >>> 0) * 1_000_003);
+  const escolhidos = new Set<number>();
+  for (const dif of Object.keys(POR_DIFICULDADE) as Difficulty[]) {
+    const idx = SPECS.map((s, i) => (s.difficulty === dif ? i : -1)).filter((i) => i >= 0);
+    for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rand() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
+    idx.slice(0, POR_DIFICULDADE[dif]).forEach((i) => escolhidos.add(i));
+  }
+  const ordem: Record<Difficulty, number> = { media: 0, dificil: 1, extrema: 2 };
+  return SPECS.map((s, i) => ({ s, i }))
+    .filter(({ i }) => escolhidos.has(i))
+    .sort((a, b) => ordem[a.s.difficulty] - ordem[b.s.difficulty] || a.i - b.i)
+    .map(({ s, i }, n) => {
+    const r = mulberry32(9000 + i * 71 + (seed >>> 0) * 7919);
+    const { options, answerIndex } = buildOptions(String(s.answer), s.distractors.map(String), (v) => v, r);
     return {
-      id: `ns${String(i + 1).padStart(2, "0")}`,
+      id: `ns${String(n + 1).padStart(2, "0")}`,
       difficulty: s.difficulty,
       prompt: s.seq.join(", ") + ", ?",
       textOptions: options,

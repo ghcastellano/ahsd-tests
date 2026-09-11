@@ -73,7 +73,8 @@ function build(rule: SeriesRule, seed: number): { seq: Cell[]; answer: Cell; dis
   return { seq, answer, distractors, why: why[rule] };
 }
 
-export function figureSeriesItems(): Item[] {
+export function figureSeriesItems(seed = 0): Item[] {
+  const k = (seed >>> 0) * 1_000_003;
   const rules: SeriesRule[] = [
     "quantidade", "rotacao", "preenchimento", "tamanho",
     "quantidade", "rotacao", "preenchimento", "rotacao-quantidade",
@@ -81,9 +82,9 @@ export function figureSeriesItems(): Item[] {
     "rotacao-quantidade",
   ];
   return rules.map((rule, i) => {
-    const seed = 7000 + i * 61;
-    const { seq, answer, distractors, why } = build(rule, seed);
-    const { options, answerIndex } = buildOptions(answer, distractors, key, mulberry32(seed + 5));
+    const s = 7000 + i * 61 + k;
+    const { seq, answer, distractors, why } = build(rule, s);
+    const { options, answerIndex } = buildOptions(answer, distractors, key, mulberry32(s + 5));
     const difficulty: Difficulty = rule === "rotacao-quantidade" ? "dificil" : "media";
     return {
       id: `fs${String(i + 1).padStart(2, "0")}`,

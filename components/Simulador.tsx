@@ -10,6 +10,7 @@ import { gerarTrials, pontuarVelocidade, type TrialVelocidade } from "@/lib/simu
 import { insertRemoteRecord, makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
+import { useSeed } from "@/lib/use-seed";
 
 type Etapa = "intro" | "verbal" | "memoria" | "velocidade" | "raciocinio" | "entre-blocos" | "done";
 
@@ -20,8 +21,9 @@ type Etapa = "intro" | "verbal" | "memoria" | "velocidade" | "raciocinio" | "ent
  * em lib/simulador; aqui só o fluxo e a coleta.
  */
 export default function Simulador() {
-  const todos = useMemo(() => blocos(), []);
-  const [seed, setSeed] = useState<number | null>(null);
+  // ?seed=N fixa a semente (testes automatizados); sem ele, sorteia uma a cada abertura.
+  const [seed, novaSemente] = useSeed();
+  const todos = useMemo(() => blocos(seed ?? 0), [seed]);
   const [etapa, setEtapa] = useState<Etapa>("intro");
   const [b, setB] = useState(0); // índice do bloco atual
   const [respondent, setRespondent] = useState("");
@@ -50,12 +52,6 @@ export default function Simulador() {
   const parcial = useRef<Partial<ResultadoBloco>>({});
 
   useScrollTopOnScreenChange(`${etapa}-${b}-${im}`);
-  useEffect(() => {
-    // ?seed=N fixa a semente (usado pelos testes automatizados); sem ele, aleatória.
-    const q = new URLSearchParams(window.location.search).get("seed");
-    const n = q ? Number(q) : Number.NaN;
-    setSeed(Number.isFinite(n) ? Math.abs(Math.floor(n)) % 1_000_000 : Date.now() % 1_000_000);
-  }, []);
 
   const bloco: Bloco = todos[b];
 
@@ -238,7 +234,7 @@ export default function Simulador() {
             <li><strong>Velocidade</strong> — 60 s: dois símbolos-alvo à esquerda; algum deles aparece IGUAL na fileira? Responda Sim/Não (teclas S/N). Erro desconta ponto.</li>
             <li><strong>Raciocínio</strong> — 4 matrizes 3×3 com tempo.</li>
           </ol>
-          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 18 / 22 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O bloco 1 já é a entrada do 2% superior: não fechar é o esperado para a maioria.</p>
+          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 18 / 22 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O bloco 1 já é a entrada do 2% superior: não fechar é o esperado para a maioria. Os itens verbais, as sequências de memória, os símbolos e as matrizes são sorteados de um banco a cada tentativa — não dá para decorar.</p>
         </div>
         <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="resp">Identificação (opcional)</label>
         <input id="resp" type="text" value={respondent} onChange={(e) => setRespondent(e.target.value)} className="mt-1 w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none" placeholder="Nome ou iniciais" />
@@ -450,7 +446,7 @@ export default function Simulador() {
       </details>
       {savedRecord && <ShareBlock record={savedRecord} />}
       <div className="no-print mt-6 flex flex-wrap gap-3">
-        <button type="button" onClick={() => { setResultados([]); setSavedRecord(null); setSeed(Date.now() % 1_000_000); setEtapa("intro"); }} className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700">Refazer</button>
+        <button type="button" onClick={() => { setResultados([]); setSavedRecord(null); novaSemente(); setEtapa("intro"); }} className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700">Refazer</button>
         <Link href="/teste-qi" className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 hover:bg-slate-100">Teste de matrizes</Link>
         <Link href="/treino" className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 hover:bg-slate-100">Bateria de treino</Link>
       </div>

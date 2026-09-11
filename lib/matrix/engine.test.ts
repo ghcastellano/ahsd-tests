@@ -7,6 +7,7 @@ import {
   optionsFor,
   TIME_LIMIT_SECONDS,
   type CellSpec,
+  itemsForSeed,
 } from "./engine";
 
 const SHAPES = ["circle", "square", "triangle", "diamond", "cross", "star"];
@@ -127,5 +128,40 @@ describe("grading", () => {
 describe("timer config", () => {
   it("is 25 minutes", () => {
     expect(TIME_LIMIT_SECONDS).toBe(1500);
+  });
+});
+
+describe("variação por semente (/teste-qi)", () => {
+  it("semente 0 é o banco original; outra semente muda a superfície e mantém regras e dificuldade", () => {
+    expect(itemsForSeed(0)).toBe(items);
+    const a = itemsForSeed(42), b = itemsForSeed(42), c = itemsForSeed(43);
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    expect(JSON.stringify(a)).not.toBe(JSON.stringify(items));
+    expect(JSON.stringify(a)).not.toBe(JSON.stringify(c));
+    a.forEach((it, i) => {
+      expect(it.tier).toBe(items[i].tier);
+      expect(it.rules.map((r) => r.attr + r.kind)).toEqual(items[i].rules.map((r) => r.attr + r.kind));
+      expect(it.rules.map((r) => [...r.values].sort().join())).toEqual(items[i].rules.map((r) => [...r.values].sort().join()));
+    });
+  });
+  it("em qualquer semente: rotação só em triângulo/estrela, 6 opções únicas com uma correta, e a correção usa os itens da semente", () => {
+    for (const seed of [1, 5, 12345, 777777]) {
+      const its = itemsForSeed(seed);
+      for (const it of its) {
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+          const s = cellAt(it, r, c);
+          if (s.rotation !== 0) expect(["triangle", "star"]).toContain(s.shape);
+        }
+        const { options, answerIndex } = optionsFor(it, seed);
+        expect(options.length).toBe(6);
+        expect(new Set(options.map((o) => JSON.stringify(o))).size).toBe(6);
+        expect(JSON.stringify(options[answerIndex])).toBe(JSON.stringify(answerOf(it)));
+      }
+      const perfeito = its.map((it) => optionsFor(it, seed).answerIndex);
+      expect(grade(perfeito, its, seed).correct).toBe(30);
+      // as respostas certas da semente 0 NÃO corrigem a prova de outra semente (as opções mudam)
+      const daOutra = items.map((it) => optionsFor(it, 0).answerIndex);
+      expect(grade(daOutra, its, seed).correct).toBeLessThan(30);
+    }
   });
 });

@@ -162,6 +162,29 @@ export const items: MatrixItem[] = [
   ]),
 ];
 
+/**
+ * Variante dos 30 itens para uma semente: mesmas regras (mesma dificuldade),
+ * outra superfície — a ordem dos valores de cada regra é embaralhada e a forma
+ * de base muda. Itens com regra de rotação continuam em triângulo/estrela
+ * (rotação só é inequívoca nessas formas). Semente 0 = banco original.
+ */
+export function itemsForSeed(seed: number): MatrixItem[] {
+  if (!seed) return items;
+  const rand = mulberry32((seed >>> 0) * 2654435761 + 7);
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const out = [...arr];
+    for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+    return out;
+  };
+  return items.map((it) => {
+    const temRotacao = it.rules.some((r) => r.attr === "rotation");
+    const temForma = it.rules.some((r) => r.attr === "shape");
+    const formas: Shape[] = temRotacao ? ["triangle", "star"] : (DOMAINS.shape as Shape[]);
+    const shape = temForma ? it.base.shape : formas[Math.floor(rand() * formas.length)];
+    return { ...it, base: { ...it.base, shape }, rules: it.rules.map((r) => ({ ...r, values: shuffle(r.values) })) };
+  });
+}
+
 export function cellAt(it: MatrixItem, row: number, col: number): CellSpec {
   const spec: CellSpec = { ...it.base };
   for (const rule of it.rules) {
@@ -216,7 +239,7 @@ function mutate(spec: CellSpec, attr: Attr, step: number): CellSpec {
  * mutações de um atributo), embaralhadas deterministicamente.
  * Retorna as opções e o índice da correta.
  */
-export function optionsFor(it: MatrixItem): { options: CellSpec[]; answerIndex: number } {
+export function optionsFor(it: MatrixItem, seed = 0): { options: CellSpec[]; answerIndex: number } {
   const answer = answerOf(it);
   const seen = new Set([key(answer)]);
   const distractors: CellSpec[] = [];
@@ -244,7 +267,7 @@ export function optionsFor(it: MatrixItem): { options: CellSpec[]; answerIndex: 
   }
 
   const options = [answer, ...distractors];
-  const rand = mulberry32(it.id * 7919 + 13);
+  const rand = mulberry32(it.id * 7919 + 13 + (seed >>> 0) * 31);
   for (let i = options.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
     [options[i], options[j]] = [options[j], options[i]];
@@ -260,7 +283,7 @@ export interface MatrixScore {
 }
 
 /** Corrige o teste: `chosen[i]` é o índice da opção escolhida no item i (ou null). */
-export function grade(chosen: (number | null)[]): MatrixScore {
+export function grade(chosen: (number | null)[], its: MatrixItem[] = items, seed = 0): MatrixScore {
   const byTier: MatrixScore["byTier"] = {
     facil: { correct: 0, total: 0 },
     medio: { correct: 0, total: 0 },
@@ -268,16 +291,16 @@ export function grade(chosen: (number | null)[]): MatrixScore {
   };
   let correct = 0;
   let answered = 0;
-  items.forEach((it, i) => {
+  its.forEach((it, i) => {
     byTier[it.tier].total++;
     const pick = chosen[i];
     if (pick !== null && pick !== undefined) answered++;
-    if (pick !== null && pick !== undefined && pick === optionsFor(it).answerIndex) {
+    if (pick !== null && pick !== undefined && pick === optionsFor(it, seed).answerIndex) {
       correct++;
       byTier[it.tier].correct++;
     }
   });
-  return { correct, total: items.length, byTier, answered };
+  return { correct, total: its.length, byTier, answered };
 }
 
 export const TIME_LIMIT_SECONDS = 25 * 60;

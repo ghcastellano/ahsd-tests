@@ -237,4 +237,19 @@ npm run build && npx next start -p 3111 &
 npx vitest run scripts/e2e && BASE_URL=http://localhost:3111 node scripts/e2e/verifica-todos.mjs
 # simulador de escalas (semente fixa 12345: jogada perfeita nos 3 blocos e jogada fraca)
 BASE_URL=http://localhost:3111 node scripts/e2e/verifica-simulador.mjs
+# variação por semente: /teste-qi e os 4 treinos com ?seed=11 e ?seed=4242 —
+# provas diferentes entre si e jogada perfeita com nota máxima em cada uma
+BASE_URL=http://localhost:3111 node scripts/e2e/verifica-variacao.mjs
 ```
+
+**Banco de questões e variação por tentativa.** Nenhuma prova cronometrada é
+fixa. Cada abertura de `/teste-qi`, de um treino da bateria ou do simulador
+sorteia uma semente (`lib/use-seed.ts`; `?seed=N` fixa uma para os testes
+automatizados) e gera a prova a partir dela: as matrizes, séries de figuras e
+classificações variam valores, formas e ordem das alternativas mantendo a mesma
+estrutura de regras e dificuldade; as séries numéricas sorteiam 20 de um banco
+de 40 (6 médias, 12 difíceis, 2 extremas); o simulador sorteia 8 itens verbais
+por bloco de um banco de 20 por nível, além de sequências de memória, símbolos
+e matrizes próprios da semente. Os testes unitários (`battery.test.ts`,
+`engine.test.ts`, `simulador.test.ts`) garantem que sementes diferentes dão
+provas diferentes com a mesma distribuição de dificuldade.

@@ -9,6 +9,7 @@ import type { Item, TestDef } from "@/lib/battery/types";
 import { insertRemoteRecord, makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
+import { useSeed } from "@/lib/use-seed";
 
 type Phase = "intro" | "running" | "done";
 
@@ -41,11 +42,18 @@ function band(pct: number): { label: string; text: string } {
 
 export default function BatteryQuiz({ id }: { id: string }) {
   const test = getTest(id) as TestDef | undefined;
-  const items = useMemo<Item[]>(() => (test ? test.items() : []), [test]);
+  // Cada tentativa recebe uma semente: mesma estrutura de dificuldade, itens diferentes.
+  const [seed] = useSeed();
+  const items = useMemo<Item[]>(() => (test ? test.items(seed ?? 0) : []), [test, seed]);
 
   const [phase, setPhase] = useState<Phase>("intro");
   const [current, setCurrent] = useState(0);
   const [chosen, setChosen] = useState<(number | null)[]>(() => items.map(() => null));
+  // A semente só chega após o primeiro render: zera as respostas quando os itens mudam
+  // (sempre antes de começar, porque o botão "Iniciar" espera a semente).
+  useEffect(() => {
+    setChosen(items.map(() => null));
+  }, [items]);
   const [timeLeft, setTimeLeft] = useState(test?.timeLimitSeconds ?? 0);
   const [respondent, setRespondent] = useState("");
   const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
@@ -137,7 +145,10 @@ export default function BatteryQuiz({ id }: { id: string }) {
         </div>
         <h1 className="mt-2 text-2xl font-bold text-slate-900">{test.name}</h1>
         <p className="mt-1 text-sm text-slate-400">{test.modeledOn}</p>
-        <p className="mt-3 text-slate-600">{test.intro}</p>
+        <p className="mt-3 text-slate-600">
+          {test.intro} As questões são sorteadas de um banco a cada tentativa — mesma estrutura
+          de dificuldade, itens diferentes.
+        </p>
 
         <div className="mt-4 rounded-lg border border-brand-100 bg-brand-50 p-3 text-sm text-brand-900">
           <strong>Instruções:</strong> {test.instructions}
@@ -175,7 +186,8 @@ export default function BatteryQuiz({ id }: { id: string }) {
         <button
           type="button"
           onClick={() => setPhase("running")}
-          className="mt-5 rounded-lg bg-brand-600 px-6 py-3 font-medium text-white transition hover:bg-brand-700"
+          disabled={seed === null}
+          className="mt-5 rounded-lg bg-brand-600 px-6 py-3 font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
         >
           Iniciar — {fmt(test.timeLimitSeconds)} no relógio
         </button>
@@ -418,6 +430,7 @@ export default function BatteryQuiz({ id }: { id: string }) {
               key={i}
               type="button"
               onClick={() => pick(i)}
+              aria-label={`Alternativa ${i + 1}`}
               className={`rounded-xl border-2 bg-white px-4 py-3 font-mono text-lg transition ${
                 chosen[current] === i ? "border-brand-600 bg-brand-50 ring-2 ring-brand-200" : "border-slate-200 hover:border-brand-300"
               }`}

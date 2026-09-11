@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   cellAt,
   grade,
-  items,
+  itemsForSeed,
   optionsFor,
   TIME_LIMIT_SECONDS,
   type CellSpec,
@@ -14,6 +14,7 @@ import {
 import { insertRemoteRecord, makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { remoteEnabled } from "@/lib/remote-config";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
+import { useSeed } from "@/lib/use-seed";
 import ShareBlock from "./ShareBlock";
 
 // ---------- Renderização SVG de uma célula ----------
@@ -131,16 +132,28 @@ function bandFor(score: MatrixScore): { label: string; text: string } {
 }
 
 export default function MatrixQuiz() {
+  // Cada tentativa recebe uma semente: os itens (valores, formas, ordem das
+  // alternativas) mudam, mas a estrutura das regras e a graduação não.
+  const [seed] = useSeed();
+  const items = useMemo(() => itemsForSeed(seed ?? 0), [seed]);
   const [phase, setPhase] = useState<Phase>("intro");
   const [current, setCurrent] = useState(0);
   const [chosen, setChosen] = useState<(number | null)[]>(() => items.map(() => null));
+  // A semente só chega após o primeiro render: zera as respostas quando os itens mudam
+  // (sempre antes de começar, porque o botão "Iniciar" espera a semente).
+  useEffect(() => {
+    setChosen(items.map(() => null));
+  }, [items]);
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT_SECONDS);
   const [respondent, setRespondent] = useState("");
   const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
   const finishedRef = useRef(false);
 
-  const allOptions = useMemo(() => items.map((it) => optionsFor(it)), []);
-  const score = useMemo(() => (phase === "done" ? grade(chosen) : null), [phase, chosen]);
+  const allOptions = useMemo(() => items.map((it) => optionsFor(it, seed ?? 0)), [items, seed]);
+  const score = useMemo(
+    () => (phase === "done" ? grade(chosen, items, seed ?? 0) : null),
+    [phase, chosen, items, seed],
+  );
 
   useEffect(() => {
     if (phase !== "running") return;
@@ -214,7 +227,8 @@ export default function MatrixQuiz() {
           Matrizes progressivas 3×3 no mesmo formato dos testes de admissão da Mensa e das
           Matrizes de Raven: em cada item, descubra o padrão (forma, preenchimento, rotação,
           tamanho, quantidade) e escolha a figura que completa a matriz. A dificuldade aumenta ao
-          longo do teste.
+          longo do teste. As questões são sorteadas de um banco a cada tentativa — decorar não
+          adianta; só o raciocínio.
         </p>
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <strong>Leia antes de começar:</strong> este é um <strong>treino original</strong> desta
@@ -247,7 +261,8 @@ export default function MatrixQuiz() {
         <button
           type="button"
           onClick={() => setPhase("running")}
-          className="mt-5 rounded-lg bg-brand-600 px-6 py-3 font-medium text-white transition hover:bg-brand-700"
+          disabled={seed === null}
+          className="mt-5 rounded-lg bg-brand-600 px-6 py-3 font-medium text-white transition hover:bg-brand-700 disabled:opacity-50"
         >
           Iniciar cronômetro e começar
         </button>
