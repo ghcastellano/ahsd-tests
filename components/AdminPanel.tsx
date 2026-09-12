@@ -7,12 +7,12 @@ import {
   clearLocalRecords,
   fetchRemoteRecords,
   formatDateTimeBR,
-  insertRemoteRecord,
+  insertRemoteRecordDetalhado,
   loadLocalRecords,
   saveLocalRecord,
   type ResultRecord,
 } from "@/lib/history";
-import { codeFromHash, decodeRecord, extractCode } from "@/lib/share";
+import { codeFromHash, decodeRecord, extractCode, shareLink } from "@/lib/share";
 import { remoteEnabled } from "@/lib/remote-config";
 import { fmt, formatSubscaleValue } from "@/lib/subscale-format";
 import VisitasPanel from "./VisitasPanel";
@@ -40,7 +40,7 @@ function downloadCsv(records: ResultRecord[], filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function RecordsTable({ records }: { records: ResultRecord[] }) {
+function RecordsTable({ records, compartilhavel = false }: { records: ResultRecord[]; compartilhavel?: boolean }) {
   const [openId, setOpenId] = useState<string | null>(null);
 
   if (records.length === 0) {
@@ -69,6 +69,7 @@ function RecordsTable({ records }: { records: ResultRecord[] }) {
                 r={r}
                 open={open}
                 onToggle={() => setOpenId(open ? null : r.id)}
+                compartilhavel={compartilhavel}
               />
             );
           })}
@@ -78,7 +79,19 @@ function RecordsTable({ records }: { records: ResultRecord[] }) {
   );
 }
 
-function RowGroup({ r, open, onToggle }: { r: ResultRecord; open: boolean; onToggle: () => void }) {
+function RowGroup({ r, open, onToggle, compartilhavel }: { r: ResultRecord; open: boolean; onToggle: () => void; compartilhavel: boolean }) {
+  const [copiado, setCopiado] = useState<"idle" | "ok" | "fail">("idle");
+  async function copiarLink() {
+    const url = shareLink(window.location.origin, r);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiado("ok");
+    } catch {
+      window.prompt("Copie o link do resultado:", url);
+      setCopiado("fail");
+    }
+    setTimeout(() => setCopiado("idle"), 2500);
+  }
   return (
     <>
       <tr className="border-t border-slate-100">
@@ -103,7 +116,12 @@ function RowGroup({ r, open, onToggle }: { r: ResultRecord; open: boolean; onTog
             {r.bandLabel}
           </span>
         </td>
-        <td className="px-3 py-2 text-right">
+        <td className="whitespace-nowrap px-3 py-2 text-right">
+          {compartilhavel && (
+            <button type="button" onClick={() => void copiarLink()} className="mr-3 text-xs text-brand-600 hover:underline" aria-label={`Copiar link do resultado ${r.acronym}`}>
+              {copiado === "ok" ? "link copiado ✓" : copiado === "fail" ? "copie do aviso" : "copiar link"}
+            </button>
+          )}
           {(r.subscales?.length || r.notes?.length) ? (
             <button type="button" onClick={onToggle} className="text-xs text-brand-600 hover:underline">
               {open ? "fechar" : "detalhes"}
@@ -173,11 +191,22 @@ export default function AdminPanel() {
     let cancelled = false;
     void (async () => {
       let ok = 0;
+      const falhas: string[] = [];
       for (const r of records) {
-        if (await insertRemoteRecord(r)) ok++;
+        const e = await insertRemoteRecordDetalhado(r);
+        if (e.ok) ok++;
+        else falhas.push(e.motivo ?? "falha desconhecida");
         if (cancelled) return;
       }
-      if (!cancelled && ok > 0) {
+      if (cancelled) return;
+      // Antes só o sucesso era anunciado; a falha ficava muda e o registro
+      // sumia do painel central sem explicação.
+      if (falhas.length > 0) {
+        setSyncMsg(
+          `${ok} registro(s) sincronizado(s); ${falhas.length} não enviado(s) ao banco central — ${[...new Set(falhas)].join("; ")}. ` +
+            'Use "copiar link" no registro para enviá-lo por mensagem ao avaliador.',
+        );
+      } else if (ok > 0) {
         setSyncMsg(`${ok} registro(s) deste dispositivo sincronizado(s) com o banco central.`);
       }
     })();
@@ -335,7 +364,10 @@ export default function AdminPanel() {
         </p>
       )}
       {syncMsg && (
-        <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+        <p
+          className={`mt-3 rounded-lg border px-4 py-2 text-sm ${syncMsg.includes("não enviado") ? "border-rose-200 bg-rose-50 text-rose-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}
+          data-sync={syncMsg.includes("não enviado") ? "parcial" : "ok"}
+        >
           ☁️ {syncMsg}
         </p>
       )}
@@ -376,7 +408,7 @@ export default function AdminPanel() {
           antes da criação deste painel não existem — o histórico começa a partir da ativação do
           recurso.
         </p>
-        <RecordsTable records={local} />
+        <RecordsTable records={local} compartilhavel />
 
         <details className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
           <summary className="cursor-pointer text-sm font-medium text-slate-700">

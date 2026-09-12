@@ -92,6 +92,17 @@ ok(await p.getByText(/IP\(s\) distinto\(s\)/).count() === 1, "resumo com IPs dis
   const gravados = await (await fetch(`${F}/__resultados`)).json();
   ok(gravados.some((r) => r.respondent === "Gabi" && r.instrument_id === "treino-classificacao"), "o banco falso recebeu o resultado da Gabi (treino-classificacao)");
   ok(!gravados.some((r) => r.total_score > 1000), "a sonda não gravou nenhuma linha");
+
+  // Painel no mesmo aparelho: sincroniza os registros locais e AVISA o que não entrou.
+  await p.goto(`${B}/painel-ahsd`);
+  await p.locator("[data-sync]").waitFor();
+  const sync = await p.locator("[data-sync]").innerText();
+  ok(/1 não enviado\(s\)/.test(sync) && /RLS/.test(sync), `painel avisa o registro que não entrou e o motivo: "${sync.slice(0, 90)}…"`);
+  ok(await p.getByRole("button", { name: /Copiar link do resultado/ }).count() >= 2, "cada registro local tem 'copiar link'");
+  await p.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await p.getByRole("button", { name: /Copiar link do resultado/ }).first().click();
+  const link = await p.evaluate(() => navigator.clipboard.readText());
+  ok(/\/resultado#v2\./.test(link), `link copiado abre a página de resultado (${link.slice(0, 50)}…)`);
 }
 
 await browser.close();
