@@ -104,6 +104,15 @@ ser aberto. O schema vive em [`supabase/setup.sql`](supabase/setup.sql).
   então use uma senha longa e única.
 - `created_at` é carimbado pelo servidor: o cliente não envia data.
 
+**Status visível da gravação.** Cada tela de resultado mostra se o registro
+entrou no banco central ("✓ Gravado no registro central") ou o motivo da falha
+(chave/RLS, tabela ausente, sem conexão) com o botão "Tentar de novo"
+(`components/RegistroCentralStatus.tsx`). O painel testa a gravação ao abrir
+via `GET /api/registro-central`: a sonda envia uma linha propositalmente
+inválida e lê a resposta — 23514 (restrição de valores) significa que a
+política RLS deixou passar e a gravação real funciona; 42501/401 significa
+bloqueada. Nada é gravado pela sonda.
+
 ### Registro de acessos (IP)
 
 Cada página aberta dispara `POST /api/visita` (componente `VisitaLogger` no

@@ -127,7 +127,32 @@ export function clearLocalRecords(): void {
  * anônimo permitiria a qualquer visitante sobrescrever resultados alheios.
  */
 export async function insertRemoteRecord(record: ResultRecord): Promise<boolean> {
-  if (!remoteEnabled()) return false;
+  return (await insertRemoteRecordDetalhado(record)).ok;
+}
+
+/** Resultado de um envio ao registro central, com o motivo quando falha. */
+export interface EnvioRemoto {
+  ok: boolean;
+  /** HTTP devolvido pelo banco (ausente quando a rede falhou). */
+  status?: number;
+  /** Texto curto e acionável para a tela. */
+  motivo?: string;
+}
+
+/** Traduz a resposta do PostgREST/Supabase para um motivo legível. */
+export function motivoDaFalha(status: number | undefined, body: string): string {
+  if (status === undefined) return "sem conexão com o banco central (rede, VPN/bloqueador ou projeto pausado)";
+  if (status === 401 || status === 403 || body.includes("42501")) {
+    return `o banco recusou a gravação (HTTP ${status}${body.includes("42501") ? ", política RLS" : ""}) — a chave ou a permissão de inserção mudou`;
+  }
+  if (status === 404 || body.includes("PGRST205") || body.includes("PGRST202")) return "a tabela de resultados não existe no banco central";
+  if (status === 400 || status === 422) return `o banco rejeitou os dados (HTTP ${status}${body.includes("23514") ? ", restrição de valores" : ""})`;
+  if (status >= 500) return `o banco central está fora do ar (HTTP ${status})`;
+  return `falha inesperada (HTTP ${status})`;
+}
+
+export async function insertRemoteRecordDetalhado(record: ResultRecord): Promise<EnvioRemoto> {
+  if (!remoteEnabled()) return { ok: false, motivo: "registro central desativado" };
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${RESULTS_TABLE}`, {
       method: "POST",
@@ -155,9 +180,11 @@ export async function insertRemoteRecord(record: ResultRecord): Promise<boolean>
       }),
     });
     // 409 = client_id já existe: o registro está no banco, missão cumprida.
-    return res.ok || res.status === 409;
+    if (res.ok || res.status === 409) return { ok: true, status: res.status };
+    const body = await res.text().catch(() => "");
+    return { ok: false, status: res.status, motivo: motivoDaFalha(res.status, body) };
   } catch {
-    return false;
+    return { ok: false, motivo: motivoDaFalha(undefined, "") };
   }
 }
 

@@ -153,6 +153,15 @@ export default function AdminPanel() {
   const [pasteValue, setPasteValue] = useState("");
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  // Sonda: o site consegue gravar novos resultados no banco central?
+  const [sonda, setSonda] = useState<{ gravacao: string; texto: string; detalhe: string } | null>(null);
+  useEffect(() => {
+    if (!remoteEnabled()) return;
+    fetch("/api/registro-central", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => setSonda(j))
+      .catch(() => setSonda({ gravacao: "sem-conexao", texto: "não foi possível testar a gravação", detalhe: "" }));
+  }, []);
   const central = useMemo(() => remoteEnabled(), []);
 
   // Sincroniza os registros deste dispositivo com o banco central (idempotente:
@@ -400,6 +409,15 @@ export default function AdminPanel() {
       {/* Registro central */}
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-slate-900">Registro central (todos os dispositivos)</h2>
+        {central && (
+          <p
+            className={`mt-1 text-sm ${!sonda ? "text-slate-400" : sonda.gravacao === "ok" ? "text-emerald-700" : "text-rose-700"}`}
+            title={sonda?.detalhe || undefined}
+            data-sonda={sonda?.gravacao}
+          >
+            Gravação de novos resultados: {sonda ? sonda.texto : "testando…"}
+          </p>
+        )}
         {!central ? (
           <div className="mt-3 rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-600">
             <p>

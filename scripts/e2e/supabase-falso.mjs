@@ -4,6 +4,7 @@
 import { createServer } from "node:http";
 const porta = Number(process.argv[2] ?? 3222);
 const visitas = [];
+const resultados = [];
 createServer((req, res) => {
   // CORS como o Supabase real: o painel chama a RPC direto do navegador.
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -32,7 +33,16 @@ createServer((req, res) => {
     if (req.method === "GET" && url === "/__visitas") {
       res.writeHead(200, { "Content-Type": "application/json" }); return res.end(JSON.stringify(visitas));
     }
-    if (req.method === "POST" && url.startsWith("/rest/v1/resultados")) { res.writeHead(201); return res.end(); }
+    if (req.method === "POST" && url.startsWith("/rest/v1/resultados")) {
+      let r = {}; try { r = JSON.parse(corpo); } catch {}
+      // Sonda: linha inválida de propósito -> violação de CHECK (RLS passou).
+      if (Number(r.total_score) > 1000) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ code: "23514", message: "new row violates check constraint" })); }
+      // Simulação de RLS bloqueando, para testar a mensagem na tela.
+      if (r.respondent === "FALHA-RLS") { res.writeHead(401, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ code: "42501", message: "new row violates row-level security policy" })); }
+      resultados.push(r);
+      res.writeHead(201); return res.end();
+    }
+    if (req.method === "GET" && url === "/__resultados") { res.writeHead(200, { "Content-Type": "application/json" }); return res.end(JSON.stringify(resultados)); }
     res.writeHead(404); res.end();
   });
 }).listen(porta, "127.0.0.1", () => console.log(`supabase falso em http://127.0.0.1:${porta}`));

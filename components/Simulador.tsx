@@ -8,8 +8,7 @@ import ShareBlock from "./ShareBlock";
 import { blocos, pontuarSimulador, NOMES_DOMINIO, type Bloco, type ResultadoBloco, type Dominio } from "@/lib/simulador";
 import { gerarItensMemoria, conferirMemoria, type ItemMemoria } from "@/lib/simulador/memoria";
 import { gerarTrials, pontuarVelocidade, type TrialVelocidade } from "@/lib/simulador/velocidade";
-import { insertRemoteRecord, makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
-import { remoteEnabled } from "@/lib/remote-config";
+import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import { useSeed } from "@/lib/use-seed";
 
@@ -183,7 +182,7 @@ export default function Simulador() {
       subscales: (Object.keys(NOMES_DOMINIO) as Dominio[]).map((d) => ({ name: NOMES_DOMINIO[d], raw: final.porDominio[d].acertos, max: final.porDominio[d].total })),
     };
     saveLocalRecord(record);
-    if (remoteEnabled()) void insertRemoteRecord(record);
+    // O envio ao registro central (com status na tela) acontece no ShareBlock.
     setSavedRecord(record);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [final]);

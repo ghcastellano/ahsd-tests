@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ResultRecord } from "@/lib/history";
 import { shareLink } from "@/lib/share";
+import RegistroCentralStatus from "./RegistroCentralStatus";
 
 /**
  * Bloco "enviar ao avaliador": gera um link curto para a página /resultado, com
@@ -60,6 +61,9 @@ export default function ShareBlock({ record }: { record: ResultRecord }) {
 
   return (
     <div className="no-print mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+      <div className="mb-3">
+        <RegistroCentralStatus record={record} />
+      </div>
       <h2 className="text-lg font-semibold text-emerald-900">
         Compartilhar este resultado
       </h2>

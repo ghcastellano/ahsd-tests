@@ -59,6 +59,41 @@ await p.getByLabel("Filtrar por IP").fill("200.1.1.1");
 ok(await p.locator("table").last().locator("tbody tr").count() === 1, "filtro por IP reduz a 1 linha");
 ok(await p.getByText(/IP\(s\) distinto\(s\)/).count() === 1, "resumo com IPs distintos");
 
+// ---------------- Registro central: status visível + sonda ----------------
+{
+  const sonda = await (await fetch(`${B}/api/registro-central`)).json();
+  ok(sonda.gravacao === "ok", `sonda /api/registro-central diz "ok" (${sonda.gravacao}: ${sonda.texto})`);
+  ok(await p.locator('[data-sonda="ok"]').count() === 1 || (await p.reload(), await p.getByLabel("Senha do painel").fill("senha-teste"), await p.getByRole("button", { name: "Entrar" }).click(), await p.locator('[data-sonda="ok"]').waitFor(), true), "painel mostra 'Gravação de novos resultados: OK'");
+
+  // Um treino curto com nome que o banco falso recusa (simula RLS bloqueando).
+  const resp = JSON.parse((await import("node:fs")).readFileSync(new URL("./variacao-esperado.json", import.meta.url), "utf8"));
+  const seed = Object.keys(resp)[0];
+  async function treino(nome) {
+    await p.goto(`${B}/treino/classificacao?seed=${seed}`);
+    await p.locator('input[maxlength="80"]').first().fill(nome);
+    await p.getByRole("button", { name: /^Iniciar/ }).click();
+    const r = resp[seed]["classificacao"];
+    for (let i = 0; i < r.length; i++) {
+      await p.getByText(new RegExp(`Item ${i + 1} de ${r.length}`)).waitFor();
+      await p.getByRole("button", { name: new RegExp(`^Figura ${r[i] + 1}$`) }).click();
+      if (i < r.length - 1) await p.getByRole("button", { name: /Próximo/ }).click();
+    }
+    await p.getByRole("button", { name: /^Finalizar/ }).click();
+    await p.getByText("Acertos", { exact: true }).waitFor();
+  }
+  await treino("FALHA-RLS");
+  await p.locator('[data-registro="falhou"]').waitFor();
+  const msg = await p.locator('[data-registro="falhou"]').innerText();
+  ok(/Não foi gravado no registro central/.test(msg) && /RLS/.test(msg), "resultado mostra a falha de gravação com o motivo (RLS)");
+  ok(await p.getByRole("button", { name: "Tentar de novo" }).count() === 1, "botão 'Tentar de novo' presente");
+  await treino("Gabi");
+  await p.locator('[data-registro="ok"]').waitFor();
+  ok((await p.locator('[data-registro="ok"]').innerText()).includes("Gravado no registro central"), "resultado mostra '✓ Gravado no registro central'");
+  const gravados = await (await fetch(`${F}/__resultados`)).json();
+  ok(gravados.some((r) => r.respondent === "Gabi" && r.instrument_id === "treino-classificacao"), "o banco falso recebeu o resultado da Gabi (treino-classificacao)");
+  ok(!gravados.some((r) => r.total_score > 1000), "a sonda não gravou nenhuma linha");
+}
+
 await browser.close();
 console.log(log.join("\n"));
 const falhas = log.filter((l) => l.startsWith("FALHOU")).length;

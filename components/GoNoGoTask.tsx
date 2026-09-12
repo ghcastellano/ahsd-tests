@@ -15,8 +15,7 @@ import {
   type Metricas,
   type Resposta,
 } from "@/lib/tasks/go-nogo";
-import { insertRemoteRecord, makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
-import { remoteEnabled } from "@/lib/remote-config";
+import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import ShareBlock from "./ShareBlock";
 
@@ -148,7 +147,7 @@ export default function GoNoGoTask() {
       ],
     };
     saveLocalRecord(record);
-    if (remoteEnabled()) void insertRemoteRecord(record);
+    // O envio ao registro central (com status na tela) acontece no ShareBlock.
     setSavedRecord(record);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fase]);

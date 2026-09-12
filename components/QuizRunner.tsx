@@ -5,7 +5,6 @@ import Link from "next/link";
 import { getInstrument } from "@/lib/instruments";
 import { countAnswered, isComplete, optionsFor } from "@/lib/scoring";
 import {
-  insertRemoteRecord,
   makeRecordId,
   recordFromResult,
   saveLocalRecord,
@@ -73,9 +72,7 @@ export default function QuizRunner({ id }: { id: string }) {
       new Date().toISOString(),
     );
     saveLocalRecord(record);
-    if (remoteEnabled()) {
-      void insertRemoteRecord(record);
-    }
+    // O envio ao registro central (com status na tela) acontece no ShareBlock.
     setSavedRecord(record);
     setSubmitted(true);
   }

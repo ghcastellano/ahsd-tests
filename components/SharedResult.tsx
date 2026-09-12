@@ -5,7 +5,7 @@ import Link from "next/link";
 import { codeFromHash, decodeRecord } from "@/lib/share";
 import {
   formatDateTimeBR,
-  insertRemoteRecord,
+  insertRemoteRecordDetalhado,
   loadLocalRecords,
   saveLocalRecord,
   type ResultRecord,
@@ -42,6 +42,7 @@ export default function SharedResult() {
   const [estado, setEstado] = useState<Estado>("carregando");
   const [rec, setRec] = useState<ResultRecord | null>(null);
   const [salvo, setSalvo] = useState<string | null>(null);
+  const [central, setCentral] = useState<string | null>(null);
 
   useEffect(() => {
     function ler() {
@@ -67,8 +68,13 @@ export default function SharedResult() {
       return;
     }
     const ok = saveLocalRecord(rec);
-    if (ok && remoteEnabled()) void insertRemoteRecord(rec);
     setSalvo(ok ? "novo" : "falhou");
+    if (ok && remoteEnabled()) {
+      setCentral("Enviando ao registro central…");
+      void insertRemoteRecordDetalhado(rec).then((r) =>
+        setCentral(r.ok ? "✓ Também gravado no registro central." : `Não entrou no registro central: ${r.motivo}.`),
+      );
+    }
   }
 
   if (estado === "carregando") {
@@ -177,6 +183,11 @@ export default function SharedResult() {
         {salvo === "falhou" && (
           <p className="mt-2 text-sm text-rose-700">
             Não foi possível gravar neste navegador (modo privado ou armazenamento bloqueado).
+          </p>
+        )}
+        {central && (
+          <p className={`mt-2 text-sm ${central.startsWith("✓") ? "text-emerald-800" : central.startsWith("Enviando") ? "text-slate-500" : "text-rose-700"}`} data-registro-central>
+            {central}
           </p>
         )}
       </div>
