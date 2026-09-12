@@ -250,7 +250,7 @@ export function formatDateTimeBR(iso: string): string {
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
 
-function csvEscape(value: string): string {
+export function csvEscape(value: string): string {
   // Neutraliza injeção de fórmula: célula começando com = + - @ seria
   // executada pelo Excel/LibreOffice ao abrir o arquivo.
   let v = value;

@@ -75,3 +75,12 @@ na Vercel e faça redeploy.)*
 Se o conector do Supabase estiver ativo na sessão do Claude (claude.ai →
 Settings → Connectors), basta pedir "suba o supabase" — o Claude cria projeto,
 schema, senha e ativação sem nenhum passo manual.
+
+## Registro de acessos (IP) num projeto já existente
+
+O `setup.sql` novo já cria a tabela `visitas`. Se o seu projeto foi criado
+antes disso, rode uma vez [`supabase/visitas.sql`](supabase/visitas.sql) no
+SQL Editor: ele cria a tabela, o RLS (só inserção) e a função
+`admin_listar_visitas`, protegida pela mesma senha do painel. A partir daí a
+seção "Acessos ao site (IP)" do painel passa a listar os acessos.
+

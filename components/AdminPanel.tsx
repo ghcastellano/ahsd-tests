@@ -15,6 +15,7 @@ import {
 import { codeFromHash, decodeRecord, extractCode } from "@/lib/share";
 import { remoteEnabled } from "@/lib/remote-config";
 import { fmt, formatSubscaleValue } from "@/lib/subscale-format";
+import VisitasPanel from "./VisitasPanel";
 import type { Severity } from "@/lib/types";
 
 const severityBadge: Record<Severity, string> = {
@@ -471,10 +472,15 @@ export default function AdminPanel() {
         )}
       </section>
 
+      {/* Acessos (IP) — só depois que a senha foi aceita pelo registro central */}
+      {central && remote !== null && <VisitasPanel password={password} />}
+
       <p className="mt-10 text-xs text-slate-400">
         Esta página não é indexada por buscadores e não aparece na navegação do site. Os registros
         não incluem as respostas individuais — apenas resultado agregado (pontuações, faixas e
-        subescalas), data/hora e a identificação opcional informada por quem respondeu.
+        subescalas), data/hora e a identificação opcional informada por quem respondeu. O registro
+        de acessos guarda IP, localização aproximada, página, origem e navegador de cada abertura
+        de página, para segurança e auditoria de uso.
       </p>
     </div>
   );

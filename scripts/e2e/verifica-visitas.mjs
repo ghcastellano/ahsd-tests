@@ -1,0 +1,66 @@
+// Verifica o registro de acessos de ponta a ponta contra o Supabase falso:
+// abrir uma página grava IP/cidade/caminho lidos dos cabeçalhos; IP no corpo
+// é ignorado; o painel lista o acesso depois da senha.
+// Uso: node scripts/e2e/supabase-falso.mjs & (site buildado com
+//      NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3222) node scripts/e2e/verifica-visitas.mjs
+import { chromium } from "playwright";
+const B = process.env.BASE_URL ?? "http://localhost:3111";
+const F = process.env.FAKE_URL ?? "http://127.0.0.1:3222";
+const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
+const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const ctx = await browser.newContext({ extraHTTPHeaders: {
+  "x-forwarded-for": "187.10.20.30, 10.0.0.1",
+  "x-vercel-ip-country": "BR", "x-vercel-ip-country-region": "SP", "x-vercel-ip-city": "S%C3%A3o%20Paulo",
+} });
+const p = await ctx.newPage();
+const esperar = async (n) => { for (let i = 0; i < 40; i++) { const v = await (await fetch(`${F}/__visitas`)).json(); if (v.length >= n) return v; await new Promise((r) => setTimeout(r, 250)); } return (await fetch(`${F}/__visitas`)).json(); };
+
+await fetch(`${F}/__visitas`, { method: "DELETE" }); // começa do zero
+await p.goto(`${B}/teste-qi?seed=3`);
+let vs = await esperar(1);
+ok(vs.length === 1, `abrir /teste-qi gravou 1 acesso (${vs.length})`);
+ok(vs[0]?.ip === "187.10.20.30", `IP gravado é o primeiro de x-forwarded-for (${vs[0]?.ip})`);
+ok(vs[0]?.cidade === "São Paulo" && vs[0]?.regiao === "SP" && vs[0]?.pais === "BR", `local decodificado: ${vs[0]?.cidade}, ${vs[0]?.regiao}, ${vs[0]?.pais}`);
+ok(vs[0]?.caminho === "/teste-qi", `caminho sem query (${vs[0]?.caminho})`);
+ok(typeof vs[0]?.user_agent === "string" && /Chrome|HeadlessChrome/.test(vs[0].user_agent), "user-agent gravado");
+
+await p.getByRole("link", { name: /Sobre/ }).first().click();
+await p.waitForURL(/\/sobre/);
+vs = await esperar(2);
+ok(vs.length === 2 && vs[0]?.caminho === "/sobre", `navegação interna grava outro acesso (${vs.length}, ${vs[0]?.caminho})`);
+ok(vs[0]?.referer === `${B}/teste-qi`, `origem sem query (${vs[0]?.referer})`);
+ok(await p.getByText(/Registro de acessos\./).count() === 1, "página Sobre informa a coleta de IP");
+
+// IP no corpo é ignorado; corpo lixo não derruba a rota.
+const r1 = await fetch(`${B}/api/visita`, { method: "POST", headers: { "Content-Type": "application/json", "x-real-ip": "200.1.1.1" }, body: JSON.stringify({ ip: "6.6.6.6", caminho: "/x?y=1" }) });
+vs = await esperar(3);
+ok(r1.status === 200 && vs[0]?.ip === "200.1.1.1" && vs[0]?.caminho === "/x", `IP do corpo ignorado; usa x-real-ip (${vs[0]?.ip}, ${vs[0]?.caminho})`);
+const r2 = await fetch(`${B}/api/visita`, { method: "POST", body: "{{{ lixo" });
+ok(r2.status === 200 || r2.status === 202, `corpo malformado não quebra a rota (${r2.status})`);
+const r3 = await fetch(`${B}/api/visita`);
+ok(r3.status === 405, `GET em /api/visita é 405 (${r3.status})`);
+
+// Painel: senha errada, senha certa, listagem e filtro.
+await p.goto(`${B}/painel-ahsd`);
+await p.getByLabel("Senha do painel").fill("errada");
+await p.getByRole("button", { name: "Entrar" }).click();
+await p.getByText("Senha incorreta.").waitFor();
+ok(await p.getByText("Acessos ao site (IP)").count() === 0, "seção de acessos escondida antes da senha");
+await p.getByLabel("Senha do painel").fill("senha-teste");
+await p.getByRole("button", { name: "Entrar" }).click();
+await p.getByText("Acessos ao site (IP)").waitFor();
+await p.getByRole("button", { name: "Carregar acessos" }).click();
+await p.getByText(/acesso\(s\)/).waitFor();
+const total = await p.locator("table").last().locator("tbody tr").count();
+ok(total >= 4, `painel lista os acessos (${total} linhas, inclui o próprio /painel-ahsd)`);
+ok(await p.getByText("187.10.20.30").count() >= 1, "IP aparece na tabela");
+ok(await p.getByText("São Paulo, SP, BR").count() >= 1, "local aparece na tabela");
+await p.getByLabel("Filtrar por IP").fill("200.1.1.1");
+ok(await p.locator("table").last().locator("tbody tr").count() === 1, "filtro por IP reduz a 1 linha");
+ok(await p.getByText(/IP\(s\) distinto\(s\)/).count() === 1, "resumo com IPs distintos");
+
+await browser.close();
+console.log(log.join("\n"));
+const falhas = log.filter((l) => l.startsWith("FALHOU")).length;
+console.log(`\n${log.length - falhas}/${log.length} verificações`);
+process.exit(falhas ? 1 : 0);

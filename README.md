@@ -104,6 +104,24 @@ ser aberto. O schema vive em [`supabase/setup.sql`](supabase/setup.sql).
   então use uma senha longa e única.
 - `created_at` é carimbado pelo servidor: o cliente não envia data.
 
+### Registro de acessos (IP)
+
+Cada página aberta dispara `POST /api/visita` (componente `VisitaLogger` no
+layout). A rota, no servidor, lê o IP e a localização aproximada dos cabeçalhos
+que a Vercel carimba (`x-real-ip`, `x-vercel-ip-country/-region/-city`), o
+navegador e o idioma, e grava na tabela `visitas` — o cliente só informa caminho
+e página de origem, e um IP enviado no corpo é ignorado. Mesma regra de
+segurança do registro central: a chave pública só insere; a leitura acontece
+pela função `admin_listar_visitas`, protegida pela senha do painel, que lista
+até 5.000 acessos com filtro por IP e exportação CSV.
+
+Para ativar num projeto que ainda não tem a tabela, rode
+[`supabase/visitas.sql`](supabase/visitas.sql) no SQL Editor (o `setup.sql`
+já inclui o mesmo bloco para instalações novas). Endereço IP é dado pessoal
+(LGPD): a finalidade registrada é segurança e auditoria de uso, a página
+"Sobre" informa a coleta e o script traz o comando de limpeza para apagar
+acessos com mais de 180 dias.
+
 **Apontar para outro projeto** (sem alterar código): defina no Vercel
 `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`, rode o
 `setup.sql` no projeto novo, defina a senha e faça um novo deploy.
@@ -134,7 +152,8 @@ lib/
   instruments/       # uma definição por instrumento + registry (index.ts)
   scoring.test.ts    # testes unitários de pontuação (Vitest)
   history.test.ts    # testes do registro/CSV
-supabase/setup.sql   # schema + RLS do registro central
+supabase/setup.sql   # schema + RLS do registro central (resultados + visitas)
+supabase/visitas.sql # só a tabela de acessos, para projetos já existentes
 ```
 
 ### Pontuação verificada
@@ -240,6 +259,10 @@ BASE_URL=http://localhost:3111 node scripts/e2e/verifica-simulador.mjs
 # variação por semente: /teste-qi e os 4 treinos com ?seed=11 e ?seed=4242 —
 # provas diferentes entre si e jogada perfeita com nota máxima em cada uma
 BASE_URL=http://localhost:3111 node scripts/e2e/verifica-variacao.mjs
+# registro de acessos (IP): site buildado apontando para um Supabase falso local
+node scripts/e2e/supabase-falso.mjs 3222 &
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3222 npm run build && npx next start -p 3111 &
+node scripts/e2e/verifica-visitas.mjs   # 17 verificações: IP dos cabeçalhos, painel, filtro, CSV
 ```
 
 **Banco de questões e variação por tentativa.** Nenhuma prova cronometrada é

@@ -19,6 +19,10 @@ export const SUPABASE_KEY: string =
 
 export const RESULTS_TABLE = "resultados";
 export const ADMIN_RPC = "admin_listar_resultados";
+// Registro de acessos (IP de quem abre o site) — mesma regra: anon só insere;
+// a leitura passa pela função admin_listar_visitas, protegida pela senha do painel.
+export const VISITS_TABLE = "visitas";
+export const ADMIN_VISITS_RPC = "admin_listar_visitas";
 
 export function remoteEnabled(): boolean {
   return SUPABASE_URL.length > 0 && SUPABASE_KEY.length > 0;

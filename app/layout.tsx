@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import VisitaLogger from "@/components/VisitaLogger";
 
 export const metadata: Metadata = {
   title: "Rastreio AH/SD e Neurodivergências",
@@ -12,6 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR">
       <body>
+        <VisitaLogger />
         <div className="min-h-screen flex flex-col">
           <header className="no-print border-b border-slate-200 bg-white">
             <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
