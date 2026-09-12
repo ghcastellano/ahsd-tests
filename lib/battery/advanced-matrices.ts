@@ -1,5 +1,6 @@
 import type { Cell, Difficulty, Item, Mark } from "./types";
 import { buildOptions, mulberry32, shuffle } from "./rng";
+import { visualKey } from "./visual-key";
 
 // Matrizes 3x3 no estilo das Matrizes Progressivas Avançadas.
 //
@@ -21,16 +22,8 @@ const SHAPES: Mark[] = ["circle", "square", "triangle", "diamond", "star", "cros
 const ELEMENTS: Mark[] = ["hbar", "vbar", "slash", "backslash", "dot", "circle"];
 const FILLS = ["none", "half", "solid"] as const;
 
-const key = (c: Cell) =>
-  JSON.stringify({
-    m: [...c.marks].sort(),
-    o: c.outer ?? "",
-    of: c.outerFill ?? "",
-    i: c.innerFill ?? "",
-    r: c.rotation ?? 0,
-    s: c.size ?? 2,
-    n: c.count ?? 1,
-  });
+// Chave visual: alternativas que se desenham iguais contam como uma só.
+const key = visualKey;
 
 // ---------------------------------------------------------------------------
 // 1. Distribuição de três (D3) em dois atributos simultâneos
@@ -97,13 +90,17 @@ function d2Item(id: string, seed: number, difficulty: Difficulty): Item {
   const answer: Cell = { marks: [b] };
   grid[2][2] = answer;
 
+  // Distratores visualmente distintos da resposta. (Girar ou "preencher" o
+  // elemento certo não serve: um círculo girado é o mesmo círculo, e linhas
+  // não têm preenchimento — a alternativa sairia idêntica à correta.)
+  const outro = shuffle(ELEMENTS, rand).find((e) => e !== a && e !== b)!;
   const distractors: Cell[] = [
     { marks: [a] }, // repete o que já está na linha
     { marks: [] }, // repete o vazio
     { marks: [a, b] }, // soma os dois
-    { marks: [shuffle(ELEMENTS, rand).find((e) => e !== a && e !== b)!] },
-    { marks: [b], rotation: 45 },
-    { marks: [b], innerFill: "none" },
+    { marks: [outro] }, // elemento que não pertence ao item
+    { marks: [b], count: 2 }, // o certo, mas em dobro
+    { marks: [b, outro] }, // o certo contaminado por um estranho
   ];
 
   const { options, answerIndex } = buildOptions(answer, distractors, key, rand);

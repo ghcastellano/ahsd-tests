@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import CellSvg from "./CellSvg";
+import RevisaoItem from "./RevisaoItem";
 import ShareBlock from "./ShareBlock";
 import { blocos, pontuarSimulador, NOMES_DOMINIO, type Bloco, type ResultadoBloco, type Dominio } from "@/lib/simulador";
 import { gerarItensMemoria, conferirMemoria, type ItemMemoria } from "@/lib/simulador/memoria";
@@ -50,6 +51,8 @@ export default function Simulador() {
 
   // acumulado do bloco atual
   const parcial = useRef<Partial<ResultadoBloco>>({});
+  // escolhas de cada bloco (verbal e raciocínio), para a revisão no resultado
+  const escolhasPorBloco = useRef<Record<number, { verbal: Record<string, number>; raciocinio: Record<string, number> }>>({});
 
   useScrollTopOnScreenChange(`${etapa}-${b}-${im}`);
 
@@ -79,6 +82,7 @@ export default function Simulador() {
     pararCronometro();
     const acertos = bloco.verbal.filter((q) => escolhas[q.id] === q.resposta).length;
     parcial.current.verbal = { acertos, total: bloco.verbal.length };
+    escolhasPorBloco.current[b] = { verbal: { ...escolhas }, raciocinio: {} };
     // memória
     const itens = gerarItensMemoria(bloco.nivel, (seed ?? 1) + b);
     setItensMem(itens); setIm(0); setAcertosMem(0); setEntrada(""); setMostrandoIdx(0); setEtapa("memoria");
@@ -136,6 +140,7 @@ export default function Simulador() {
   const fecharRaciocinio = () => {
     pararCronometro();
     const acertos = bloco.raciocinio.filter((q) => escolhas[q.id] === q.answerIndex).length;
+    escolhasPorBloco.current[b] = { ...(escolhasPorBloco.current[b] ?? { verbal: {} }), raciocinio: { ...escolhas } };
     const completo: ResultadoBloco = {
       nivel: bloco.nivel,
       verbal: parcial.current.verbal ?? { acertos: 0, total: bloco.verbal.length },
@@ -436,17 +441,56 @@ export default function Simulador() {
           </tbody>
         </table>
       </div>
-      <details className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-        <summary className="cursor-pointer text-sm font-medium text-slate-700">Ver as respostas dos itens verbais com explicação</summary>
-        <ul className="mt-3 space-y-2 text-sm text-slate-600">
-          {todos.slice(0, Math.max(1, resultados.length)).flatMap((x) => x.verbal).map((q) => (
-            <li key={q.id}><span className="font-medium text-slate-800">{q.enunciado}</span> → <strong>{q.opcoes[q.resposta]}</strong>. {q.explicacao}</li>
-          ))}
-        </ul>
-      </details>
+      {/* Revisão item a item: o que foi marcado e o que era certo */}
+      <h2 className="mt-6 text-lg font-semibold text-slate-900">Revisão dos itens</h2>
+      <p className="mt-1 text-sm text-slate-500">Erros aparecem em vermelho; clique em uma matriz para ver a questão com a sua resposta e a correta.</p>
+      {todos.slice(0, Math.max(1, resultados.length)).map((x, idx) => {
+        const esc = escolhasPorBloco.current[idx] ?? { verbal: {}, raciocinio: {} };
+        const errosVerbal = x.verbal.filter((q) => esc.verbal[q.id] !== q.resposta).length;
+        const errosRac = x.raciocinio.filter((q) => esc.raciocinio[q.id] !== q.answerIndex).length;
+        return (
+          <div key={x.nivel} className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{x.nome} ({x.qiAlvo})</p>
+            <details className="mt-2" open={errosVerbal > 0}>
+              <summary className="cursor-pointer text-sm font-medium text-slate-700">Compreensão verbal — {errosVerbal === 0 ? "sem erros" : `${errosVerbal} erro(s)`}</summary>
+              <ul className="mt-2 space-y-2 text-sm">
+                {x.verbal.map((q) => {
+                  const marcada = esc.verbal[q.id];
+                  const errou = marcada !== q.resposta;
+                  return (
+                    <li key={q.id} className={`rounded-lg border p-3 ${errou ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`} data-revisao={q.id}>
+                      <p className="font-medium text-slate-800">{q.enunciado}</p>
+                      {errou && <p className="mt-1 text-rose-700">✗ Sua resposta: <strong>{marcada === undefined ? "(em branco)" : q.opcoes[marcada]}</strong></p>}
+                      <p className={`mt-1 ${errou ? "text-emerald-700" : "text-emerald-800"}`}>✓ Correta: <strong>{q.opcoes[q.resposta]}</strong></p>
+                      <p className="mt-1 text-xs text-slate-600">{q.explicacao}</p>
+                    </li>
+                  );
+                })}
+              </ul>
+            </details>
+            <details className="mt-2" open={errosRac > 0}>
+              <summary className="cursor-pointer text-sm font-medium text-slate-700">Raciocínio (matrizes) — {errosRac === 0 ? "sem erros" : `${errosRac} erro(s)`}</summary>
+              <div className="mt-2 space-y-2">
+                {x.raciocinio.map((item, i) => {
+                  const marcada = esc.raciocinio[item.id] ?? null;
+                  const errou = marcada !== item.answerIndex;
+                  return (
+                    <details key={item.id} className={`rounded-lg border px-3 py-2 ${errou ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`}>
+                      <summary className={`cursor-pointer text-sm font-medium ${errou ? "text-rose-700" : "text-emerald-800"}`}>
+                        Matriz {i + 1} — {marcada === null ? "não respondida" : errou ? "errada" : "correta"} · ver a questão
+                      </summary>
+                      <RevisaoItem item={item} escolhido={marcada} uid={`rev-${x.nivel}-${item.id}`} />
+                    </details>
+                  );
+                })}
+              </div>
+            </details>
+          </div>
+        );
+      })}
       {savedRecord && <ShareBlock record={savedRecord} />}
       <div className="no-print mt-6 flex flex-wrap gap-3">
-        <button type="button" onClick={() => { setResultados([]); setSavedRecord(null); novaSemente(); setEtapa("intro"); }} className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700">Refazer</button>
+        <button type="button" onClick={() => { setResultados([]); setSavedRecord(null); escolhasPorBloco.current = {}; novaSemente(); setEtapa("intro"); }} className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700">Refazer</button>
         <Link href="/teste-qi" className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 hover:bg-slate-100">Teste de matrizes</Link>
         <Link href="/treino" className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 hover:bg-slate-100">Bateria de treino</Link>
       </div>

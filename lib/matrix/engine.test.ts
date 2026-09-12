@@ -8,6 +8,7 @@ import {
   TIME_LIMIT_SECONDS,
   type CellSpec,
   itemsForSeed,
+  describeRules,
 } from "./engine";
 
 const SHAPES = ["circle", "square", "triangle", "diamond", "cross", "star"];
@@ -162,6 +163,16 @@ describe("variação por semente (/teste-qi)", () => {
       // as respostas certas da semente 0 NÃO corrigem a prova de outra semente (as opções mudam)
       const daOutra = items.map((it) => optionsFor(it, 0).answerIndex);
       expect(grade(daOutra, its, seed).correct).toBeLessThan(30);
+    }
+  });
+});
+
+describe("describeRules", () => {
+  it("descreve cada regra do item em português, uma frase por regra", () => {
+    for (const it of items) {
+      const d = describeRules(it);
+      expect(d).toHaveLength(it.rules.length);
+      for (const frase of d) expect(frase).toMatch(/^(A forma|O preenchimento|A rotação|O tamanho|A quantidade) .+\.$/);
     }
   });
 });

@@ -9,6 +9,10 @@ import { mulberry32, pick, shuffle } from "./rng";
 
 const CURVED: Mark[] = ["circle", "dot"];
 const STRAIGHT: Mark[] = ["square", "triangle", "diamond", "cross", "hbar", "vbar"];
+// Formas que DESENHAM o preenchimento (linhas e o ponto sólido não): só estas
+// entram em regras baseadas em preenchimento, senão a propriedade fica invisível.
+const FILLABLE: Mark[] = ["circle", "square", "triangle", "diamond", "cross"];
+const STRAIGHT_FILLABLE: Mark[] = ["square", "triangle", "diamond", "cross"];
 const THREE_SIDED: Mark[] = ["triangle"];
 const FOUR_SIDED: Mark[] = ["square", "diamond"];
 
@@ -37,11 +41,17 @@ function build(rule: ClassRule, seed: number): Built {
 
   switch (rule) {
     case "mesma-forma-um-diferente": {
-      const s = pick(STRAIGHT, rand);
+      const s = pick(STRAIGHT_FILLABLE, rand);
       const other = pick(STRAIGHT.filter((x) => x !== s), rand);
-      members = [0, 1, 2, 3].map((i) => ({ marks: [s], innerFill: fills[i % 3] }));
+      // Três preenchimentos + uma variação de tamanho: quatro figuras distintas da mesma forma.
+      members = [
+        { marks: [s], innerFill: fills[0] },
+        { marks: [s], innerFill: fills[1] },
+        { marks: [s], innerFill: fills[2] },
+        { marks: [s], innerFill: fills[pick([0, 1, 2], rand)], size: pick([1, 3], rand) as 1 | 3 },
+      ];
       odd = { marks: [other], innerFill: fills[1] };
-      why = "Quatro figuras têm a mesma forma (variando só o preenchimento); uma tem forma diferente.";
+      why = "Quatro figuras têm a mesma forma (variando só preenchimento ou tamanho); uma tem forma diferente.";
       break;
     }
     case "curva-vs-reta": {
@@ -54,7 +64,7 @@ function build(rule: ClassRule, seed: number): Built {
     case "mesmo-preenchimento": {
       const f = pick([...fills], rand);
       const other = pick(fills.filter((x) => x !== f), rand);
-      const shapes = shuffle([...STRAIGHT, ...CURVED], rand);
+      const shapes = shuffle(FILLABLE, rand);
       members = [0, 1, 2, 3].map((i) => ({ marks: [shapes[i]], innerFill: f }));
       odd = { marks: [shapes[4]], innerFill: other };
       why = "Quatro figuras compartilham o mesmo preenchimento, apesar de formas diferentes; uma destoa.";

@@ -1,5 +1,6 @@
 import type { Cell, Difficulty, Item, Mark } from "./types";
 import { buildOptions, mulberry32, pick, shuffle } from "./rng";
+import { visualKey } from "./visual-key";
 
 // Séries de figuras (formato dos subtestes de séries: 3 figuras, escolher a 4ª
 // que continua a transformação). Regime de VELOCIDADE: itens curtos, dominados
@@ -8,20 +9,16 @@ import { buildOptions, mulberry32, pick, shuffle } from "./rng";
 const SHAPES: Mark[] = ["circle", "square", "triangle", "diamond", "star", "cross"];
 const FILLS = ["none", "half", "solid"] as const;
 
-const key = (c: Cell) =>
-  JSON.stringify({
-    m: [...c.marks].sort(),
-    f: c.innerFill ?? "",
-    r: c.rotation ?? 0,
-    s: c.size ?? 2,
-    n: c.count ?? 1,
-  });
+// Chave visual: alternativas que se desenham iguais contam como uma só.
+const key = visualKey;
 
 type SeriesRule = "rotacao" | "quantidade" | "tamanho" | "preenchimento" | "rotacao-quantidade";
 
 function build(rule: SeriesRule, seed: number): { seq: Cell[]; answer: Cell; distractors: Cell[]; why: string } {
   const rand = mulberry32(seed);
-  const shape = pick(SHAPES.filter((s) => s === "triangle" || s === "star" || s === "cross"), rand);
+  // Só formas SEM simetria de 90°: a cruz girada 90° é a mesma cruz, o que
+  // repetiria figuras na série e nas alternativas.
+  const shape = pick(SHAPES.filter((s) => s === "triangle" || s === "star"), rand);
   const anyShape = pick(SHAPES, rand);
   const step = 4;
 
@@ -30,7 +27,8 @@ function build(rule: SeriesRule, seed: number): { seq: Cell[]; answer: Cell; dis
       case "rotacao":
         return { marks: [shape], rotation: (i * 45) % 180 };
       case "quantidade":
-        return { marks: [anyShape], count: (i + 1) as 1 | 2 | 3 | 4 };
+        // O CellSvg desenha até 4 elementos; acima disso a figura repetiria a de 4.
+        return { marks: [anyShape], count: Math.min(4, i + 1) as 1 | 2 | 3 | 4 };
       case "tamanho":
         // Ciclo 1→2→3→1: com `Math.min` o 4º elemento repetiria o 3º e o item
         // ficaria degenerado (a resposta seria a própria figura anterior).

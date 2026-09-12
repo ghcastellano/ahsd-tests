@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import CellSvg from "./CellSvg";
+import RevisaoItem from "./RevisaoItem";
 import ShareBlock from "./ShareBlock";
 import { getTest } from "@/lib/battery";
 import type { Item, TestDef } from "@/lib/battery/types";
@@ -264,22 +265,13 @@ export default function BatteryQuiz({ id }: { id: string }) {
                       <strong>{it.textOptions[it.answerIndex]}</strong>
                     </p>
                   )}
-                  {it.options && (
-                    <div className="mt-2 flex items-center gap-3">
-                      <span className="text-xs text-slate-500">Resposta correta:</span>
-                      <div className="rounded border border-emerald-300 bg-emerald-50 p-1">
-                        <CellSvg cell={it.options[it.answerIndex]} uid={`rev-${it.id}`} size={54} />
-                      </div>
-                    </div>
-                  )}
-                  {it.set && (
-                    <div className="mt-2 flex items-center gap-3">
-                      <span className="text-xs text-slate-500">Era a figura:</span>
-                      <div className="rounded border border-emerald-300 bg-emerald-50 p-1">
-                        <CellSvg cell={it.set[it.answerIndex]} uid={`revs-${it.id}`} size={54} />
-                      </div>
-                    </div>
-                  )}
+                  {/* Clique para ver a questão inteira com a alternativa marcada e a correta */}
+                  <details className="mt-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <summary className="cursor-pointer text-sm font-medium text-brand-700">
+                      {chosen[i] === it.answerIndex ? "Ver a questão e a resposta" : "Ver a questão com a sua resposta e a correta"}
+                    </summary>
+                    <RevisaoItem item={it} escolhido={chosen[i]} uid={`rev-${it.id}`} />
+                  </details>
                 </div>
               ))}
             </div>

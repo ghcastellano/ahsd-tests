@@ -259,11 +259,27 @@ BASE_URL=http://localhost:3111 node scripts/e2e/verifica-simulador.mjs
 # variação por semente: /teste-qi e os 4 treinos com ?seed=11 e ?seed=4242 —
 # provas diferentes entre si e jogada perfeita com nota máxima em cada uma
 BASE_URL=http://localhost:3111 node scripts/e2e/verifica-variacao.mjs
+# revisão de erros no resultado (/teste-qi, bateria e simulador): erra de propósito e
+# confere que a questão aparece com a alternativa marcada (vermelha) e a correta (verde)
+BASE_URL=http://localhost:3111 node scripts/e2e/verifica-revisao.mjs
 # registro de acessos (IP): site buildado apontando para um Supabase falso local
 node scripts/e2e/supabase-falso.mjs 3222 &
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3222 npm run build && npx next start -p 3111 &
 node scripts/e2e/verifica-visitas.mjs   # 17 verificações: IP dos cabeçalhos, painel, filtro, CSV
 ```
+
+**Alternativas visualmente distintas.** `lib/battery/visual-key.ts` define a
+chave visual de uma célula (um círculo girado 45° é o mesmo círculo; uma barra
+"preenchida" é a mesma barra; cinco elementos se desenham como quatro). Os
+geradores deduplicam alternativas por essa chave, e `lib/battery/visual.test.ts`
+renderiza cada opção com o próprio `CellSvg` em 14 sementes para garantir que
+nenhuma prova ofereça duas figuras iguais — foi assim que apareceu (e se
+corrigiu) a "bola duplicada" dos itens de distribuição de dois.
+
+**Revisão de erros.** Ao final de `/teste-qi`, de cada treino da bateria e do
+simulador, cada item errado abre com a questão como foi apresentada, a
+alternativa marcada em vermelho, a correta em verde e a descrição da regra
+(`components/RevisaoItem.tsx`; no `/teste-qi`, `describeRules` do motor).
 
 **Banco de questões e variação por tentativa.** Nenhuma prova cronometrada é
 fixa. Cada abertura de `/teste-qi`, de um treino da bateria ou do simulador

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   cellAt,
+  describeRules,
   grade,
   itemsForSeed,
   optionsFor,
@@ -147,6 +148,7 @@ export default function MatrixQuiz() {
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT_SECONDS);
   const [respondent, setRespondent] = useState("");
   const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
+  const [reviewOnlyWrong, setReviewOnlyWrong] = useState(true);
   const finishedRef = useRef(false);
 
   const allOptions = useMemo(() => items.map((it) => optionsFor(it, seed ?? 0)), [items, seed]);
@@ -332,6 +334,89 @@ export default function MatrixQuiz() {
             })}
           </div>
         </div>
+
+        {/* Revisão item a item: clique para ver a matriz, a alternativa marcada e a correta */}
+        {(() => {
+          const errados = items.map((it, i) => ({ it, i })).filter(({ it, i }) => chosen[i] !== allOptions[i].answerIndex);
+          const lista = reviewOnlyWrong ? errados : items.map((it, i) => ({ it, i }));
+          return (
+            <div className="mt-6">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold text-slate-900">Revisão dos itens</h2>
+                <button
+                  type="button"
+                  onClick={() => setReviewOnlyWrong((v) => !v)}
+                  className="no-print rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+                >
+                  {reviewOnlyWrong ? `Ver todos os ${items.length}` : `Ver só os ${errados.length} erros`}
+                </button>
+              </div>
+              <p className="mt-1 text-sm text-slate-500">Clique em um item para ver a matriz, a alternativa que você marcou e a correta.</p>
+              {lista.length === 0 ? (
+                <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">Nenhum erro — gabarito completo. 🎯</p>
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {lista.map(({ it, i }) => {
+                    const { options: ops, answerIndex: correta } = allOptions[i];
+                    const marcada = chosen[i];
+                    const errou = marcada !== correta;
+                    return (
+                      <details key={it.id} className={`rounded-lg border px-3 py-2 ${errou ? "border-rose-200 bg-rose-50" : "border-emerald-200 bg-emerald-50"}`} data-revisao={`m${it.id}`}>
+                        <summary className={`cursor-pointer text-sm font-medium ${errou ? "text-rose-700" : "text-emerald-800"}`}>
+                          Item {i + 1} — {marcada === null ? "não respondido" : errou ? "errado" : "correto"} · {it.tier} · ver a questão
+                        </summary>
+                        <p className={`mt-2 text-sm font-medium ${errou ? "text-rose-700" : "text-emerald-700"}`}>
+                          {marcada === null
+                            ? `Você não respondeu este item. A correta é a alternativa ${correta + 1}.`
+                            : errou
+                              ? `Você marcou a alternativa ${marcada + 1}; a correta é a ${correta + 1}.`
+                              : `Você acertou: alternativa ${correta + 1}.`}
+                        </p>
+                        <div className="mt-3 flex justify-center">
+                          <div className="grid grid-cols-3 gap-1 rounded-xl border border-slate-300 bg-white p-2">
+                            {[0, 1, 2].flatMap((r) =>
+                              [0, 1, 2].map((c) => {
+                                const vazia = r === 2 && c === 2;
+                                return (
+                                  <div key={`${r}${c}`} className={`flex h-[72px] w-[72px] items-center justify-center rounded ${vazia ? "border-2 border-dashed border-emerald-400 bg-emerald-50" : ""}`}>
+                                    <CellSvg spec={vazia ? ops[correta] : cellAt(it, r, c)} uid={`rev${it.id}-${r}${c}`} size={64} />
+                                  </div>
+                                );
+                              }),
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                          {ops.map((opt, k) => {
+                            const papel = k === correta && k === marcada ? "certa-e-escolhida" : k === correta ? "correta" : k === marcada ? "escolhida" : null;
+                            const classe = k === correta ? "border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200" : k === marcada ? "border-rose-500 bg-rose-50 ring-2 ring-rose-200" : "border-slate-200 bg-white opacity-60";
+                            return (
+                              <div key={k} data-papel={papel ?? undefined} aria-label={`Alternativa ${k + 1}${papel ? ` (${papel})` : ""}`}>
+                                <div className={`flex items-center justify-center rounded-xl border-2 p-1 ${classe}`}>
+                                  <CellSvg spec={opt} uid={`revo${it.id}-${k}`} size={56} />
+                                </div>
+                                {papel && (
+                                  <span className={`mt-1 block text-center text-[11px] font-semibold ${papel === "escolhida" ? "text-rose-700" : "text-emerald-700"}`}>
+                                    {papel === "certa-e-escolhida" ? "✓ sua resposta (correta)" : papel === "correta" ? "✓ correta" : "✗ sua resposta"}
+                                  </span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <ul className="mt-3 list-disc space-y-0.5 pl-5 text-sm text-slate-600">
+                          {describeRules(it).map((t, k) => (
+                            <li key={k}>{t}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <strong>Interpretação honesta:</strong> não existe conversão válida deste treino para QI

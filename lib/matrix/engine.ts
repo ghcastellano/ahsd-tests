@@ -17,9 +17,9 @@ export interface CellSpec {
 
 export type Tier = "facil" | "medio" | "dificil";
 
-type Attr = "shape" | "fill" | "rotation" | "size" | "count";
+export type Attr = "shape" | "fill" | "rotation" | "size" | "count";
 
-interface Rule {
+export interface Rule {
   attr: Attr;
   /**
    * byRow: valor depende da linha; byCol: da coluna;
@@ -304,3 +304,24 @@ export function grade(chosen: (number | null)[], its: MatrixItem[] = items, seed
 }
 
 export const TIME_LIMIT_SECONDS = 25 * 60;
+
+const NOME_ATRIBUTO: Record<Attr, string> = {
+  shape: "a forma",
+  fill: "o preenchimento",
+  rotation: "a rotação",
+  size: "o tamanho",
+  count: "a quantidade",
+};
+
+const NOME_PADRAO: Record<Rule["kind"], string> = {
+  byRow: "é constante em cada linha (muda só de uma linha para outra)",
+  byCol: "é constante em cada coluna (muda só de uma coluna para outra)",
+  latin: "segue um quadrado latino: cada linha e cada coluna têm os três valores, uma vez cada",
+  latin2: "segue um quadrado latino com outro deslocamento: cada linha e cada coluna têm os três valores, sem repetir",
+};
+
+/** Explica, em português, as regras que geram um item (para a revisão no resultado). */
+export function describeRules(it: MatrixItem): string[] {
+  return it.rules.map((r) => `${NOME_ATRIBUTO[r.attr][0].toUpperCase()}${NOME_ATRIBUTO[r.attr].slice(1)} ${NOME_PADRAO[r.kind]}.`);
+}
+
