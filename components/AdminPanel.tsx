@@ -18,6 +18,10 @@ import { fmt, formatSubscaleValue } from "@/lib/subscale-format";
 import VisitasPanel from "./VisitasPanel";
 import type { Severity } from "@/lib/types";
 
+// Chaves do localStorage para o login lembrado (só neste navegador).
+const CHAVE_USUARIO = "ahsd:painel:usuario";
+const CHAVE_SENHA = "ahsd:painel:senha";
+
 const severityBadge: Record<Severity, string> = {
   info: "bg-slate-100 text-slate-700",
   none: "bg-emerald-100 text-emerald-800",
@@ -171,6 +175,12 @@ export default function AdminPanel() {
   const [pasteValue, setPasteValue] = useState("");
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  // Login do painel: usuário (só para o gerenciador de senhas do navegador
+  // associar a senha a uma conta) e "lembrar neste aparelho" (guarda a senha
+  // no localStorage e entra sozinho na próxima abertura).
+  const [usuario, setUsuario] = useState("");
+  const [lembrar, setLembrar] = useState(false);
+  const [entrouSozinho, setEntrouSozinho] = useState(false);
   // Sonda: o site consegue gravar novos resultados no banco central?
   const [sonda, setSonda] = useState<{ gravacao: string; texto: string; detalhe: string } | null>(null);
   useEffect(() => {
@@ -213,6 +223,24 @@ export default function AdminPanel() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    // Usuário e senha lembrados neste aparelho.
+    try {
+      const u = window.localStorage.getItem(CHAVE_USUARIO);
+      if (u) setUsuario(u);
+      const sen = window.localStorage.getItem(CHAVE_SENHA);
+      if (sen && remoteEnabled()) {
+        setPassword(sen);
+        setLembrar(true);
+        setEntrouSozinho(true);
+        void loadRemote(sen);
+      }
+    } catch {
+      // ignore
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -294,11 +322,17 @@ export default function AdminPanel() {
     }
   }
 
-  async function loadRemote() {
+  async function loadRemote(senha: string = password) {
     setLoading(true);
     setRemoteError(null);
     try {
-      setRemote(await fetchRemoteRecords(password));
+      setRemote(await fetchRemoteRecords(senha));
+      try {
+        if (usuario.trim()) window.localStorage.setItem(CHAVE_USUARIO, usuario.trim());
+        if (lembrar) window.localStorage.setItem(CHAVE_SENHA, senha);
+      } catch {
+        // armazenamento bloqueado: segue sem lembrar
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Erro ao consultar o registro central.";
       setRemoteError(msg);
@@ -308,6 +342,18 @@ export default function AdminPanel() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function esquecerSenha() {
+    try {
+      window.localStorage.removeItem(CHAVE_SENHA);
+    } catch {
+      // ignore
+    }
+    setLembrar(false);
+    setEntrouSozinho(false);
+    setPassword("");
+    setRemote(null);
   }
 
   return (
@@ -466,29 +512,54 @@ export default function AdminPanel() {
           </div>
         ) : remote === null ? (
           <div className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
-            <label htmlFor="senha" className="block text-sm font-medium text-slate-700">
-              Senha do painel
-            </label>
-            <div className="mt-2 flex max-w-sm gap-2">
+            {/* Formulário de verdade (com usuário + senha e submit) para o navegador
+                oferecer "salvar senha" e preencher sozinho nas próximas vezes. */}
+            <form
+              className="max-w-sm"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (password && !loading) void loadRemote();
+              }}
+            >
+              <label htmlFor="usuario" className="block text-sm font-medium text-slate-700">
+                Usuário (e-mail) <span className="font-normal text-slate-400">— só para o navegador salvar a senha</span>
+              </label>
               <input
-                id="senha"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && password && !loading) void loadRemote();
-                }}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                id="usuario"
+                name="username"
+                type="email"
+                autoComplete="username"
+                value={usuario}
+                onChange={(e) => setUsuario(e.target.value)}
+                placeholder="seu@email.com"
+                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
               />
-              <button
-                type="button"
-                onClick={() => void loadRemote()}
-                disabled={!password || loading}
-                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
-              >
-                {loading ? "Carregando…" : "Entrar"}
-              </button>
-            </div>
+              <label htmlFor="senha" className="mt-3 block text-sm font-medium text-slate-700">
+                Senha do painel
+              </label>
+              <div className="mt-1 flex gap-2">
+                <input
+                  id="senha"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={!password || loading}
+                  className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+                >
+                  {loading ? "Carregando…" : "Entrar"}
+                </button>
+              </div>
+              <label className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                <input type="checkbox" checked={lembrar} onChange={(e) => setLembrar(e.target.checked)} />
+                Lembrar neste aparelho (entra sozinho da próxima vez)
+              </label>
+            </form>
             {remoteError && <p className="mt-2 text-sm text-rose-600">{remoteError}</p>}
           </div>
         ) : (
@@ -515,6 +586,16 @@ export default function AdminPanel() {
                 >
                   Atualizar
                 </button>
+                {(lembrar || entrouSozinho) && (
+                  <button
+                    type="button"
+                    onClick={esquecerSenha}
+                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100"
+                    title="Apaga a senha guardada neste aparelho"
+                  >
+                    Esquecer senha neste aparelho
+                  </button>
+                )}
               </div>
             </div>
             <RecordsTable records={remote} />

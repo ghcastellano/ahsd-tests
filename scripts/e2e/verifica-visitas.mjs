@@ -103,6 +103,26 @@ ok(await p.getByText(/IP\(s\) distinto\(s\)/).count() === 1, "resumo com IPs dis
   await p.getByRole("button", { name: /Copiar link do resultado/ }).first().click();
   const link = await p.evaluate(() => navigator.clipboard.readText());
   ok(/\/resultado#v2\./.test(link), `link copiado abre a página de resultado (${link.slice(0, 50)}…)`);
+
+  // Login lembrado: usuário + senha num formulário, "lembrar neste aparelho", recarrega e entra sozinho.
+  const p2 = await ctx.newPage();
+  await p2.goto(`${B}/painel-ahsd`);
+  ok(await p2.locator('form input[autocomplete="username"][type="email"]').count() === 1 && await p2.locator('form input[autocomplete="current-password"]').count() === 1, "login é um formulário com usuário (e-mail) e senha para o navegador salvar");
+  await p2.getByLabel(/Usuário/).fill("avaliador@example.com");
+  await p2.getByLabel("Senha do painel").fill("senha-teste");
+  await p2.getByLabel(/Lembrar neste aparelho/).check();
+  await p2.getByRole("button", { name: "Entrar" }).click();
+  await p2.getByText(/registro\(s\) no banco central/).waitFor();
+  ok(await p2.getByRole("button", { name: /Esquecer senha neste aparelho/ }).count() === 1, "após entrar com 'lembrar', aparece 'Esquecer senha neste aparelho'");
+  await p2.reload();
+  await p2.getByText(/registro\(s\) no banco central/).waitFor({ timeout: 15000 });
+  ok(await p2.getByLabel("Senha do painel").count() === 0, "recarregou e entrou sozinho, sem pedir a senha");
+  ok(await p2.evaluate(() => localStorage.getItem("ahsd:painel:usuario")) === "avaliador@example.com", "usuário lembrado no aparelho");
+  await p2.getByRole("button", { name: /Esquecer senha neste aparelho/ }).click();
+  await p2.getByLabel("Senha do painel").waitFor();
+  ok(await p2.evaluate(() => localStorage.getItem("ahsd:painel:senha")) === null, "'Esquecer' apaga a senha guardada e volta ao login");
+  ok((await p2.getByLabel(/Usuário/).inputValue()) === "avaliador@example.com", "usuário continua preenchido para o próximo login");
+  await p2.close();
 }
 
 await browser.close();
