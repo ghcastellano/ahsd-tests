@@ -65,7 +65,7 @@ export default function Simulador() {
     setRestante(segundos);
     const fim = Date.now() + segundos * 1000;
     cronometro.current = window.setInterval(() => {
-      const r = Math.max(0, Math.round((fim - Date.now()) / 1000));
+      const r = Math.max(0, Math.ceil((fim - Date.now()) / 1000));
       setRestante(r);
       if (r <= 0) { pararCronometro(); aoZerar(); }
     }, 250);
@@ -114,7 +114,7 @@ export default function Simulador() {
     const fim = Date.now() + bloco.segundosVelocidade * 1000;
     pararCronometro();
     cronometro.current = window.setInterval(() => {
-      const r = Math.max(0, Math.round((fim - Date.now()) / 1000));
+      const r = Math.max(0, Math.ceil((fim - Date.now()) / 1000));
       setVelRestante(r);
       if (r <= 0) { pararCronometro(); fecharVelocidadeRef.current(); }
     }, 250);
@@ -157,6 +157,7 @@ export default function Simulador() {
   useEffect(() => {
     if (etapa !== "velocidade") return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return; // segurar a tecla não pode disparar respostas em rajada
       if (e.key === "s" || e.key === "S") responderVelocidade(true);
       if (e.key === "n" || e.key === "N") responderVelocidade(false);
     };
@@ -226,8 +227,8 @@ export default function Simulador() {
           ))}
         </div>
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <strong>Leia antes:</strong> 130, 133 e 149 são o <em>mesmo</em> ponto — o percentil 98 (2% superior) — expresso em três
-          escalas com desvios-padrão diferentes (15, 16 e 24). Aqui eles dão nome à dificuldade-alvo de cada bloco. Nenhum
+          <strong>Leia antes:</strong> 130, 132 e 148 são o <em>mesmo</em> ponto — o percentil 98 (2% superior) — expresso em três
+          escalas com desvios-padrão diferentes (15 no Wechsler e no Stanford-Binet 5 atual; 16 no Stanford-Binet IV; 24 na escala Cattell III B). Aqui eles dão nome à dificuldade-alvo de cada bloco. Nenhum
           simulador converte desempenho em QI: o resultado diz qual bloco você fechou e como foi em cada domínio.
         </div>
         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
@@ -238,7 +239,7 @@ export default function Simulador() {
             <li><strong>Velocidade</strong> — 60 s: dois símbolos-alvo à esquerda; algum deles aparece IGUAL na fileira? Responda Sim/Não (teclas S/N). Erro desconta ponto.</li>
             <li><strong>Raciocínio</strong> — 4 matrizes 3×3 com tempo.</li>
           </ol>
-          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 18 / 22 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O bloco 1 já é a entrada do 2% superior: não fechar é o esperado para a maioria. Os itens verbais, as sequências de memória, os símbolos e as matrizes são sorteados de um banco a cada tentativa — não dá para decorar.</p>
+          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 22 / 24 / 26 pontos na velocidade e pelo menos 50% em cada domínio. Os blocos precisam ser fechados em ordem. O bloco 1 já está acima da média adulta: não fechar é o esperado para a maioria. Os itens verbais, as sequências de memória, os símbolos e as matrizes são sorteados de um banco a cada tentativa — não dá para decorar.</p>
         </div>
         <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="resp">Identificação (opcional)</label>
         <input id="resp" type="text" value={respondent} onChange={(e) => setRespondent(e.target.value)} className="mt-1 w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none" placeholder="Nome ou iniciais" />

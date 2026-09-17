@@ -9,6 +9,7 @@ import {
   type CellSpec,
   itemsForSeed,
   describeRules,
+  admiteLeituraAritmetica,
 } from "./engine";
 
 const SHAPES = ["circle", "square", "triangle", "diamond", "cross", "star"];
@@ -176,3 +177,35 @@ describe("describeRules", () => {
     }
   });
 });
+
+describe("auditoria: unicidade sob leitura aritmética e rotação inequívoca", () => {
+  it("nenhuma semente admite a leitura 'terceira = |primeira − segunda|' num quadrado latino numérico", () => {
+    for (let seed = 0; seed < 300; seed++) {
+      for (const it of itemsForSeed(seed)) {
+        for (const r of it.rules) expect(admiteLeituraAritmetica(r.values, r.kind), `seed ${seed} item ${it.id}`).toBe(false);
+      }
+    }
+    // (2,3,1): linhas 2,3,1 / 3,1,2 → |2−3|=1 ✓ e |3−1|=2 ✓: leitura aritmética existe
+    expect(admiteLeituraAritmetica([2, 3, 1], "latin")).toBe(true);
+    expect(admiteLeituraAritmetica(["a", "b", "c"], "latin")).toBe(false);
+  });
+  it("itens com regra de rotação usam só o triângulo (a estrela tem período de 72°)", () => {
+    for (const seed of [0, 1, 2, 3, 4, 5, 6, 7]) {
+      for (const it of itemsForSeed(seed)) {
+        if (it.rules.some((r) => r.attr === "rotation") && !it.rules.some((r) => r.attr === "shape")) expect(it.base.shape, `seed ${seed} item ${it.id}`).toBe("triangle");
+      }
+    }
+  });
+  it("itens difíceis: a maioria dos distratores viola só uma regra (n−1), não são cópias de células visíveis", () => {
+    for (const it of items.filter((i) => i.tier === "dificil")) {
+      const { options, answerIndex } = optionsFor(it, 0);
+      const answer = options[answerIndex];
+      const visiveis = new Set([0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => (r === 2 && c === 2 ? "" : JSON.stringify(cellAt(it, r, c))))));
+      const n1 = options.filter((o, i) => i !== answerIndex && it.rules.filter((r) => o[r.attr] !== answer[r.attr]).length === 1).length;
+      const copias = options.filter((o, i) => i !== answerIndex && visiveis.has(JSON.stringify(o))).length;
+      expect(n1, `item ${it.id}: distratores n−1`).toBeGreaterThanOrEqual(3);
+      expect(copias, `item ${it.id}: cópias de células visíveis`).toBeLessThanOrEqual(2);
+    }
+  });
+});
+

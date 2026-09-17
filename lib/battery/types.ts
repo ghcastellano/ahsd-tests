@@ -42,6 +42,8 @@ export type Difficulty = "media" | "dificil" | "extrema";
 export interface Item {
   id: string;
   difficulty: Difficulty;
+  /** Tipo estrutural do item (ex.: "d3", "logic", "dual", "d2", "logicD2", "triad") — para selecionar por estrutura, não por posição. */
+  kind?: string;
   /** Enunciado curto (séries numéricas usam; figurais deixam vazio). */
   prompt?: string;
   /** Grade 3x3 (matrizes) — a célula (2,2) é a resposta. */

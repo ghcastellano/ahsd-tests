@@ -121,6 +121,11 @@ export default function HomePage() {
             Versão mais leve, para o primeiro contato com o formato.
           </p>
         </Link>
+        <Link href="/treino/dojo" className="block rounded-xl border border-emerald-200 bg-emerald-50 p-5 transition hover:border-emerald-400">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Dojo · treino ativo</p>
+          <h3 className="mt-1 font-semibold text-slate-900">Mensa, Wechsler, Stanford-Binet e Cattell</h3>
+          <p className="mt-1 text-xs text-slate-500">10 itens rápidos por exame, com a regra e uma dica após cada resposta</p>
+        </Link>
         <Link
           href="/treino/simulador"
           className="group mt-3 block rounded-xl border-2 border-violet-300 bg-violet-50 p-4 transition hover:border-violet-500"
@@ -131,7 +136,7 @@ export default function HomePage() {
             </span>
             <span className="text-xs text-slate-500">3 blocos · ~35 min</span>
           </div>
-          <p className="mt-1 text-xs text-slate-500">Wechsler 130 → Stanford-Binet 133 → Cattell 149</p>
+          <p className="mt-1 text-xs text-slate-500">Wechsler 130 → Stanford-Binet IV 132 → Cattell 148</p>
           <h3 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-violet-800">
             Simulador de escalas completas
           </h3>

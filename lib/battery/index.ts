@@ -68,7 +68,7 @@ export const tests: TestDef[] = [
     intro:
       "Sequências numéricas e alfabéticas com dificuldade crescente: progressões simples, diferenças de segunda ordem, séries intercaladas (duas sequências dentro de uma!), recursões tipo Fibonacci e regras posicionais no alfabeto.",
     instructions:
-      "Descubra a regra e escolha o próximo termo. Dica de método: calcule primeiro as diferenças entre termos vizinhos; se elas não revelarem padrão, teste se a série está intercalada (posições ímpares e pares como sequências separadas).",
+      "Descubra a regra e escolha o próximo termo. Dica de método: calcule primeiro as diferenças entre termos vizinhos; se elas não revelarem padrão, teste se a série está intercalada (posições ímpares e pares como sequências separadas), se cada termo depende de dois ou três anteriores, ou se há uma operação sobre os dígitos do termo anterior.",
     items: numericSeriesItems,
   },
 ];

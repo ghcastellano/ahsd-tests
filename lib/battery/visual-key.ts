@@ -30,15 +30,23 @@ export function rotacaoEfetiva(marks: Mark[], rotation: number | undefined): num
   return marks.every((m) => r % PERIODO[m] === 0) ? 0 : r;
 }
 
+/** hbar girada 90° É a vbar (e vice-versa); slash 90° é backslash. */
+const GIRO_90: Partial<Record<Mark, Mark>> = { hbar: "vbar", vbar: "hbar", slash: "backslash", backslash: "slash" };
+
 export function visualKey(c: Cell): string {
-  const marks = [...c.marks].sort();
+  const r0 = (((c.rotation ?? 0) % 360) + 360) % 360;
+  const marksBrutas = [...c.marks];
+  // Linhas: um giro de 90°/270° equivale a trocar a marca; 180°, à própria marca.
+  const trocaLinhas = r0 % 180 === 90 && marksBrutas.every((m) => GIRO_90[m]);
+  const marks = (trocaLinhas ? marksBrutas.map((m) => GIRO_90[m]!) : marksBrutas).sort();
+  const rotacao = trocaLinhas ? 0 : c.rotation;
   const usaFill = marks.some((m) => USA_FILL.has(m));
   return JSON.stringify({
     m: marks,
     o: c.outer ?? "",
     of: c.outer && USA_FILL.has(c.outer) ? c.outerFill ?? "none" : "",
     i: usaFill ? c.innerFill ?? "none" : "",
-    r: rotacaoEfetiva(marks, c.rotation),
+    r: rotacaoEfetiva(marks, rotacao),
     s: c.size ?? 2,
     // O CellSvg desenha no máximo 4 posições: 5 elementos aparecem como 4.
     n: Math.min(4, Math.max(1, c.count ?? 1)),

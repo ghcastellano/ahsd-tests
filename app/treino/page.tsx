@@ -43,6 +43,19 @@ export default function TreinoIndex() {
       </div>
 
       <Link
+        href="/treino/dojo"
+        className="mt-4 block rounded-xl border-2 border-emerald-300 bg-emerald-50 p-5 transition hover:border-emerald-500"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white">NOVO</span>
+          <span className="text-xs text-emerald-700">treino ativo · explicação após cada item · plano do dia</span>
+        </div>
+        <h2 className="mt-2 text-lg font-semibold text-slate-900">Dojo: Mensa, Wechsler, Stanford-Binet e Cattell</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Escolha o exame, faça 10 itens rápidos e veja, a cada resposta, a regra, o porquê da dificuldade e uma dica. O progresso por domínio fica no aparelho e monta o seu plano de treino.
+        </p>
+      </Link>
+      <Link
         href="/treino/simulador"
         className="group mt-8 block rounded-xl border-2 border-violet-300 bg-violet-50 p-5 transition hover:border-violet-500 hover:shadow-md"
       >
@@ -50,7 +63,7 @@ export default function TreinoIndex() {
           <span className="shrink-0 whitespace-nowrap rounded-md bg-violet-600 px-2 py-0.5 text-xs font-semibold text-white">SIMULADOR · 3 BLOCOS</span>
           <span className="text-xs text-slate-500">3 blocos · ~35 min</span>
         </div>
-        <p className="mt-1 text-xs text-slate-500">Wechsler 130 → Stanford-Binet 133 → Cattell 149</p>
+        <p className="mt-1 text-xs text-slate-500">Wechsler 130 → Stanford-Binet IV 132 → Cattell 148</p>
         <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-violet-800">Simulador de escalas completas</h3>
         <p className="mt-1 text-sm text-slate-600">
           Compreensão verbal, memória operacional, velocidade de processamento e raciocínio fluido, em três

@@ -59,7 +59,7 @@ for (let b = 0; b < 3; b++) {
 await p.waitForTimeout(800);
 let t = await p.locator("body").innerText();
 ok(/3\s+de 3/.test(t), "resultado: 3 de 3 blocos fechados");
-ok(/Bloco 3 fechado \(nível Cattell ~149\)/.test(t), "faixa: Bloco 3 fechado (Cattell ~149)");
+ok(/Bloco 3 fechado \(topo\)/.test(t), "faixa: Bloco 3 fechado (topo)");
 ok(/Compreensão verbal[\s\S]*24\/24 · 100%/.test(t), "verbal 24/24");
 ok(/Raciocínio fluido[\s\S]*12\/12 · 100%/.test(t), "raciocínio 12/12");
 ok(/Pontos \(acertos − erros\): 240/.test(t), "velocidade 240 pontos (80×3, todos certos)");

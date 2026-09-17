@@ -7,6 +7,7 @@
 
 import { mulberry32 } from "../battery/rng";
 import type { Cell, Mark } from "../battery/types";
+import { visualKey } from "../battery/visual-key";
 import type { Nivel } from "./verbal";
 
 export interface TrialVelocidade {
@@ -19,13 +20,36 @@ export interface TrialVelocidade {
 const MARCAS: Mark[] = ["circle", "square", "triangle", "diamond", "star", "cross", "hbar", "vbar", "slash", "backslash"];
 
 export const CONFIG: Record<Nivel, { candidatos: number; segundos: number; distratorParecido: boolean }> = {
+  // 5 candidatos como no Procura de Símbolos do WAIS-IV; a dificuldade sobe
+  // pelo distrator parecido e pelo corte, não por fileiras enormes.
   1: { candidatos: 5, segundos: 60, distratorParecido: false },
   2: { candidatos: 7, segundos: 60, distratorParecido: true },
-  3: { candidatos: 9, segundos: 60, distratorParecido: true },
+  3: { candidatos: 7, segundos: 60, distratorParecido: true },
 };
 
-function igual(a: Cell, b: Cell): boolean {
-  return a.marks.join() === b.marks.join() && (a.rotation ?? 0) === (b.rotation ?? 0) && (a.innerFill ?? "solid") === (b.innerFill ?? "solid");
+/** Igualdade VISUAL (um círculo girado 90° é o mesmo círculo; hbar girada 90° é a vbar). */
+export function igual(a: Cell, b: Cell): boolean {
+  return visualKey(a) === visualKey(b);
+}
+
+const COM_PREENCHIMENTO = new Set<Mark>(["circle", "square", "triangle", "diamond", "star", "cross"]);
+const VIZINHA: Partial<Record<Mark, Mark>> = { hbar: "vbar", vbar: "hbar", slash: "backslash", backslash: "slash", square: "diamond", diamond: "square" };
+
+/**
+ * Distrator "quase igual" ao alvo, mas VISIVELMENTE diferente: troca o
+ * preenchimento (marcas que o desenham), gira 45° ou usa a marca vizinha.
+ * Antes, o alvo girado 90° era usado — e círculo/quadrado/losango/cruz girados
+ * 90° se desenham iguais: o gabarito ficava invertido em ~19% dos trials.
+ */
+export function quaseIgual(alvo: Cell, alvos: Cell[], rnd: () => number): Cell {
+  const m = alvo.marks[0];
+  const candidatos: Cell[] = [];
+  if (COM_PREENCHIMENTO.has(m)) candidatos.push({ ...alvo, innerFill: (alvo.innerFill ?? "solid") === "solid" ? "none" : "solid" });
+  if (m !== "circle" && m !== "dot") candidatos.push({ ...alvo, rotation: ((alvo.rotation ?? 0) + 45) % 360 });
+  if (VIZINHA[m]) candidatos.push({ ...alvo, marks: [VIZINHA[m]!] });
+  const validos = candidatos.filter((c) => !alvos.some((a) => igual(a, c)));
+  if (validos.length === 0) return { ...alvo, marks: ["star"], innerFill: "none" };
+  return validos[Math.floor(rnd() * validos.length)];
 }
 
 function celula(mark: Mark, rotation = 0, fill: Cell["innerFill"] = "solid"): Cell {
@@ -51,8 +75,7 @@ export function gerarTrials(nivel: Nivel, seed: number, quantidade = 60): TrialV
     if (cfg.distratorParecido) {
       // distrator "quase igual": mesmo símbolo do alvo, rotação ou preenchimento diferente
       const a = alvos[Math.floor(rnd() * 2)];
-      const quase: Cell = { ...a, rotation: ((a.rotation ?? 0) + 90) % 360 };
-      candidatos[Math.floor(rnd() * candidatos.length)] = quase;
+      candidatos[Math.floor(rnd() * candidatos.length)] = quaseIgual(a, alvos, rnd);
     }
     if (presente) {
       const a = alvos[Math.floor(rnd() * 2)];

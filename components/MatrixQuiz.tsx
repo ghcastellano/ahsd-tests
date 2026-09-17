@@ -9,94 +9,13 @@ import {
   itemsForSeed,
   optionsFor,
   TIME_LIMIT_SECONDS,
-  type CellSpec,
   type MatrixScore,
 } from "@/lib/matrix/engine";
 import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import { useSeed } from "@/lib/use-seed";
 import ShareBlock from "./ShareBlock";
-
-// ---------- Renderização SVG de uma célula ----------
-
-const INK = "#1e293b";
-
-function shapeElement(spec: CellSpec, cx: number, cy: number, s: number, uid: string) {
-  const fill =
-    spec.fill === "solid" ? INK : spec.fill === "half" ? `url(#half-${uid})` : "transparent";
-  const common = {
-    fill,
-    stroke: INK,
-    strokeWidth: 3,
-    transform: spec.rotation ? `rotate(${spec.rotation} ${cx} ${cy})` : undefined,
-  } as const;
-
-  switch (spec.shape) {
-    case "circle":
-      return <circle cx={cx} cy={cy} r={s} {...common} />;
-    case "square":
-      return <rect x={cx - s} y={cy - s} width={2 * s} height={2 * s} {...common} />;
-    case "triangle":
-      return (
-        <polygon
-          points={`${cx},${cy - s} ${cx - s * 0.95},${cy + s * 0.75} ${cx + s * 0.95},${cy + s * 0.75}`}
-          {...common}
-        />
-      );
-    case "diamond":
-      return (
-        <polygon points={`${cx},${cy - s} ${cx + s},${cy} ${cx},${cy + s} ${cx - s},${cy}`} {...common} />
-      );
-    case "cross": {
-      const w = s * 0.38;
-      return (
-        <polygon
-          points={[
-            `${cx - w},${cy - s}`, `${cx + w},${cy - s}`, `${cx + w},${cy - w}`,
-            `${cx + s},${cy - w}`, `${cx + s},${cy + w}`, `${cx + w},${cy + w}`,
-            `${cx + w},${cy + s}`, `${cx - w},${cy + s}`, `${cx - w},${cy + w}`,
-            `${cx - s},${cy + w}`, `${cx - s},${cy - w}`, `${cx - w},${cy - w}`,
-          ].join(" ")}
-          {...common}
-        />
-      );
-    }
-    case "star": {
-      const pts: string[] = [];
-      for (let i = 0; i < 10; i++) {
-        const r = i % 2 === 0 ? s : s * 0.45;
-        const a = -Math.PI / 2 + (i * Math.PI) / 5;
-        pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
-      }
-      return <polygon points={pts.join(" ")} {...common} />;
-    }
-  }
-}
-
-const POSITIONS: Record<number, [number, number][]> = {
-  1: [[50, 50]],
-  2: [[32, 32], [68, 68]],
-  3: [[50, 28], [30, 70], [70, 70]],
-  4: [[30, 30], [70, 30], [30, 70], [70, 70]],
-};
-
-function CellSvg({ spec, uid, size = 92 }: { spec: CellSpec; uid: string; size?: number }) {
-  const base = [10, 14, 18][spec.size - 1];
-  const s = spec.count > 1 ? base * 0.78 : base * 1.5;
-  return (
-    <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
-      <defs>
-        <linearGradient id={`half-${uid}`} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="50%" stopColor={INK} />
-          <stop offset="50%" stopColor="transparent" />
-        </linearGradient>
-      </defs>
-      {POSITIONS[spec.count].map(([cx, cy], i) => (
-        <g key={i}>{shapeElement(spec, cx, cy, s, uid)}</g>
-      ))}
-    </svg>
-  );
-}
+import CellSvg from "./MatrixCellSvg";
 
 // ---------- Componente principal ----------
 
@@ -429,7 +348,7 @@ export default function MatrixQuiz() {
         <Link href="/treino/simulador" className="mt-6 block rounded-xl border-2 border-violet-300 bg-violet-50 p-5 transition hover:border-violet-500">
           <p className="text-xs font-semibold uppercase tracking-wide text-violet-700">Continue — os domínios que as matrizes não medem</p>
           <h2 className="mt-1 text-lg font-semibold text-slate-900">Simulador: compreensão verbal, memória operacional e velocidade de processamento</h2>
-          <p className="mt-1 text-sm text-slate-600">Três blocos crescentes — Wechsler (130) → Stanford-Binet (133) → Cattell (149) — com raciocínio fluido incluído.</p>
+          <p className="mt-1 text-sm text-slate-600">Três blocos crescentes — Wechsler (130) → Stanford-Binet IV (132) → Cattell (148) — com raciocínio fluido incluído.</p>
         </Link>
 
         <div className="mt-6 rounded-xl border border-brand-200 bg-brand-50 p-5">

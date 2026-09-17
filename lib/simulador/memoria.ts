@@ -33,7 +33,8 @@ export const AMPLITUDES: Record<Nivel, [number[], number[], number[]]> = {
 function digitos(n: number, rnd: () => number): string[] {
   const out: string[] = [];
   while (out.length < n) {
-    const d = String(1 + Math.floor(rnd() * 9));
+    // 0–9: com só 1–9 e sem repetição, uma sequência de 9 vira permutação (o último dígito é dedutível).
+    const d = String(Math.floor(rnd() * 10));
     const ult = out[out.length - 1];
     // dígitos distintos dentro da sequência: repetições viram "pedaços"
     // memorizáveis e baixam a carga real da amplitude

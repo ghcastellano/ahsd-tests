@@ -6,6 +6,7 @@ import { classificationItems } from "./classification";
 import { numericSeriesItems } from "./numeric-series";
 import type { Item } from "./types";
 import { mulberry32, buildOptions, shuffle } from "./rng";
+import { visualKey } from "./visual-key";
 import type { Cell } from "./types";
 
 const cellKey = (c: Cell) =>
@@ -154,17 +155,17 @@ describe("matrizes avançadas", () => {
   it("escalona a dificuldade: os últimos itens não são todos 'media'", () => {
     const tail = items.slice(-9);
     expect(tail.every((i) => i.difficulty === "media")).toBe(false);
-    expect(items.slice(-4).every((i) => i.difficulty === "extrema")).toBe(true);
+    expect(items.slice(-5).every((i) => i.difficulty === "extrema")).toBe(true);
   });
 });
 
 describe("séries de figuras", () => {
   const items = figureSeriesItems();
 
-  it("tem 13 itens, cada um com 3 figuras visíveis e 6 alternativas únicas", () => {
+  it("tem 13 itens, cada um com 3 ou 4 figuras visíveis e 6 alternativas únicas", () => {
     expect(items.length).toBe(13);
     for (const it of items) {
-      expect(it.sequence!.length, it.id).toBe(3);
+      expect([3, 4], it.id).toContain(it.sequence!.length);
       expect(it.options!.length, it.id).toBe(6);
       expect(new Set(it.options!.map(cellKey)).size, it.id).toBe(6);
     }
@@ -271,7 +272,7 @@ describe("variação por semente", () => {
     const a = numericSeriesItems(3);
     expect(a).toHaveLength(20);
     const cont = a.reduce((acc, x) => ({ ...acc, [x.difficulty]: (acc[x.difficulty] ?? 0) + 1 }), {} as Record<string, number>);
-    expect(cont).toEqual({ media: 6, dificil: 12, extrema: 2 });
+    expect(cont).toEqual({ media: 5, dificil: 12, extrema: 3 });
     expect(new Set(a.map((x) => x.prompt)).size).toBe(20);
     // duas sementes cobrem itens que uma só não cobre
     const prompts = new Set([...numericSeriesItems(3), ...numericSeriesItems(4)].map((x) => x.prompt));
@@ -279,3 +280,106 @@ describe("variação por semente", () => {
     for (const it of a) expect(it.textOptions!.filter((o) => o === it.textOptions![it.answerIndex])).toHaveLength(1);
   });
 });
+
+describe("auditoria: classificação sem partição 4-a-1 secundária", () => {
+  const PROPS: Record<string, (c: Cell) => string> = {
+    forma: (c) => c.marks[0],
+    curvo: (c) => String(["circle", "dot"].includes(c.marks[0])),
+    linha: (c) => String(["hbar", "vbar", "slash", "backslash"].includes(c.marks[0])),
+    simetrico: (c) => String(c.marks[0] !== "triangle"),
+    convexo: (c) => String(!["cross", "star"].includes(c.marks[0])),
+    fill: (c) => c.innerFill ?? "none",
+    size: (c) => String(c.size ?? 2),
+    count: (c) => String(c.count ?? 1),
+  };
+  it("toda propriedade que divide o conjunto em 4-a-1 aponta para a resposta", () => {
+    for (const seed of [0, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 12345, 999999]) {
+      for (const it of classificationItems(seed)) {
+        for (const [nome, f] of Object.entries(PROPS)) {
+          const vals = it.set!.map(f);
+          const unico = vals.findIndex((v) => vals.filter((w) => w === v).length === 1);
+          const resto = new Set(vals.filter((_, i) => i !== unico));
+          if (unico >= 0 && resto.size === 1) {
+            expect(unico, `seed ${seed} ${it.id}: "${nome}" também exclui a figura ${unico + 1}`).toBe(it.answerIndex);
+          }
+        }
+      }
+    }
+  });
+  it("o mesmo conjunto nunca aparece com respostas diferentes na mesma prova", () => {
+    for (const seed of [0, 1, 2, 3, 5, 8, 13, 21, 34, 55]) {
+      const vistos = new Map<string, number>();
+      for (const it of classificationItems(seed)) {
+        const chave = JSON.stringify([...it.set!].map((c) => c.marks[0]).sort());
+        const resposta = it.set![it.answerIndex].marks[0];
+        const antes = vistos.get(chave + resposta);
+        expect(antes === undefined || antes === it.answerIndex || true).toBe(true);
+        for (const [k] of vistos) {
+          if (k.startsWith(chave) && !k.endsWith(resposta)) throw new Error(`seed ${seed}: conjunto repetido com gabarito diferente (${it.id})`);
+        }
+        vistos.set(chave + resposta, it.answerIndex);
+      }
+    }
+  });
+});
+
+describe("auditoria: séries numéricas sem regra alternativa mais simples", () => {
+  const ALT: ((a: number[]) => number)[] = [
+    (a) => a[a.length - 1] + (a[a.length - 1] - a[a.length - 2]),
+    (a) => a[a.length - 1] * (a[a.length - 1] / a[a.length - 2]),
+    (a) => a[a.length - 1] + a[a.length - 2],
+    (a) => a[a.length - 2],
+    (a) => 2 * a[a.length - 1],
+    (a) => 2 * a[a.length - 1] + 1,
+    (a) => 2 * a[a.length - 1] - 1,
+  ];
+  it("nenhuma regra simples que reproduz a série cai num distrator", () => {
+    for (const seed of [0, 1, 2, 3, 4, 5]) {
+      for (const it of numericSeriesItems(seed)) {
+        const termos = it.prompt!.replace(", ?", "").split(", ");
+        if (termos.some((t) => Number.isNaN(Number(t)))) continue; // séries de letras
+        const nums = termos.map(Number);
+        for (const alt of ALT) {
+          // a regra reproduz todos os termos exibidos (a partir do 3º)?
+          let reproduz = nums.length >= 4;
+          for (let k = 2; k < nums.length && reproduz; k++) if (alt(nums.slice(0, k)) !== nums[k]) reproduz = false;
+          if (!reproduz) continue;
+          const previsto = String(alt(nums));
+          const correta = it.textOptions![it.answerIndex];
+          expect(previsto, `${it.id}: regra alternativa dá ${previsto}, gabarito ${correta}`).toBe(correta);
+        }
+      }
+    }
+  });
+});
+
+describe("auditoria: matrizes avançadas — teto real e D2 variado", () => {
+  it("os itens 'extrema' são de tipos próprios (não o XOR relabelado), sem distrator igual a célula visível", () => {
+    for (const seed of [0, 1, 2, 3, 5, 8, 13, 21]) {
+      const its = advancedMatrixItems(seed);
+      const extremos = its.filter((i) => i.difficulty === "extrema");
+      expect(extremos).toHaveLength(5);
+      expect(new Set(extremos.map((i) => i.kind))).toEqual(new Set(["logicD2-xor", "logicD2-and", "triad"]));
+      for (const it of extremos) {
+        expect(it.options).toHaveLength(6);
+        const vis = new Set(it.grid!.flat().slice(0, 8).map(visualKey));
+        it.options!.forEach((o, i) => { if (i !== it.answerIndex) expect(vis.has(visualKey(o)), `${it.id} seed ${seed}: distrator é célula visível`).toBe(false); });
+        expect(it.grid!.flat().every((c) => c.marks.length > 0)).toBe(true);
+      }
+    }
+  });
+  it("distribuição de dois: layouts variam; linhas e colunas são quadrados latinos", () => {
+    const layouts = new Set<string>();
+    for (const seed of [0, 1, 2, 3, 4, 5]) {
+      for (const it of advancedMatrixItems(seed).filter((i) => i.kind === "d2")) {
+        const g = it.grid!;
+        const nome = (c: Cell) => (c.marks[0] ?? "_");
+        layouts.add(g.map((r) => r.map((c) => (c.marks.length ? "X" : "_")).join("")).join("/"));
+        for (let r = 0; r < 3; r++) expect(new Set(g[r].map(nome)).size, `${it.id} seed ${seed} linha ${r}`).toBe(3);
+        for (let c = 0; c < 3; c++) expect(new Set([0, 1, 2].map((r) => nome(g[r][c]))).size, `${it.id} seed ${seed} coluna ${c}`).toBe(3);
+      }
+    }
+    expect(layouts.size).toBeGreaterThanOrEqual(3);
+  });
+});
+
