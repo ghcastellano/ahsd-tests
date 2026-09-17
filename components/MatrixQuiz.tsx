@@ -14,6 +14,7 @@ import {
 import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import { useSeed } from "@/lib/use-seed";
+import { useTemposPorItem } from "@/lib/use-tempos";
 import ShareBlock from "./ShareBlock";
 import CellSvg from "./MatrixCellSvg";
 
@@ -68,6 +69,8 @@ export default function MatrixQuiz() {
   const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
   const [reviewOnlyWrong, setReviewOnlyWrong] = useState(true);
   const finishedRef = useRef(false);
+  // tempo por item e da prova, para o histórico rastreável
+  const { fechar: fecharTempos } = useTemposPorItem(current, phase === "running");
 
   const allOptions = useMemo(() => items.map((it) => optionsFor(it, seed ?? 0)), [items, seed]);
   const score = useMemo(
@@ -114,6 +117,21 @@ export default function MatrixQuiz() {
       maxScore: score.total,
       bandLabel: band.label,
       severity: "info" as const,
+      durationSeconds: TIME_LIMIT_SECONDS - timeLeft,
+      // Revisão item a item: o que foi marcado, o que era certo, as regras e o tempo.
+      detalhes: (() => {
+        const tempos = fecharTempos();
+        return items.map((it, i) => ({
+          n: i + 1,
+          id: `m${it.id}`,
+          escolhida: chosen[i] === null ? null : chosen[i] + 1,
+          correta: allOptions[i].answerIndex + 1,
+          acertou: chosen[i] === allOptions[i].answerIndex,
+          regra: describeRules(it).join(" "),
+          tempoSeg: Math.round(tempos[i] ?? 0),
+          grupo: it.tier,
+        }));
+      })(),
       subscales: (["facil", "medio", "dificil"] as const).map((t) => ({
         name: `Itens ${t === "facil" ? "fáceis" : t === "medio" ? "médios" : "difíceis"}`,
         raw: score.byTier[t].correct,

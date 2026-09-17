@@ -5,7 +5,7 @@ import Link from "next/link";
 import CellSvg from "./CellSvg";
 import RevisaoItem from "./RevisaoItem";
 import ShareBlock from "./ShareBlock";
-import { blocos, pontuarSimulador, NOMES_DOMINIO, type Bloco, type ResultadoBloco, type Dominio } from "@/lib/simulador";
+import { blocos, pontuarSimulador, NOMES_DOMINIO, CORTES, type Bloco, type ResultadoBloco, type Dominio } from "@/lib/simulador";
 import { gerarItensMemoria, conferirMemoria, type ItemMemoria } from "@/lib/simulador/memoria";
 import { gerarTrials, pontuarVelocidade, type TrialVelocidade } from "@/lib/simulador/velocidade";
 import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
@@ -52,6 +52,9 @@ export default function Simulador() {
   const parcial = useRef<Partial<ResultadoBloco>>({});
   // escolhas de cada bloco (verbal e raciocínio), para a revisão no resultado
   const escolhasPorBloco = useRef<Record<number, { verbal: Record<string, number>; raciocinio: Record<string, number> }>>({});
+  // memória item a item e início da prova, para o histórico rastreável
+  const memoriaPorBloco = useRef<Record<number, { id: string; formato: string; sequencia: string; esperado: string; digitado: string; ok: boolean }[]>>({});
+  const inicioProva = useRef(0);
 
   useScrollTopOnScreenChange(`${etapa}-${b}-${im}`);
 
@@ -74,6 +77,7 @@ export default function Simulador() {
 
   // ---------- transições ----------
   const irParaVerbal = (idx: number) => {
+    if (idx === 0) { inicioProva.current = Date.now(); memoriaPorBloco.current = {}; }
     setB(idx); parcial.current = {}; setEscolhas({}); setEtapa("verbal");
     iniciarCronometro(todos[idx].verbal.length * 30, () => fecharVerbalRef.current());
   };
@@ -102,6 +106,7 @@ export default function Simulador() {
   const responderMemoria = () => {
     const item = itensMem[im];
     const ok = conferirMemoria(item, entrada);
+    (memoriaPorBloco.current[b] ??= []).push({ id: item.id, formato: item.formato, sequencia: item.sequencia.join(" "), esperado: item.resposta, digitado: entrada, ok });
     const novos = acertosMem + (ok ? 1 : 0);
     setAcertosMem(novos); setEntrada("");
     if (im + 1 < itensMem.length) { setIm(im + 1); setMostrandoIdx(0); return; }
@@ -181,6 +186,30 @@ export default function Simulador() {
       bandLabel: final.faixa.label,
       severity: final.faixa.severity,
       subscales: (Object.keys(NOMES_DOMINIO) as Dominio[]).map((d) => ({ name: NOMES_DOMINIO[d], raw: final.porDominio[d].acertos, max: final.porDominio[d].total })),
+      durationSeconds: inicioProva.current ? Math.round((Date.now() - inicioProva.current) / 1000) : undefined,
+      // Revisão item a item de todos os blocos feitos: verbal, memória, velocidade e matrizes.
+      detalhes: (() => {
+        const out: NonNullable<ResultRecord["detalhes"]> = [];
+        let n = 0;
+        for (const r of [...resultados].sort((a, c) => a.nivel - c.nivel)) {
+          const idx = r.nivel - 1;
+          const x = todos[idx];
+          const esc = escolhasPorBloco.current[idx] ?? { verbal: {}, raciocinio: {} };
+          for (const q of x.verbal) {
+            const m = esc.verbal[q.id];
+            out.push({ n: ++n, id: q.id, escolhida: m === undefined ? null : q.opcoes[m], correta: q.opcoes[q.resposta], acertou: m === q.resposta, regra: q.explicacao, grupo: `bloco ${r.nivel} · verbal` });
+          }
+          for (const mItem of memoriaPorBloco.current[idx] ?? []) {
+            out.push({ n: ++n, id: mItem.id, escolhida: mItem.digitado || null, correta: mItem.esperado, acertou: mItem.ok, regra: `${mItem.formato} · sequência ${mItem.sequencia}`, grupo: `bloco ${r.nivel} · memória` });
+          }
+          out.push({ n: ++n, id: `vel-b${r.nivel}`, escolhida: `${r.velocidade.acertos} certos, ${r.velocidade.erros} erros, ${r.velocidade.pontos} pontos, TR médio ${r.velocidade.rtMedio} ms`, correta: `≥ ${CORTES[r.nivel].velocidade} pontos`, acertou: r.velocidade.pontos >= CORTES[r.nivel].velocidade, regra: "procura de símbolos, 60 s (acertos − erros)", grupo: `bloco ${r.nivel} · velocidade` });
+          x.raciocinio.forEach((it, i) => {
+            const m = esc.raciocinio[it.id];
+            out.push({ n: ++n, id: it.id, escolhida: m === undefined ? null : m + 1, correta: it.answerIndex + 1, acertou: m === it.answerIndex, regra: it.explanation, grupo: `bloco ${r.nivel} · matriz ${i + 1}` });
+          });
+        }
+        return out;
+      })(),
     };
     saveLocalRecord(record);
     // O envio ao registro central (com status na tela) acontece no ShareBlock.

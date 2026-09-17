@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ARITMETICA, ABSURDOS, CONHECIMENTO, ESPACIAL } from "./bancos-texto";
-import { dentroDe, gerarCondicoes, pontoQueSatisfaz, satisfaz } from "./condicoes";
+import { dentroDe, gerarCondicoes, pontoQueSatisfaz, satisfaz, MARGEM, distanciaComSinal } from "./condicoes";
 
 describe("bancos de texto do dojo", () => {
   for (const [nome, banco] of Object.entries({ ARITMETICA, ABSURDOS, CONHECIMENTO, ESPACIAL })) {
@@ -44,10 +44,14 @@ describe("condições (topologia)", () => {
   it("cada item tem exatamente uma figura que satisfaz a condição, e o ponto indicado satisfaz", () => {
     for (const seed of [0, 1, 2, 3, 7, 42, 999]) {
       for (const it of gerarCondicoes(seed, 6)) {
-        const satisfazem = it.opcoes.map((f) => pontoQueSatisfaz(f, it.condicao) !== null);
-        expect(satisfazem.filter(Boolean)).toHaveLength(1);
-        expect(satisfazem[it.resposta]).toBe(true);
-        expect(satisfaz(it.opcoes[it.resposta], it.condicao, it.ponto.x, it.ponto.y)).toBe(true);
+        // só a certa tem ponto com folga; as erradas não têm ponto nem na borda
+        const comFolga = it.opcoes.map((f) => pontoQueSatisfaz(f, it.condicao, MARGEM) !== null);
+        const naBorda = it.opcoes.map((f) => pontoQueSatisfaz(f, it.condicao, 0) !== null);
+        expect(comFolga.filter(Boolean)).toHaveLength(1);
+        expect(naBorda.filter(Boolean)).toHaveLength(1);
+        expect(comFolga[it.resposta]).toBe(true);
+        expect(satisfaz(it.opcoes[it.resposta], it.condicao, it.ponto.x, it.ponto.y, MARGEM)).toBe(true);
+        expect(distanciaComSinal(it.opcoes[it.resposta], "circulo", it.ponto.x, it.ponto.y)).not.toBeNaN();
         expect(it.opcoes).toHaveLength(5);
         expect(it.motivos.filter((m) => m).length).toBe(4);
         expect(it.enunciado).toMatch(/dentro|fora/);

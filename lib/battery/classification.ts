@@ -55,7 +55,7 @@ function build(rule: ClassRule, seed: number): Built {
     }
     case "curva-vs-reta": {
       members = balanced(shuffle(POOL_SIM, rand));
-      odd = { marks: ["circle"], innerFill: pick([...FILLS2], rand) };
+      odd = rand() < 0.5 ? { marks: ["circle"], innerFill: pick([...FILLS2], rand) } : { marks: ["dot"] };
       why = "Quatro figuras são formadas apenas por linhas retas; uma contém curva.";
       difficulty = "dificil";
       break;

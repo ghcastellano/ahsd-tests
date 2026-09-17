@@ -83,6 +83,45 @@ function RecordsTable({ records, compartilhavel = false }: { records: ResultReco
   );
 }
 
+/** Revisão item a item gravada com o treino: erros primeiro, com opção de ver todos. */
+function DetalhesItens({ detalhes }: { detalhes: NonNullable<ResultRecord["detalhes"]> }) {
+  const [todos, setTodos] = useState(false);
+  const erros = detalhes.filter((d) => !d.acertou);
+  const lista = todos ? detalhes : erros;
+  const tempoTotal = detalhes.reduce((a, d) => a + (d.tempoSeg ?? 0), 0);
+  return (
+    <div className="mt-3" data-detalhes>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-medium text-slate-700">
+          Revisão item a item: {erros.length} erro(s) em {detalhes.length}
+          {tempoTotal > 0 ? ` · tempo por item medido (${Math.round(tempoTotal / detalhes.length)} s em média)` : ""}
+        </p>
+        <button type="button" onClick={() => setTodos((v) => !v)} className="text-xs text-brand-600 hover:underline">
+          {todos ? "ver só os erros" : `ver todos os ${detalhes.length}`}
+        </button>
+      </div>
+      {lista.length === 0 ? (
+        <p className="mt-1 text-xs text-emerald-700">Nenhum erro — gabarito completo.</p>
+      ) : (
+        <ul className="mt-1 space-y-1">
+          {lista.map((d) => (
+            <li key={`${d.n}-${d.id}`} className={`rounded border px-2 py-1 text-xs ${d.acertou ? "border-emerald-100 bg-emerald-50 text-slate-600" : "border-rose-100 bg-rose-50 text-slate-700"}`}>
+              <span className="font-semibold">#{d.n}</span>
+              {d.grupo ? <span className="ml-1 text-slate-500">· {d.grupo}</span> : null}
+              {d.tempoSeg !== undefined ? <span className="ml-1 text-slate-500">· {d.tempoSeg} s</span> : null}
+              <span className="ml-1">
+                {d.acertou ? "✓ certo" : d.escolhida === null ? "✗ em branco" : `✗ marcou ${String(d.escolhida)}`}
+                {!d.acertou ? <> · certa: <strong>{String(d.correta)}</strong></> : null}
+              </span>
+              {d.regra ? <span className="ml-1 block text-slate-500">{d.regra}</span> : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function RowGroup({ r, open, onToggle, compartilhavel }: { r: ResultRecord; open: boolean; onToggle: () => void; compartilhavel: boolean }) {
   const [copiado, setCopiado] = useState<"idle" | "ok" | "fail">("idle");
   async function copiarLink() {
@@ -109,6 +148,9 @@ function RowGroup({ r, open, onToggle, compartilhavel }: { r: ResultRecord; open
         <td className="px-3 py-2 text-slate-600">{r.respondent ?? <span className="text-slate-300">—</span>}</td>
         <td className="whitespace-nowrap px-3 py-2 font-medium text-slate-800">
           {fmt(r.totalScore)}/{fmt(r.maxScore)}
+          {r.durationSeconds !== undefined && (
+            <span className="ml-2 text-xs font-normal text-slate-500" title="tempo total">⏱ {Math.floor(r.durationSeconds / 60)}:{String(r.durationSeconds % 60).padStart(2, "0")}</span>
+          )}
           {r.positive !== undefined && (
             <span className={`ml-2 text-xs ${r.positive ? "text-orange-600" : "text-emerald-600"}`}>
               {r.positive ? "positivo" : "negativo"}
@@ -126,7 +168,7 @@ function RowGroup({ r, open, onToggle, compartilhavel }: { r: ResultRecord; open
               {copiado === "ok" ? "link copiado ✓" : copiado === "fail" ? "copie do aviso" : "copiar link"}
             </button>
           )}
-          {(r.subscales?.length || r.notes?.length) ? (
+          {(r.subscales?.length || r.notes?.length || r.detalhes?.length) ? (
             <button type="button" onClick={onToggle} className="text-xs text-brand-600 hover:underline">
               {open ? "fechar" : "detalhes"}
             </button>
@@ -155,6 +197,7 @@ function RowGroup({ r, open, onToggle, compartilhavel }: { r: ResultRecord; open
                 ))}
               </ul>
             )}
+            {r.detalhes && r.detalhes.length > 0 && <DetalhesItens detalhes={r.detalhes} />}
           </td>
         </tr>
       )}

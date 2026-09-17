@@ -32,37 +32,68 @@ export interface ItemCondicao {
 const NOME: Record<Forma, string> = { circulo: "do círculo", quadrado: "do quadrado", triangulo: "do triângulo" };
 const FORMAS: Forma[] = ["circulo", "quadrado", "triangulo"];
 
-export function dentroDe(f: Figura, forma: Forma, x: number, y: number): boolean {
+/**
+ * Distância com sinal até a borda da forma: positiva dentro, negativa fora.
+ * É o que permite exigir MARGEM: um ponto "dentro" a 0,3 px do traço não
+ * conta como dentro para quem olha a figura.
+ */
+export function distanciaComSinal(f: Figura, forma: Forma, x: number, y: number): number {
   if (forma === "circulo") {
     const { cx, cy, r } = f.circulo;
-    return (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
+    return r - Math.hypot(x - cx, y - cy);
   }
   if (forma === "quadrado") {
     const { x: qx, y: qy, lado } = f.quadrado;
-    return x >= qx && x <= qx + lado && y >= qy && y <= qy + lado;
+    return Math.min(x - qx, qx + lado - x, y - qy, qy + lado - y);
   }
   const { cx, cy, lado } = f.triangulo;
   const h = (lado * Math.sqrt(3)) / 2;
-  // vértices: topo (cx, cy - 2h/3), base (cx ± lado/2, cy + h/3)
-  const ax = cx, ay = cy - (2 * h) / 3;
-  const bx = cx - lado / 2, by = cy + h / 3;
-  const qx = cx + lado / 2, qy = cy + h / 3;
-  const d1 = (x - bx) * (ay - by) - (ax - bx) * (y - by);
-  const d2 = (x - qx) * (by - qy) - (bx - qx) * (y - qy);
-  const d3 = (x - ax) * (qy - ay) - (qx - ax) * (y - ay);
-  const neg = d1 < 0 || d2 < 0 || d3 < 0;
-  const pos = d1 > 0 || d2 > 0 || d3 > 0;
-  return !(neg && pos);
+  // vértices: topo (cx, cy - 2h/3), base (cx ± lado/2, cy + h/3); arestas no sentido horário
+  const v: [number, number][] = [[cx, cy - (2 * h) / 3], [cx + lado / 2, cy + h / 3], [cx - lado / 2, cy + h / 3]];
+  let min = Infinity;
+  for (let i = 0; i < 3; i++) {
+    const [ax, ay] = v[i], [bx, by] = v[(i + 1) % 3];
+    const len = Math.hypot(bx - ax, by - ay);
+    // distância com sinal à reta da aresta (positiva do lado de dentro)
+    const d = ((bx - ax) * (y - ay) - (by - ay) * (x - ax)) / len;
+    min = Math.min(min, d);
+  }
+  return min;
 }
 
-export function satisfaz(f: Figura, c: Condicao, x: number, y: number): boolean {
-  return FORMAS.every((forma) => (c[forma] === "dentro") === dentroDe(f, forma, x, y));
+export function dentroDe(f: Figura, forma: Forma, x: number, y: number): boolean {
+  return distanciaComSinal(f, forma, x, y) >= 0;
 }
 
-/** Procura um ponto (grade de 2 em 2) que satisfaça a condição; null se não existe. */
-export function pontoQueSatisfaz(f: Figura, c: Condicao): { x: number; y: number } | null {
-  for (let y = 2; y < 100; y += 2) for (let x = 2; x < 100; x += 2) if (satisfaz(f, c, x, y)) return { x, y };
-  return null;
+/** Margem mínima (px do viewBox 100) para um ponto contar como claramente dentro/fora. */
+export const MARGEM = 2.5;
+
+export function satisfaz(f: Figura, c: Condicao, x: number, y: number, margem = 0): boolean {
+  return FORMAS.every((forma) => {
+    const d = distanciaComSinal(f, forma, x, y);
+    return c[forma] === "dentro" ? d >= margem : d <= -margem;
+  });
+}
+
+/**
+ * Melhor ponto que satisfaz a condição com a margem pedida (o de maior folga),
+ * numa grade de 1 em 1; null se não existe.
+ */
+export function pontoQueSatisfaz(f: Figura, c: Condicao, margem = MARGEM): { x: number; y: number } | null {
+  let melhor: { x: number; y: number; folga: number } | null = null;
+  // grade de 2 em 2: regiões mais finas que isso são invisíveis no desenho
+  for (let y = 1; y < 100; y += 2) {
+    for (let x = 1; x < 100; x += 2) {
+      if (!satisfaz(f, c, x, y, margem)) continue;
+      if (margem <= 0) return { x, y }; // só interessa saber se existe
+      const folga = Math.min(...FORMAS.map((forma) => {
+        const d = distanciaComSinal(f, forma, x, y);
+        return c[forma] === "dentro" ? d : -d;
+      }));
+      if (!melhor || folga > melhor.folga) melhor = { x, y, folga };
+    }
+  }
+  return melhor ? { x: melhor.x, y: melhor.y } : null;
 }
 
 export function descreverCondicao(c: Condicao): string {
@@ -95,7 +126,7 @@ export function motivoFalha(f: Figura, c: Condicao): string {
     for (const d of dentro) soDentro[d] = "dentro";
     // ignora as "fora": existe ponto dentro de todas as "dentro"?
     const ha = (() => {
-      for (let y = 2; y < 100; y += 2) for (let x = 2; x < 100; x += 2) if (dentro.every((d) => dentroDe(f, d, x, y))) return true;
+      for (let y = 1; y < 100; y += 2) for (let x = 1; x < 100; x += 2) if (dentro.every((d) => dentroDe(f, d, x, y))) return true;
       return false;
     })();
     if (!ha) return `${dentro.map((d) => NOME[d].replace(/^d[oa] /, "o ")).join(" e ")} não se sobrepõem`;
@@ -122,9 +153,10 @@ export function gerarCondicao(seed: number, n = 0): ItemCondicao {
   const erradas: Figura[] = [];
   for (let tent = 0; tent < 4000 && (!certa || erradas.length < 4); tent++) {
     const f = figuraAleatoria(rand);
-    const p = pontoQueSatisfaz(f, condicao);
+    // certa: existe região com folga visível; errada: não existe ponto NEM na borda
+    const p = pontoQueSatisfaz(f, condicao, MARGEM);
     if (p && !certa) { certa = f; ponto = p; }
-    else if (!p && erradas.length < 4) erradas.push(f);
+    else if (!p && !pontoQueSatisfaz(f, condicao, 0) && erradas.length < 4) erradas.push(f);
   }
   if (!certa || !ponto || erradas.length < 4) {
     // Fallback determinístico (nunca deve acontecer com as faixas de tamanho acima).

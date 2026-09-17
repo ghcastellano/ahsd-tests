@@ -24,7 +24,7 @@ function shapeElement(spec: CellSpec, cx: number, cy: number, s: number, uid: st
     case "triangle":
       return (
         <polygon
-          points={`${cx},${cy - s} ${cx - s * 0.95},${cy + s * 0.75} ${cx + s * 0.95},${cy + s * 0.75}`}
+          points={`${cx},${cy - s} ${cx - s * 0.7},${cy + s * 0.8} ${cx + s * 0.7},${cy + s * 0.8}`}
           {...common}
         />
       );

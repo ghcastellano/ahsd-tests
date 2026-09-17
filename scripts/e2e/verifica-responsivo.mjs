@@ -4,6 +4,7 @@
 // de contêineres roláveis, (c) texto cortado (overflow escondido com
 // scrollWidth maior). Grava screenshots em SHOTS_DIR para inspeção.
 import { chromium } from "playwright";
+import { entrar } from "./login.mjs";
 import { mkdirSync } from "node:fs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const DIR = process.env.SHOTS_DIR ?? "/tmp/claude-0/-home-user-ahsd-tests/127777f9-3544-5baf-b866-2da183b5c0de/scratchpad/shots";
@@ -25,7 +26,7 @@ async function medir(p) {
       if (r.right > W + 1 && !el.closest(".overflow-x-auto, [style*='overflow-x: auto'], table")) {
         estouram.push(`${el.tagName.toLowerCase()}.${String(el.className).split(" ").slice(0, 2).join(".")} right=${Math.round(r.right)}`);
       }
-      if ((cs.overflow === "hidden" || cs.overflowX === "hidden") && el.scrollWidth > el.clientWidth + 2 && cs.textOverflow !== "ellipsis" && !el.querySelector("svg")) {
+      if ((cs.overflow === "hidden" || cs.overflowX === "hidden") && el.scrollWidth > el.clientWidth + 2 && cs.textOverflow !== "ellipsis" && !el.querySelector("svg") && !el.classList.contains("sr-only")) {
         cortados.push(`${el.tagName.toLowerCase()}.${String(el.className).split(" ").slice(0, 2).join(".")}`);
       }
     }
@@ -35,6 +36,7 @@ async function medir(p) {
 
 // Telas e como chegar nelas
 const TELAS = [
+  { nome: "entrar", ir: async (p) => p.goto(`${B}/entrar`) },
   { nome: "home", ir: async (p) => p.goto(`${B}/`) },
   { nome: "treino", ir: async (p) => p.goto(`${B}/treino`) },
   { nome: "regras", ir: async (p) => p.goto(`${B}/treino/regras`) },
@@ -63,6 +65,7 @@ const TELAS = [
 for (const [w, h, rotulo] of LARGURAS) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: w < 500, hasTouch: w < 900 });
   const p = await ctx.newPage();
+  await entrar(p, B);
   const erros = [];
   p.on("pageerror", (e) => erros.push(e.message.slice(0, 120)));
   for (const t of TELAS) {

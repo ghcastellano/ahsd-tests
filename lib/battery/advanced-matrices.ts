@@ -331,7 +331,11 @@ function triadItem(id: string, seed: number, difficulty: Difficulty): Item {
   // Três pares distintos; a linha de soma 4 vai primeiro: assim as duas primeiras
   // linhas nunca são ambas permutações de {1,2,3}, o que abriria a leitura
   // "distribuição de três" na quantidade com outra resposta.
-  const pares = shuffle(PARES_SOMA, rand).slice(0, 3).sort((p, q) => (q[0] + q[1]) - (p[0] + p[1]));
+  // Somas mistas (4 e 3): se as três linhas somassem o mesmo, a coluna 3 ficaria
+  // constante e a "adição" viraria "constante na coluna".
+  const soma4 = shuffle(PARES_SOMA.filter((p) => p[0] + p[1] === 4), rand);
+  const soma3 = shuffle(PARES_SOMA.filter((p) => p[0] + p[1] === 3), rand);
+  const pares = (rand() < 0.5 ? [soma4[0], soma3[0], soma3[1]] : [soma4[0], soma4[1], soma3[0]]).sort((p, q) => (q[0] + q[1]) - (p[0] + p[1]));
 
   const cellAt = (r: number, c: number): Cell => ({
     outer: shapes[(r + c) % 3],
@@ -347,14 +351,16 @@ function triadItem(id: string, seed: number, difficulty: Difficulty): Item {
   const somaErrada = [Math.abs(a2 - b2), Math.min(4, a2 + b2 + 1), b2].filter((n) => n >= 1 && n !== answer.count);
 
   // Cada distrator viola exatamente UMA das quatro regras; nenhum é célula visível.
+  // Um distrator por regra primeiro (a quantidade ENTRA sempre), depois os demais.
   const distractors: Cell[] = [
+    { ...answer, count: somaErrada[0] },
     { ...answer, outer: shapes[(2 + 2 + 1) % 3] },
-    { ...answer, outer: shapes[(2 + 2 + 2) % 3] },
     { ...answer, outerFill: fills[(2 * 2 + 2 + 1) % 3] },
-    { ...answer, outerFill: fills[(2 * 2 + 2 + 2) % 3] },
     { ...answer, marks: [inners[0]] },
+    ...somaErrada.slice(1).map((n) => ({ ...answer, count: n })),
+    { ...answer, outer: shapes[(2 + 2 + 2) % 3] },
+    { ...answer, outerFill: fills[(2 * 2 + 2 + 2) % 3] },
     { ...answer, marks: [inners[1]] },
-    ...somaErrada.map((n) => ({ ...answer, count: n })),
   ];
 
   const visiveis = new Set(grid.flat().slice(0, 8).map(visualKey));

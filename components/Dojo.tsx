@@ -13,6 +13,8 @@ import CellSvg from "./CellSvg";
 import MatrixCellSvg from "./MatrixCellSvg";
 import CondicaoSvg from "./CondicaoSvg";
 import RevisaoItem from "./RevisaoItem";
+import ShareBlock from "./ShareBlock";
+import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 
 type Fase = "escolha" | "exame" | "treino" | "fim";
 
@@ -42,7 +44,10 @@ export default function Dojo() {
   const [mostrandoIdx, setMostrandoIdx] = useState(-1);
   const [revelado, setRevelado] = useState(false);
   const [acertou, setAcertou] = useState(false);
-  const [respostas, setRespostas] = useState<{ dominio: string; acertou: boolean; regra: string }[]>([]);
+  const [respostas, setRespostas] = useState<{ dominio: string; acertou: boolean; regra: string; id: string; escolhida: string | number | null; correta: string | number; tempoSeg: number }[]>([]);
+  const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
+  const inicioRodada = useRef(0);
+  const inicioItem = useRef(0);
   const [progresso, setProgresso] = useState<ProgressoDojo>(vazio());
   const registrado = useRef(false);
 
@@ -67,6 +72,8 @@ export default function Dojo() {
     setRodadaN((n) => n + 1);
     setIdx(0); setEscolha(null); setEntrada(""); setRevelado(false); setRespostas([]);
     registrado.current = false;
+    setSavedRecord(null);
+    inicioRodada.current = Date.now(); inicioItem.current = Date.now();
     setFase("treino");
   }
 
@@ -107,19 +114,30 @@ export default function Dojo() {
     const ok = i === respostaCorreta(item);
     setAcertou(ok);
     setRevelado(true);
-    setRespostas((r) => [...r, { dominio: item.dominio, acertou: ok, regra: regraDe(item) }]);
+    const textoOpcao = (k: number) => (item.tipo === "texto" ? item.item.opcoes[k] : k + 1);
+    setRespostas((r) => [...r, { dominio: item.dominio, acertou: ok, regra: regraDe(item), id: idDe(item), escolhida: textoOpcao(i), correta: textoOpcao(respostaCorreta(item)), tempoSeg: Math.round((Date.now() - inicioItem.current) / 1000) }]);
   }
   function responderMemoria() {
     if (!item || item.tipo !== "memoria" || revelado) return;
     const ok = conferirMemoria(item.item, entrada);
     setAcertou(ok);
     setRevelado(true);
-    setRespostas((r) => [...r, { dominio: item.dominio, acertou: ok, regra: regraDe(item) }]);
+    setRespostas((r) => [...r, { dominio: item.dominio, acertou: ok, regra: regraDe(item), id: item.item.id, escolhida: entrada || null, correta: item.item.resposta, tempoSeg: Math.round((Date.now() - inicioItem.current) / 1000) }]);
   }
   function proximo() {
+    inicioItem.current = Date.now();
     if (idx + 1 < itens.length) { setIdx(idx + 1); setEscolha(null); setEntrada(""); setRevelado(false); return; }
     setFase("fim");
   }
+  const idDe = (it: ItemDojo): string => {
+    switch (it.tipo) {
+      case "figural": return it.item.id;
+      case "matriz": return `m${it.item.id}`;
+      case "texto": return it.item.id;
+      case "condicao": return it.item.id;
+      case "memoria": return it.item.id;
+    }
+  };
 
   // registra a rodada no progresso (uma vez)
   useEffect(() => {
@@ -128,6 +146,27 @@ export default function Dojo() {
     const novo = registrar(progresso, respostas);
     setProgresso(novo);
     salvar(novo);
+    // Registro no histórico (painel + banco central), com revisão item a item.
+    if (ex) {
+      const certos = respostas.filter((r) => r.acertou).length;
+      const dom = dominioId ? ex.dominios.find((d) => d.id === dominioId) : undefined;
+      const record: ResultRecord = {
+        id: makeRecordId(),
+        createdAt: new Date().toISOString(),
+        instrumentId: "treino-dojo",
+        acronym: "DOJO",
+        instrumentName: `Dojo — ${ex.nome}${dom ? ` · ${dom.nome}` : " · rodada mista"}`,
+        totalScore: certos,
+        maxScore: respostas.length,
+        bandLabel: `${certos} de ${respostas.length} acertos`,
+        severity: "info",
+        subscales: ex.dominios.map((d) => ({ name: d.nome, raw: respostas.filter((r) => r.dominio === d.id && r.acertou).length, max: respostas.filter((r) => r.dominio === d.id).length })).filter((s) => s.max > 0),
+        durationSeconds: inicioRodada.current ? Math.round((Date.now() - inicioRodada.current) / 1000) : undefined,
+        detalhes: respostas.map((r, i) => ({ n: i + 1, id: r.id, escolhida: r.escolhida, correta: r.correta, acertou: r.acertou, regra: r.regra, tempoSeg: r.tempoSeg, grupo: r.dominio })),
+      };
+      saveLocalRecord(record);
+      setSavedRecord(record);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fase]);
 
@@ -280,6 +319,7 @@ export default function Dojo() {
           <p className="font-semibold text-emerald-900">Próximo passo{dias > 0 ? ` · 🔥 ${dias} dia(s) seguido(s)` : ""}</p>
           <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-emerald-900">{plano.map((p) => <li key={p}>{p}</li>)}</ol>
         </div>
+        {savedRecord && <ShareBlock record={savedRecord} />}
         <div className="mt-6 flex flex-wrap gap-3">
           <button type="button" onClick={() => comecar(dominioId)} className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700">Outra rodada (novas questões)</button>
           {pior && <button type="button" onClick={() => comecar(pior.d.id)} className="rounded-lg border border-brand-600 px-5 py-2.5 font-medium text-brand-700 hover:bg-brand-50">Só {pior.d.nome}</button>}

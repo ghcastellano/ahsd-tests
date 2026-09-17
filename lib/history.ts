@@ -12,6 +12,28 @@ export interface RecordSubscale {
   mean?: number;
 }
 
+/**
+ * Um item de TREINO, para revisão no histórico: o que foi marcado, o que era
+ * certo, a regra e o tempo. Só os treinos (treino-*) gravam isto; os
+ * instrumentos clínicos continuam sem respostas individuais.
+ */
+export interface DetalheItem {
+  /** Posição do item na prova (1-based). */
+  n: number;
+  id: string;
+  /** Alternativa marcada (1-based) ou texto digitado; null = não respondido. */
+  escolhida: string | number | null;
+  /** Alternativa correta (1-based) ou resposta esperada. */
+  correta: string | number;
+  acertou: boolean;
+  /** Regra/explicação do item. */
+  regra?: string;
+  /** Segundos gastos no item, quando medido. */
+  tempoSeg?: number;
+  /** Domínio/bloco/dificuldade (ex.: "dificil", "verbal", "condicoes"). */
+  grupo?: string;
+}
+
 export interface ResultRecord {
   id: string;
   createdAt: string; // ISO 8601
@@ -27,6 +49,10 @@ export interface ResultRecord {
   metricIsMean?: boolean;
   subscales?: RecordSubscale[];
   notes?: string[];
+  /** Tempo total gasto, em segundos (do início ao término). */
+  durationSeconds?: number;
+  /** Revisão item a item (só treinos). */
+  detalhes?: DetalheItem[];
 }
 
 const STORAGE_KEY = "ahsd:historico:v1";
@@ -151,7 +177,7 @@ export function motivoDaFalha(status: number | undefined, body: string): string 
   return `falha inesperada (HTTP ${status})`;
 }
 
-export async function insertRemoteRecordDetalhado(record: ResultRecord): Promise<EnvioRemoto> {
+export async function insertRemoteRecordDetalhado(record: ResultRecord, comDetalhes = true): Promise<EnvioRemoto> {
   if (!remoteEnabled()) return { ok: false, motivo: "registro central desativado" };
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/${RESULTS_TABLE}`, {
@@ -177,11 +203,19 @@ export async function insertRemoteRecordDetalhado(record: ResultRecord): Promise
         positive: record.positive ?? null,
         metric_is_mean: record.metricIsMean ?? false,
         subscales: record.subscales ?? null,
+        // Colunas novas (detalhes.sql). Se o banco ainda não as tiver, o
+        // PostgREST responde PGRST204 e reenviamos sem elas (o resumo não se perde).
+        ...(comDetalhes ? { duracao_segundos: record.durationSeconds ?? null, detalhes: record.detalhes ?? null } : {}),
       }),
     });
     // 409 = client_id já existe: o registro está no banco, missão cumprida.
     if (res.ok || res.status === 409) return { ok: true, status: res.status };
     const body = await res.text().catch(() => "");
+    if (comDetalhes && body.includes("PGRST204")) {
+      const semDetalhes = await insertRemoteRecordDetalhado(record, false);
+      if (semDetalhes.ok) return { ...semDetalhes, motivo: "gravado sem a revisão item a item: o banco ainda não tem as colunas novas (rode supabase/detalhes.sql)" };
+      return semDetalhes;
+    }
     return { ok: false, status: res.status, motivo: motivoDaFalha(res.status, body) };
   } catch {
     return { ok: false, motivo: motivoDaFalha(undefined, "") };
@@ -204,6 +238,8 @@ interface RemoteRow {
   metric_is_mean: boolean | null;
   subscales: RecordSubscale[] | null;
   notes: string[] | null;
+  duracao_segundos?: number | null;
+  detalhes?: DetalheItem[] | null;
 }
 
 /** Lista os registros centrais mediante a senha do painel (RPC segura). */
@@ -268,6 +304,8 @@ export async function fetchRemoteRecords(password: string): Promise<ResultRecord
     metricIsMean: r.metric_is_mean ?? undefined,
     subscales: r.subscales ?? undefined,
     notes: r.notes ?? undefined,
+    durationSeconds: r.duracao_segundos ?? undefined,
+    detalhes: r.detalhes ?? undefined,
   }));
 }
 
@@ -305,6 +343,8 @@ export function buildCsv(records: ResultRecord[]): string {
     "faixa",
     "rastreio_positivo",
     "subescalas",
+    "duracao_seg",
+    "itens_errados",
   ];
   const lines = records.map((r) => {
     const subs = (r.subscales ?? [])
@@ -323,6 +363,8 @@ export function buildCsv(records: ResultRecord[]): string {
       r.bandLabel,
       r.positive === undefined ? "" : r.positive ? "sim" : "não",
       subs,
+      r.durationSeconds === undefined ? "" : String(r.durationSeconds),
+      (r.detalhes ?? []).filter((d) => !d.acertou).map((d) => `#${d.n}${d.escolhida === null ? " (em branco)" : ""}`).join(" "),
     ]
       .map(csvEscape)
       .join(";");

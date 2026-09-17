@@ -165,7 +165,7 @@ export const EXAMES: ExameDojo[] = [
     id: "mensa",
     nome: "Mensa (teste de admissão)",
     sigla: "MENSA",
-    oQueE: "A Mensa não é um teste: é uma sociedade que admite quem está no percentil 98 (2% superior) em um teste de inteligência supervisionado. No Brasil, a Mensa aplica testes psicométricos \"culture fair\" (independentes de língua e conhecimento), sorteados no dia, com até 60 minutos, e informa apenas aprovado/reprovado — o percentil, só a pedido. Também aceita laudo de psicólogo com WAIS-III, WISC-IV, WASI, SON-R ou Matrizes Progressivas Avançadas de Raven (RAPM). Pode-se refazer após 1 ano, no máximo três vezes. Em outros países os testes variam: Mensa UK usa o Cattell III B e o Culture Fair; a americana usa o Wonderlic e o RAIT.",
+    oQueE: "A Mensa não é um teste: é uma sociedade que admite quem está no percentil 98 (2% superior) em um teste de inteligência supervisionado. No Brasil, a Mensa aplica testes psicométricos \"culture fair\" (independentes de língua e conhecimento), sorteados no dia, com até 60 minutos, e informa apenas aprovado/reprovado — o percentil, só a pedido. Também aceita laudo de psicólogo com WAIS-III, WISC-IV, WASI, SON-R ou Matrizes Progressivas de Raven (a lista e os prazos mudam; confirme no site oficial). Pode-se refazer após 1 ano, no máximo três vezes. Em outros países os testes variam: Mensa UK usa o Cattell III B e o Culture Fair; a americana usa o Wonderlic e o RAIT.",
     estrutura: [
       "Teste não verbal, em geral no formato de matrizes ou de séries/classificação de figuras (estilo Raven APM ou Cattell Culture Fair).",
       "Aplicação coletiva, presencial, cronometrada, sem calculadora ou consulta.",
@@ -191,7 +191,7 @@ export const EXAMES: ExameDojo[] = [
     sigla: "WAIS",
     oQueE: "A Escala Wechsler de Inteligência para Adultos é a escala clínica mais usada no mundo, aplicada individualmente por psicólogo em cerca de 90 minutos. Não é o teste da Mensa — mas a Mensa Brasil aceita o laudo (WAIS-III). Produz um QI total (média 100, desvio-padrão 15) e quatro índices: Compreensão Verbal, Raciocínio Perceptual, Memória Operacional e Velocidade de Processamento.",
     estrutura: [
-      "Compreensão Verbal: Semelhanças, Vocabulário, Informação (respostas abertas, pontuadas 0/1/2).",
+      "Compreensão Verbal: Semelhanças e Vocabulário (respostas abertas, pontuadas 0/1/2) e Informação (0/1).",
       "Raciocínio Perceptual: Cubos, Raciocínio Matricial, Quebra-cabeças Visuais.",
       "Memória Operacional: Dígitos (direta, inversa, sequenciamento) e Aritmética (problemas ouvidos, sem papel).",
       "Velocidade de Processamento: Procura de Símbolos e Códigos (2 minutos cada).",
@@ -246,7 +246,7 @@ export const EXAMES: ExameDojo[] = [
       "Matrizes (13 itens, 3 min): qual figura completa a matriz.",
       "Condições/Topologia (10 itens, 2,5 min): em qual figura um ponto pode ficar na mesma relação com as formas.",
     ],
-    corte: "Percentil 98 = 148 (DP 24) ou 132 (DP 16) · Triple Nine = 173 (DP 24)",
+    corte: "Percentil 98 = 132 (DP 16 do CFIT) · na escala Cattell III B (DP 24): 148 · Triple Nine = 149 (DP 16) / 173 (DP 24)",
     porQueDificil: [
       "É o mais rápido dos quatro: cerca de 14 segundos por item. Quem delibera não termina.",
       "Os quatro subtestes pedem operações mentais diferentes; o de condições (topologia) é pouco familiar para quase todo mundo.",
@@ -301,7 +301,7 @@ export function dominioDe(exameId: string, dominioId: string): DominioDojo | und
 export const ALTO_ALCANCE = {
   tripleNine: "A Triple Nine Society admite o percentil 99,9 (1 em 1.000): 146 em testes de DP 15 (WAIS, SB5), 149 em DP 16 (SB-IV), 173 em DP 24 (Cattell III B); aceita também o RAIT (146) e as Matrizes Progressivas Avançadas de Raven, entre mais de 20 testes.",
   maisDificeis: [
-    "Mega Test (Ronald Hoeflin, 1985): 48 itens, metade verbal-analógica e metade quantitativa-espacial, sem limite de tempo, resolvido em casa e enviado pelo correio; teto estimado pelo autor acima de 190. Compromissado por vazamento de respostas e busca na internet.",
+    "Mega Test (Ronald Hoeflin, 1985): 48 itens, metade verbal-analógica e metade quantitativa-espacial, sem limite de tempo, resolvido em casa e enviado pelo correio; teto estimado pelo autor acima de 190. Comprometido por vazamento de respostas e busca na internet.",
     "Titan Test (Hoeflin, 1990): sucessor do Mega, no mesmo formato; aposentado em 2020 pela mesma razão.",
     "Testes de Paul Cooijmans e outros autores de 'alto alcance': verbais, numéricos e espaciais, sem tempo, com normas construídas a partir de quem se candidata — amostras autosselecionadas.",
   ],

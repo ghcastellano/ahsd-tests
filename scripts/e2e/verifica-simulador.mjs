@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { entrar } from "./login.mjs";
 import { readFileSync } from "node:fs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const esperado = JSON.parse(readFileSync(new URL("./simulador-esperado.json", import.meta.url), "utf8"));
@@ -46,6 +47,7 @@ async function jogarBloco(p, bloco, perfeito) {
 
 // ---- jogada perfeita, três blocos ----
 let p = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+await entrar(p, B);
 await p.goto(`${B}/treino/simulador?seed=12345`); await p.waitForTimeout(600);
 await p.getByRole("button", { name: /Começar pelo Bloco 1/i }).click();
 for (let b = 0; b < 3; b++) {
@@ -70,6 +72,7 @@ await p.close();
 
 // ---- jogada fraca no bloco 1, para e vê o resultado ----
 p = await (await browser.newContext()).newPage();
+await entrar(p, B);
 await p.goto(`${B}/treino/simulador?seed=12345`); await p.waitForTimeout(600);
 await p.getByRole("button", { name: /Começar pelo Bloco 1/i }).click();
 await jogarBloco(p, esperado[0], false);

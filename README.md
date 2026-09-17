@@ -113,6 +113,33 @@ inválida e lê a resposta — 23514 (restrição de valores) significa que a
 política RLS deixou passar e a gravação real funciona; 42501/401 significa
 bloqueada. Nada é gravado pela sonda.
 
+### Senha de entrada do site
+
+Todo o site exige uma senha na tela inicial (`/entrar`), como um portão:
+`middleware.ts` redireciona qualquer página para `/entrar?next=…` quando não
+há o cookie `ahsd_acesso`, um hash HttpOnly da senha com sal (nunca a senha).
+`POST /api/entrar` confere a senha e grava o cookie por 30 dias;
+`POST /api/sair` apaga. A senha padrão é `senha123`; para trocar sem alterar
+código, defina `SITE_SENHA` na Vercel e faça um novo deploy. As rotas de API
+ficam fora do portão porque têm proteção própria (senha do painel, restrições
+do banco). Os roteiros Playwright entram pela tela de senha
+(`scripts/e2e/login.mjs`); `verifica-portao.mjs` cobre redirecionamento,
+senha errada, cookie e saída.
+
+### Histórico rastreável: duração e revisão item a item
+
+Todo registro passa a gravar `duracao_segundos` (do início ao término). Os
+TREINOS (`treino-*`: matrizes, bateria, simulador, Dojo, Go/NoGo) gravam
+também `detalhes`: item a item, o que foi marcado, o que era certo, a regra
+e o tempo gasto (`lib/use-tempos.ts` mede o tempo por item). O painel mostra
+a duração ao lado da nota e, em "detalhes", a revisão com os erros primeiro
+e "ver todos". O CSV ganha `duracao_seg` e `itens_errados`. Os instrumentos
+clínicos continuam sem respostas individuais. Para o projeto Supabase já
+existente, rode uma vez [`supabase/detalhes.sql`](supabase/detalhes.sql);
+até lá o site grava o resumo sem a revisão e avisa na tela.
+`POST /api/exportar` (com a senha do painel) devolve resultados e acessos em
+JSON, para backup ou migração.
+
 ### Registro de acessos (IP)
 
 Cada página aberta dispara `POST /api/visita` (componente `VisitaLogger` no

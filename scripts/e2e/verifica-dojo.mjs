@@ -3,11 +3,13 @@
 // resultado e o progresso gravado no aparelho.
 // Uso: BASE_URL=http://localhost:3111 node scripts/e2e/verifica-dojo.mjs
 import { chromium } from "playwright";
+import { entrar } from "./login.mjs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
 const proxy = process.env.HTTPS_PROXY && !/localhost|127\.0\.0\.1/.test(B) ? { server: process.env.HTTPS_PROXY, bypass: "localhost,127.0.0.1" } : undefined;
 const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", proxy });
 const p = await browser.newPage();
+await entrar(p, B);
 
 // Tela de escolha
 await p.goto(`${B}/treino/dojo?seed=5`);
