@@ -44,7 +44,7 @@ export default function TreinoIndex() {
 
       <Link
         href="/treino/dojo"
-        className="mt-4 block rounded-xl border-2 border-emerald-300 bg-emerald-50 p-5 transition hover:border-emerald-500"
+        className="group mt-8 block rounded-xl border-2 border-emerald-300 bg-emerald-50 p-5 transition hover:border-emerald-500 hover:shadow-md"
       >
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white">NOVO</span>

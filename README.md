@@ -268,6 +268,9 @@ BASE_URL=http://localhost:3111 node scripts/e2e/verifica-simulador.mjs
 # variação por semente: /teste-qi e os 4 treinos com ?seed=11 e ?seed=4242 —
 # provas diferentes entre si e jogada perfeita com nota máxima em cada uma
 BASE_URL=http://localhost:3111 node scripts/e2e/verifica-variacao.mjs
+# varredura responsiva: 23 telas × 3 larguras (celular 390, iPad 820, web 1280) — rolagem
+# horizontal, elementos que estouram a janela, texto cortado, erros de JavaScript; screenshots em SHOTS_DIR
+BASE_URL=http://localhost:3111 node scripts/e2e/verifica-responsivo.mjs
 # dojo (treino ativo por exame): 4 exames × rodada de 10 itens com feedback, progresso e plano
 BASE_URL=http://localhost:3111 node scripts/e2e/verifica-dojo.mjs
 # revisão de erros no resultado (/teste-qi, bateria e simulador): erra de propósito e

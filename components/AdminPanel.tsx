@@ -358,17 +358,13 @@ export default function AdminPanel() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-brand-600">Área restrita</p>
-          <h1 className="mt-1 text-2xl font-bold text-slate-900">Painel de acompanhamento</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Histórico dos testes realizados, com data, hora, pontuação e detalhamento.
-          </p>
-        </div>
-        <Link href="/" className="no-print text-sm text-brand-600 hover:underline">
-          ← Site
-        </Link>
+      <Link href="/" className="no-print text-sm text-brand-600 hover:underline">← Site</Link>
+      <div className="mt-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-brand-600">Área restrita</p>
+        <h1 className="mt-1 text-2xl font-bold text-slate-900">Painel de acompanhamento</h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Histórico dos testes realizados, com data, hora, pontuação e detalhamento.
+        </p>
       </div>
 
       {/* Confirmação de importação via link */}

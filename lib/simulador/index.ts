@@ -50,17 +50,17 @@ export function blocos(seed = 0): Bloco[] {
   const bloco3 = [...porKind((k) => k.startsWith("logicD2"), 2), ...porKind((k) => k === "triad", 2)];
   return [
     {
-      nivel: 1, nome: "Bloco 1 — Wechsler", escala: "Wechsler (DP 15)", qiAlvo: 130, dp: 15,
+      nivel: 1, nome: "Bloco 1 — Wechsler", escala: "DP 15", qiAlvo: 130, dp: 15,
       descricao: "Acima da média adulta no formato Wechsler: vocabulário pouco comum, 7–8 dígitos, matrizes com operação lógica exclusiva e com dois componentes.",
       verbal: itensVerbais(1, seed), raciocinio: bloco1, segundosVelocidade: CONFIG[1].segundos, segundosRaciocinio: 4 * 60,
     },
     {
-      nivel: 2, nome: "Bloco 2 — Stanford-Binet IV", escala: "Stanford-Binet IV (DP 16; o SB5 atual usa 15)", qiAlvo: 132, dp: 16,
+      nivel: 2, nome: "Bloco 2 — Stanford-Binet IV", escala: "DP 16 (o SB5 atual usa 15)", qiAlvo: 132, dp: 16,
       descricao: "Vocabulário raro, 8–9 dígitos, distratores parecidos, matrizes com operação exclusiva (XOR) e distribuição de dois.",
       verbal: itensVerbais(2, seed), raciocinio: bloco2, segundosVelocidade: CONFIG[2].segundos, segundosRaciocinio: 5 * 60,
     },
     {
-      nivel: 3, nome: "Bloco 3 — Cattell", escala: "Cattell III B (DP 24)", qiAlvo: 148, dp: 24,
+      nivel: 3, nome: "Bloco 3 — Cattell", escala: "DP 24 (escala Cattell III B)", qiAlvo: 148, dp: 24,
       descricao: "O topo: abstração verbal, 9 dígitos e 7–8 na inversa (teto dos instrumentos), distratores parecidos e matrizes de carga extrema (duas regras em componentes diferentes; quatro regras em eixos distintos).",
       verbal: itensVerbais(3, seed), raciocinio: bloco3, segundosVelocidade: CONFIG[3].segundos, segundosRaciocinio: 6 * 60,
     },
