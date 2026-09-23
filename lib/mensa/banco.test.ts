@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 import MensaStimulus, { PairSvg } from "../../components/MensaStimulus";
-import { answerOf, complementItems, makeMensaItems, PROTOCOLS, remainingSeconds, summarize } from "./banco";
+import { answerOf, complementItems, makeMensaItems, PROTOCOLS, remainingSeconds, stimulusKey, summarize } from "./banco";
 
 const cycle = (n: number, base: number) => (n % base + base) % base;
 describe("preparação Mensa Brasil", () => {
@@ -20,7 +20,7 @@ describe("preparação Mensa Brasil", () => {
     }
   });
   it("reproduz a semente e varia estímulos, não apenas a ordem das alternativas", () => {
-    for (const mode of ["principal", "complemento"] as const) {
+    for (const mode of ["principal", "desafio", "complemento"] as const) {
       expect(makeMensaItems(mode, 42)).toEqual(makeMensaItems(mode, 42));
       const stimuli = (seed: number) => makeMensaItems(mode, seed).map(q => JSON.stringify(q.type === "figura" ? [q.item.grid, q.item.sequence, q.item.set] : [q.grid, q.sequence])).sort();
       expect(stimuli(42)).not.toEqual(stimuli(43));
@@ -35,24 +35,46 @@ describe("preparação Mensa Brasil", () => {
         const grid = q.grid!;
         expect(new Set(q.options.map(p => p[0])).size).toBeGreaterThan(1);
         expect(new Set(q.options.map(p => p[1])).size).toBeGreaterThan(1);
-        expected = [0, 1].map(half => {
-          // Infere a operação das duas linhas completas; não usa metadados/gabarito.
-          const operators = [1, -1].filter(sign => grid.slice(0, 2).every(row => cycle(row[0][half] + sign * row[1][half], 7) === row[2][half]));
-          expect(operators).toHaveLength(1);
-          return cycle(grid[2][0][half] + operators[0] * grid[2][1][half], 7);
-        });
+        const predictions = new Map<string, number[]>();
+        for (const left of [[0, 1], [1, 0]]) for (const right of [[0, 1], [1, 0]]) for (const signs of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+          const solve = (row: [number, number][]) => [0, 1].map(j => cycle(row[0][left[j]] + signs[j] * row[1][right[j]], 7));
+          if (grid.slice(0, 2).every(row => solve(row).every((v, j) => v === row[2][j]))) {
+            const next = solve(grid[2]); predictions.set(next.join(","), next);
+          }
+        }
+        expect(predictions.size).toBe(1);
+        expected = [...predictions.values()][0];
       } else {
-        expected = [0, 1].map(hand => {
-          const positions = q.sequence!.map(pair => pair[hand]);
-          const differences = positions.slice(1).map((p, i) => cycle(p - positions[i], 12));
-          const acceleration = differences.slice(1).map((d, i) => cycle(d - differences[i], 12));
-          expect(new Set(acceleration).size).toBe(1);
-          return cycle(positions[4] + differences[3] + acceleration[0], 12);
-        });
+        const predictions = new Map<string, number[]>();
+        for (const source of [[0, 1], [1, 0]]) {
+          const ds = [0, 1].map(j => q.sequence!.slice(1).map((pair, i) => cycle(pair[j] - q.sequence![i][source[j]], 12)));
+          const accel = ds.map(differences => differences.slice(1).map((d, i) => cycle(d - differences[i], 12)));
+          if (!accel.every(a => new Set(a).size === 1)) continue;
+          const next = [0, 1].map(j => cycle(q.sequence![4][source[j]] + ds[j][3] + accel[j][0], 12));
+          predictions.set(next.join(","), next);
+        }
+        expect(predictions.size).toBe(1);
+        expected = [...predictions.values()][0];
       }
       expect(q.options[q.answerIndex]).toEqual(expected);
       expect(q.options.filter(p => p.every((v, i) => v === expected[i]))).toHaveLength(1);
     }
+  });
+  it("elimina o atalho da moda de cada componente em 12.000 itens", () => {
+    for (let seed = 0; seed < 1000; seed++) for (const q of complementItems(seed)) for (const half of [0, 1]) {
+      const frequencies = new Map<number, number>();
+      for (const p of q.options) frequencies.set(p[half], (frequencies.get(p[half]) ?? 0) + 1);
+      expect(new Set(frequencies.values()).size).toBe(1);
+      expect(frequencies.size).toBeGreaterThan(1);
+    }
+  });
+  it("não repete estímulos numa sessão e a assinatura independe do gabarito", () => {
+    for (let seed = 0; seed < 50; seed++) for (const mode of ["principal", "desafio", "complemento"] as const) {
+      const items = makeMensaItems(mode, seed);
+      expect(new Set(items.map(stimulusKey)).size).toBe(items.length);
+    }
+    const q = complementItems(1)[0];
+    expect(stimulusKey(q)).toBe(stimulusKey({ ...q, id: "outro", answerIndex: 999, options: [] }));
   });
   it("omite a célula-resposta na apresentação e mostra SVGs acessíveis", () => {
     const q = complementItems(42)[0];

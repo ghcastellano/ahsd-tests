@@ -316,7 +316,7 @@ function logicD2Item(id: string, seed: number, op: LogicOp, difficulty: Difficul
 }
 
 // ---------------------------------------------------------------------------
-// 6. Três componentes / quatro regras em eixos distintos, distratores n−1: "extrema"
+// 6. Três componentes / quatro regras em eixos distintos, alternativas equilibradas: "extrema"
 // ---------------------------------------------------------------------------
 
 /** Pares (a, b) com a + b ≤ 4, para a regra de adição na quantidade. */
@@ -375,7 +375,7 @@ function triadItem(id: string, seed: number, difficulty: Difficulty): Item {
     explanation:
       "Quatro regras em eixos diferentes. Contorno: cada linha tem as três formas E os três preenchimentos, uma vez cada, em ordens independentes. " +
       "Elemento interno: constante em cada COLUNA. Quantidade do elemento: a terceira célula tem a soma das duas primeiras (adição, como nos itens finais do APM). " +
-      "Cada alternativa errada respeita três das quatro regras.",
+      "Confira todos os componentes: os atributos estão equilibrados entre as alternativas.",
   };
 }
 
@@ -400,11 +400,36 @@ export function advancedMatrixItems(seed = 0): Item[] {
   for (let i = 0; i < 9; i++) items.push(dualItem(next(), 3000 + i * 47 + k, "dificil"));
   // Bloco 4 (28–36): distribuição de dois com layout sorteado, depois os dois
   // tipos de teto (duas regras em componentes diferentes; quatro regras em
-  // eixos distintos com distratores n−1). Antes, "extrema" era o mesmo XOR
+  // eixos distintos com alternativas equilibradas). Antes, "extrema" era o mesmo XOR
   // dos itens 15–18 com outro rótulo.
   for (let i = 0; i < 4; i++) items.push(d2Item(next(), 4000 + i * 53 + k, "dificil"));
   for (let i = 0; i < 2; i++) items.push(logicD2Item(next(), 4500 + i * 59 + k, i ? "and" : "xor", "extrema"));
   for (let i = 0; i < 3; i++) items.push(triadItem(next(), 4700 + i * 61 + k, "extrema"));
 
-  return items;
+  return items.map((item, i) => balanceMatrixOptions(item, mulberry32(k + 7001 + i * 101)));
+}
+
+function balanceMatrixOptions(item: Item, rand: () => number): Item {
+  if (!["d3", "dual", "triad", "logicD2-xor", "logicD2-and"].includes(item.kind ?? "")) return item;
+  const correct = item.grid![2][2];
+  const shape = (c: Cell) => item.kind === "d3" ? c.marks[0] : c.outer;
+  const shapes = [...new Set(item.grid!.flat().map(shape))];
+  if (item.kind === "triad") {
+    const fills = [correct.outerFill, ...FILLS.filter(f => f !== correct.outerFill)];
+    const marks = [correct.marks[0], ...new Set(item.grid!.flat().map(c => c.marks[0]).filter(m => m !== correct.marks[0]))];
+    const outers = [correct.outer, ...shapes.filter(o => o !== correct.outer)];
+    const counts = [correct.count, ...shuffle([1, 2, 3, 4].filter(n => n !== correct.count), rand)];
+    const candidates = Array.from({ length: 6 }, (_, i) => ({ ...correct, outer: outers[i % 3], outerFill: fills[(i + Math.floor(i / 3)) % 3], marks: [marks[(i + 2 * Math.floor(i / 3)) % 3]], count: counts[Math.floor(i / 3)] }));
+    return { ...item, ...buildOptions(correct, candidates, visualKey, rand), explanation: item.explanation };
+  }
+  const wrong = shuffle(item.options!.filter(c => {
+    const restored = item.kind === "d3" ? { ...c, marks: correct.marks } : { ...c, outer: correct.outer };
+    return visualKey(restored) !== visualKey(correct);
+  }), rand)[0];
+  // Todos os atributos internos incorretos mudam juntos. Cada conteúdo aparece
+  // três vezes e cada contorno duas; a moda das alternativas não revela a chave.
+  const contents = [correct, wrong];
+  const candidates = shapes.flatMap(outer => contents.map(c => item.kind === "d3" ? { ...c, marks: [outer!] } : { ...c, outer }));
+  const options = buildOptions(correct, candidates, visualKey, rand);
+  return { ...item, ...options, explanation: item.explanation };
 }

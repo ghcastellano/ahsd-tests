@@ -354,7 +354,7 @@ describe("auditoria: séries numéricas sem regra alternativa mais simples", () 
 });
 
 describe("auditoria: matrizes avançadas — teto real e D2 variado", () => {
-  it("os itens 'extrema' são de tipos próprios (não o XOR relabelado), sem distrator igual a célula visível", () => {
+  it("os itens 'extrema' são de tipos próprios (não o XOR relabelado), com alternativas visualmente distintas", () => {
     for (const seed of [0, 1, 2, 3, 5, 8, 13, 21]) {
       const its = advancedMatrixItems(seed);
       const extremos = its.filter((i) => i.difficulty === "extrema");
@@ -362,8 +362,9 @@ describe("auditoria: matrizes avançadas — teto real e D2 variado", () => {
       expect(new Set(extremos.map((i) => i.kind))).toEqual(new Set(["logicD2-xor", "logicD2-and", "triad"]));
       for (const it of extremos) {
         expect(it.options).toHaveLength(6);
-        const vis = new Set(it.grid!.flat().slice(0, 8).map(visualKey));
-        it.options!.forEach((o, i) => { if (i !== it.answerIndex) expect(vis.has(visualKey(o)), `${it.id} seed ${seed}: distrator é célula visível`).toBe(false); });
+        // Copiar uma célula visível pode ser um distrator legítimo. Excluí-la
+        // sistematicamente desequilibrava atributos e denunciava o gabarito.
+        expect(new Set(it.options!.map(visualKey)).size).toBe(6);
         expect(it.grid!.flat().every((c) => c.marks.length > 0)).toBe(true);
       }
     }
@@ -383,3 +384,17 @@ describe("auditoria: matrizes avançadas — teto real e D2 variado", () => {
   });
 });
 
+
+describe("alternativas equilibradas em matrizes com componentes", () => {
+  it("nenhum componente correto tem frequência privilegiada", () => {
+    for (let seed = 0; seed < 200; seed++) for (const q of advancedMatrixItems(seed)) {
+      if (!["d3", "dual", "triad", "logicD2-xor", "logicD2-and"].includes(q.kind ?? "")) continue;
+      const read: ((c: Cell) => unknown)[] = [(c: Cell) => c.outer, (c: Cell) => c.outerFill, (c: Cell) => c.count, (c: Cell) => c.innerFill, (c: Cell) => [...c.marks].sort().join(",")];
+      for (const attribute of read) {
+        const values = q.options!.map(attribute);
+        const counts = [...new Set(values)].map(v => values.filter(x => x === v).length);
+        expect(new Set(counts).size, `${seed}/${q.id}`).toBe(1);
+      }
+    }
+  });
+});

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { EXAMES, exame, rodada, embaralharTexto } from "./exames";
+import { EXAMES, exame, rodada, assinaturaItem, embaralharTexto } from "./exames";
 import { mulberry32 } from "../battery/rng";
 import { carregar, dominioMaisFraco, planoDoDia, registrar, sequencia, vazio } from "./progresso";
 
@@ -58,6 +58,13 @@ describe("exames do dojo", () => {
     expect(so.every((i) => i.dominio === "condicoes")).toBe(true);
     expect(rodada("inexistente", 1, 5)).toEqual([]);
   });
+  it("não repete estímulos entre domínios (regressão: semente 14)", () => {
+    for (const seed of [14, ...Array.from({ length: 80 }, (_, i) => i)]) {
+      const items = rodada("mensa", seed, 10);
+      expect(items).toHaveLength(10);
+      expect(new Set(items.map(assinaturaItem)).size, `seed ${seed}`).toBe(10);
+    }
+  }, 30000);
   it("embaralharTexto preserva a resposta correta", () => {
     const it = { id: "x", enunciado: "?", opcoes: ["a", "b", "c", "d"], resposta: 2, explicacao: "…" };
     const rand = mulberry32(5);

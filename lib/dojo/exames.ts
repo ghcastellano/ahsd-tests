@@ -1,3 +1,4 @@
+import { visualKey } from "../battery/visual-key";
 import type { DominioDojo, ExameDojo, ItemDojo, ItemTexto } from "./tipos";
 import { mulberry32 } from "../battery/rng";
 import { advancedMatrixItems } from "../battery/advanced-matrices";
@@ -290,7 +291,7 @@ export function exame(id: string): ExameDojo | undefined {
 export function assinaturaItem(it: ItemDojo): string {
   switch (it.tipo) {
     case "texto": return it.item.enunciado;
-    case "figural": return JSON.stringify([it.item.grid, it.item.sequence, it.item.set, it.item.prompt]);
+    case "figural": return JSON.stringify([it.item.grid?.flat().slice(0, 8).map(visualKey), it.item.sequence?.map(visualKey), it.item.set?.map(visualKey).sort(), it.item.prompt]);
     case "matriz": return JSON.stringify(it.item);
     case "condicao": return JSON.stringify([it.item.opcoes, it.item.ponto]);
     case "memoria": return `${it.item.formato}:${it.item.sequencia.join("|")}`;
@@ -312,10 +313,18 @@ export function rodada(exameId: string, seed: number, n = 10, dominioId?: string
     return [...lista.filter((it) => !vistos.has(assinaturaItem(it))), ...lista.filter((it) => vistos.has(assinaturaItem(it)))];
   });
   const out: ItemDojo[] = [];
+  const usados = new Set<string>();
   for (let i = 0; out.length < n; i++) {
     let algum = false;
     for (const f of filas) {
-      if (f[i]) { out.push(f[i]); algum = true; if (out.length >= n) break; }
+      if (f[i]) {
+        algum = true;
+        const assinatura = assinaturaItem(f[i]);
+        if (usados.has(assinatura)) continue;
+        usados.add(assinatura);
+        out.push(f[i]);
+        if (out.length >= n) break;
+      }
     }
     if (!algum) break;
   }

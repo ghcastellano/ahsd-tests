@@ -1,8 +1,8 @@
 // Tipos compartilhados da bateria de treino de raciocínio.
 //
 // Todos os itens são ORIGINAIS, gerados por regras determinísticas. A
-// calibração de dificuldade segue a taxonomia de Carpenter, Just & Shell
-// (1990) para matrizes e a decomposição lógica de Verguts & De Boeck (2002).
+// classificação editorial de complexidade se inspira em Carpenter, Just & Shell
+// (1990) e Verguts & De Boeck (2002); não constitui calibração psicométrica.
 
 export type Mark =
   | "circle"

@@ -105,11 +105,15 @@ export default function CellSvg({
           <stop offset="50%" stopColor={INK} />
           <stop offset="50%" stopColor="transparent" />
         </linearGradient>
+        <linearGradient id={`outer-half-${uid}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="50%" stopColor="#cbd5e1" />
+          <stop offset="50%" stopColor="transparent" />
+        </linearGradient>
       </defs>
 
       {/* Componente externo (contêiner), quando houver */}
       {cell.outer && (
-        <g>{markPath(cell.outer, 50, 50, 40, fillOf(cell.outerFill, uid), uid)}</g>
+        <g>{markPath(cell.outer, 50, 50, 40, cell.outerFill === "solid" ? "#cbd5e1" : cell.outerFill === "half" ? `url(#outer-half-${uid})` : "none", uid)}</g>
       )}
 
       {/* Marcas: sobrepostas no mesmo ponto, repetidas conforme `count` */}
