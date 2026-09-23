@@ -1,10 +1,7 @@
 // Compreensão verbal (inteligência cristalizada) — itens ORIGINAIS em três
 // formatos usados pelas escalas de inteligência: vocabulário (sentido mais
 // próximo), semelhanças (o que duas coisas têm em comum) e analogias verbais.
-// Três níveis, todos acima da média adulta: o nível 1 é a ENTRADA do
-// percentil 98 (vocabulário pouco comum, semelhanças abstratas), não o
-// nível médio — "130" é o 2% superior, e a calibração inicial estava baixa. Nenhum item é
-// copiado de teste comercial.
+// Níveis editoriais de treino; sem percentil ou dificuldade clínica demonstrada.
 
 import { mulberry32 } from "../battery/rng";
 
@@ -26,7 +23,7 @@ const V = (nivel: Nivel, formato: FormatoVerbal, enunciado: string, opcoes: stri
 });
 
 export const ITENS_VERBAIS: ItemVerbal[] = [
-  // ---------------- Nível 1 — entrada do percentil 98 ----------------
+  // ---------------- Nível 1 ----------------
   V(1, "vocabulario", "Qual alternativa tem o sentido mais próximo de LACÔNICO?", ["Prolixo", "Conciso", "Melancólico", "Preciso"], 1, "Lacônico = breve, que fala pouco; conciso. 'Preciso' é o distrator: ser breve não é ser exato.", 1),
   V(1, "vocabulario", "Qual alternativa tem o sentido mais próximo de INEXORÁVEL?", ["Inevitável", "Injusto", "Lento", "Silencioso"], 0, "Inexorável = que não se deixa demover; implacável, inevitável.", 2),
   V(1, "vocabulario", "Qual alternativa tem o sentido mais próximo de UBÍQUO?", ["Raro", "Presente em toda parte", "Antigo", "Escondido"], 1, "Ubíquo = onipresente, que está em toda parte ao mesmo tempo.", 3),
@@ -88,7 +85,7 @@ export const ITENS_VERBAIS: ItemVerbal[] = [
   V(3, "vocabulario", "Qual alternativa tem o sentido mais próximo de ESPÚRIO?", ["Autêntico", "Falso e ilegítimo", "Raro", "Escondido"], 1, "Espúrio = não genuíno; falso, bastardo.", 11),
   V(3, "vocabulario", "Qual alternativa tem o sentido mais próximo de PERFUNCTÓRIO?", ["Executado com esmero", "Feito por alto, sem cuidado", "Imposto por lei", "Demorado e cansativo"], 1, "Perfunctório = superficial, feito apenas para cumprir a formalidade. 'Executado com esmero' é o antônimo.", 12),
   V(3, "vocabulario", "Qual alternativa tem o sentido mais próximo de PROSCREVER?", ["Descrever", "Proibir, banir", "Recomendar", "Prescrever"], 1, "Proscrever = banir, proibir. 'Prescrever' (receitar) é o distrator fonético.", 13),
-  V(3, "semelhancas", "Em que ANTICORPO e SENHA se parecem?", ["Ambos são invisíveis", "Ambos distinguem o que pertence do que não pertence", "Ambos são biológicos", "Ambos são secretos"], 1, "Ambos reconhecem e barram o que é estranho ao sistema.", 14),
+  V(3, "semelhancas", "Em que FILTRO SELETIVO e CONTROLE DE ACESSO se parecem?", ["Ambos só existem em computadores", "Ambos permitem passagem segundo um critério", "Ambos sempre usam senhas", "Ambos deixam tudo passar"], 1, "A função comum é selecionar o que passa segundo um critério. O mecanismo pode ser físico ou informacional.", 14),
   V(3, "semelhancas", "Em que MITO e TEORIA se parecem?", ["Ambos são falsos", "Ambos são tentativas de explicar o mundo", "Ambos são científicos", "Ambos são antigos"], 1, "Ambos explicam fenômenos — com critérios de prova diferentes.", 15),
   V(3, "semelhancas", "Em que MOEDA e PALAVRA se parecem?", ["Ambas são de metal", "Ambas valem por convenção compartilhada", "Ambas são raras", "Ambas são impressas"], 1, "O valor de ambas vem de um acordo coletivo, não da matéria.", 16),
   V(3, "semelhancas", "Em que FEBRE e INFLAÇÃO se parecem?", ["Ambas são doenças", "Ambas são sinais de um desequilíbrio do sistema", "Ambas são causadas por vírus", "Ambas são boas"], 1, "Ambas são sintomas de algo subjacente, não a causa em si.", 17),
@@ -105,6 +102,31 @@ export const ITENS_VERBAIS: ItemVerbal[] = [
   V(2, "semelhancas", "Em que FRONTEIRA e HORÁRIO se parecem?", ["Ambos são cortes convencionais em algo contínuo", "Ambos existem na natureza", "Ambos são fixados por tratado", "Ambos aparecem só em mapas"], 0, "Ambos dividem por convenção um contínuo — o espaço e o tempo — em unidades que não existem 'lá fora'.", 23),
   V(2, "semelhancas", "Em que ANTÍDOTO e DESCULPA se parecem?", ["Ambos são produtos químicos", "Ambos evitam que o mal aconteça", "Ambos procuram anular um dano já feito", "Ambos funcionam sempre"], 2, "Ambos são remédios corretivos: agem depois do dano para neutralizá-lo. 'Evitar que aconteça' é prevenção, não correção.", 24),
   V(2, "analogia", "RECEITA está para BOLO assim como PARTITURA está para…", ["Piano", "Execução", "Compositor", "Pauta"], 1, "Instruções → resultado que produzem: a receita orienta o bolo; a partitura, a execução da música.", 25),
+  // Relações adicionais autorais; gabaritos baseados nas definições explicitadas.
+  V(1, "semelhancas", "Em que FRAÇÃO e PORCENTAGEM se parecem?", ["Ambas exprimem uma razão", "Ambas são sempre inteiras", "Ambas só representam valores abaixo de um", "Ambas usam sempre o mesmo denominador"], 0, "Ambas podem expressar razões; uma porcentagem explicita a referência a cem.", 100),
+  V(1, "semelhancas", "Em que LEGENDA DE MAPA e DICIONÁRIO BILÍNGUE se parecem?", ["Ambos medem distâncias", "Ambos relacionam representações a significados", "Ambos traduzem apenas sons", "Ambos ordenam acontecimentos"], 1, "São sistemas de correspondência que ajudam a interpretar uma representação.", 101),
+  V(1, "analogia", "RAIO está para DIÂMETRO assim como METADE está para…", ["Terço", "Dobro", "Inteiro", "Quarto"], 2, "O diâmetro é duas vezes o raio; o inteiro é duas vezes a metade.", 102),
+  V(1, "analogia", "PENTÁGONO está para CINCO LADOS assim como HEPTÁGONO está para…", ["Seis lados", "Sete lados", "Oito lados", "Nove lados"], 1, "O prefixo hepta indica sete; a relação é polígono e número de lados.", 103),
+  V(1, "analogia", "MINUTO está para HORA assim como CENTÍMETRO está para…", ["Milímetro", "Quilômetro", "Segundo", "Metro"], 3, "A relação é uma unidade menor com uma unidade maior da mesma grandeza; não implica o mesmo fator numérico.", 104),
+  V(1, "analogia", "AUTOR está para ROMANCE assim como COMPOSITOR está para…", ["Sinfonia", "Museu", "Plateia", "Ator"], 0, "Criador e obra: o compositor cria a sinfonia.", 105),
+  V(1, "semelhancas", "Em que RÉGUA e BALANÇA se parecem?", ["Ambas medem comprimentos", "Ambas são instrumentos de medição", "Ambas dependem de eletricidade", "Ambas medem massa"], 1, "A categoria comum é instrumento de medição, sem confundir as grandezas.", 106),
+  V(1, "semelhancas", "Em que ÍNDICE REMISSIVO e CATÁLOGO se parecem?", ["Ambos localizam informação por referências organizadas", "Ambos contêm toda a obra original", "Ambos são cronômetros", "Ambos dependem de tradução"], 0, "Organizam referências para encontrar itens ou assuntos.", 107),
+  V(2, "analogia", "INTERSEÇÃO está para ELEMENTOS COMUNS assim como UNIÃO está para…", ["Elementos que pertencem a pelo menos um conjunto", "Apenas elementos exclusivos", "Apenas elementos ausentes", "Elementos repetidos duas vezes"], 0, "Na união basta pertencer a um dos conjuntos; elementos repetidos não são contados duas vezes.", 108),
+  V(2, "analogia", "CONDIÇÃO NECESSÁRIA está para NÃO PODE FALTAR assim como CONDIÇÃO SUFICIENTE está para…", ["Nunca ocorre", "Garante o resultado", "Sempre é única", "É consequência impossível"], 1, "Uma condição suficiente, se satisfeita, garante o resultado; não precisa ser a única via.", 109),
+  V(2, "analogia", "TRIÂNGULO está para POLÍGONO assim como CUBO está para…", ["Poliedro", "Círculo", "Aresta", "Diagonal"], 0, "Espécie e categoria: cubo é um poliedro, como triângulo é um polígono.", 110),
+  V(2, "analogia", "CONVEXO está para SEGMENTO INTERNO assim como CÔNCAVO está para…", ["Todos os segmentos internos", "Ausência de pontos", "Algum segmento entre pontos internos sai da região", "Nenhuma reta atravessa"], 2, "No sentido geométrico, a não convexidade admite dois pontos cuja ligação não fica inteiramente na região.", 111),
+  V(2, "semelhancas", "Em que MÉDIA PONDERADA e VOTAÇÃO COM PESOS se parecem?", ["Cada contribuição pode ter influência diferente", "Todos os participantes precisam ter pesos iguais", "Ambas descartam valores grandes", "Ambas impedem empate"], 0, "Cada contribuição é ponderada; igualdade dos pesos é apenas um caso particular.", 112),
+  V(2, "semelhancas", "Em que REFLEXÃO e ROTAÇÃO geométricas se parecem?", ["Ambas alteram todas as distâncias", "Ambas preservam distâncias", "Ambas mantêm cada ponto imóvel", "Ambas sempre invertem orientação"], 1, "São isometrias. A reflexão inverte orientação e a rotação a preserva, mas ambas preservam distâncias.", 113),
+  V(2, "semelhancas", "Em que CONTRAEXEMPLO e REFUTAÇÃO EXPERIMENTAL se parecem?", ["Ambos provam qualquer teoria", "Ambos podem contrariar uma afirmação", "Ambos dispensam premissas", "Ambos são sinônimos de confirmação"], 1, "Um caso incompatível pode contrariar uma afirmação universal; a interpretação experimental exige considerar as hipóteses auxiliares.", 114),
+  V(2, "analogia", "NUMERADOR está para ACIMA DA BARRA assim como DENOMINADOR está para…", ["Resultado", "Unidade", "Abaixo da barra", "Sinal negativo"], 2, "Na notação usual de fração com barra horizontal, numerador fica acima e denominador abaixo.", 115),
+  V(3, "analogia", "BIJEÇÃO está para INVERSA FUNCIONAL assim como IMPLICAÇÃO está para…", ["Contrapositiva equivalente", "Recíproca sempre equivalente", "Negação equivalente", "Contradição necessária"], 0, "Uma bijeção admite função inversa. Uma implicação é equivalente à contrapositiva, não necessariamente à recíproca.", 116),
+  V(3, "semelhancas", "Em que BIJEÇÃO e CORRESPONDÊNCIA UM A UM E SOBRE se parecem?", ["A segunda é a definição da primeira", "Ambas admitem dois destinos por origem", "Ambas deixam necessariamente destinos sem origem", "Ambas se limitam a números reais"], 0, "Bijeção combina injetividade (um a um) e sobrejetividade (todos os destinos atingidos).", 117),
+  V(3, "analogia", "CONJUNÇÃO está para AMBAS VERDADEIRAS assim como DISJUNÇÃO EXCLUSIVA está para…", ["Ambas falsas", "Pelo menos uma verdadeira, inclusive ambas", "Exatamente uma verdadeira", "Sempre verdadeira"], 2, "A disjunção exclusiva é verdadeira quando os valores lógicos são diferentes.", 118),
+  V(3, "semelhancas", "Em que ORDEM ALFABÉTICA e ORDEM LEXICOGRÁFICA DE TUPLAS se parecem?", ["Comparam apenas o comprimento", "Decidem pela primeira posição diferente", "Ignoram a ordem das posições", "Exigem números em cada posição"], 1, "A comparação avança por posições até encontrar a primeira diferença; prefixos exigem regra adicional de término.", 119),
+  V(3, "analogia", "IDEMPOTÊNCIA está para REPETIR SEM ALTERAR O RESULTADO assim como INVOLUÇÃO está para…", ["Nunca repetir", "Aplicar duas vezes e voltar ao original", "Sempre produzir zero", "Mudar o domínio"], 1, "Uma involução satisfaz f(f(x)) = x. Idempotência é f(f(x)) = f(x).", 120),
+  V(3, "semelhancas", "Em que INVARIANTE e GRANDEZA CONSERVADA se parecem?", ["Permanecem constantes sob as transformações consideradas", "São sempre iguais a zero", "São impossíveis de medir", "Mudam em toda operação"], 0, "A constância vale relativamente às transformações ou ao processo especificado.", 121),
+  V(3, "analogia", "REFLEXIVIDADE está para CADA ELEMENTO RELACIONADO A SI assim como SIMETRIA está para…", ["Se a relaciona-se com b, b relaciona-se com a", "Toda relação é transitiva", "Nenhum elemento relaciona-se a si", "Todos os pares têm relação"], 0, "Simetria troca a ordem do par sem alterar a relação; não implica reflexividade ou transitividade.", 122),
+  V(3, "analogia", "PROVA POR CONTRADIÇÃO está para NEGAR A TESE assim como CONTRAPOSIÇÃO está para…", ["Provar a recíproca", "Repetir a hipótese", "Assumir a conclusão falsa e deduzir a hipótese falsa", "Aceitar um exemplo favorável"], 2, "Para provar P implica Q por contraposição, prova-se não Q implica não P. Em contradição, a negação da tese leva a uma incompatibilidade.", 123),
 ];
 
 /** Quantos itens de cada formato entram numa tentativa (8 por bloco). */

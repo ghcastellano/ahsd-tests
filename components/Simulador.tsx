@@ -7,7 +7,7 @@ import RevisaoItem from "./RevisaoItem";
 import ShareBlock from "./ShareBlock";
 import { blocos, pontuarSimulador, NOMES_DOMINIO, CORTES, type Bloco, type ResultadoBloco, type Dominio } from "@/lib/simulador";
 import { gerarItensMemoria, conferirMemoria, type ItemMemoria } from "@/lib/simulador/memoria";
-import { gerarTrials, pontuarVelocidade, type TrialVelocidade } from "@/lib/simulador/velocidade";
+import { gerarTrials, pontuarVelocidade, pontosPorMinuto, type TrialVelocidade } from "@/lib/simulador/velocidade";
 import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import { useSeed } from "@/lib/use-seed";
@@ -24,6 +24,8 @@ export default function Simulador() {
   // ?seed=N fixa a semente (testes automatizados); sem ele, sorteia uma a cada abertura.
   const [seed, novaSemente] = useSeed();
   const todos = useMemo(() => blocos(seed ?? 0), [seed]);
+  const [modo, setModo] = useState<"estudo" | "desafio">("desafio");
+  const [janelaVel, setJanelaVel] = useState<60 | 120>(120);
   const [etapa, setEtapa] = useState<Etapa>("intro");
   const [b, setB] = useState(0); // índice do bloco atual
   const [respondent, setRespondent] = useState("");
@@ -79,7 +81,7 @@ export default function Simulador() {
   const irParaVerbal = (idx: number) => {
     if (idx === 0) { inicioProva.current = Date.now(); memoriaPorBloco.current = {}; }
     setB(idx); parcial.current = {}; setEscolhas({}); setEtapa("verbal");
-    iniciarCronometro(todos[idx].verbal.length * 30, () => fecharVerbalRef.current());
+    if (modo === "desafio") iniciarCronometro(todos[idx].verbal.length * 30, () => fecharVerbalRef.current());
   };
   const fecharVerbal = () => {
     pararCronometro();
@@ -112,11 +114,11 @@ export default function Simulador() {
     if (im + 1 < itensMem.length) { setIm(im + 1); setMostrandoIdx(0); return; }
     parcial.current.memoria = { acertos: novos, total: itensMem.length };
     // velocidade
-    const t = gerarTrials(bloco.nivel, (seed ?? 1) + b * 3, 80);
+    const t = gerarTrials(bloco.nivel, (seed ?? 1) + b * 3, 400);
     setTrials(t); setIt(0); respostasVel.current = []; inicioTrial.current = performance.now();
     setEtapa("velocidade");
-    setVelRestante(bloco.segundosVelocidade);
-    const fim = Date.now() + bloco.segundosVelocidade * 1000;
+    setVelRestante(janelaVel);
+    const fim = Date.now() + janelaVel * 1000;
     pararCronometro();
     cronometro.current = window.setInterval(() => {
       const r = Math.max(0, Math.ceil((fim - Date.now()) / 1000));
@@ -135,9 +137,9 @@ export default function Simulador() {
   }, [trials, it]);
 
   const fecharVelocidade = () => {
-    parcial.current.velocidade = pontuarVelocidade(respostasVel.current);
+    parcial.current.velocidade = { ...pontuarVelocidade(respostasVel.current), duracaoSegundos: janelaVel };
     setEscolhas({}); setEtapa("raciocinio");
-    iniciarCronometro(bloco.segundosRaciocinio, () => fecharRaciocinioRef.current());
+    if (modo === "desafio") iniciarCronometro(bloco.segundosRaciocinio, () => fecharRaciocinioRef.current());
   };
   const fecharVelocidadeRef = useRef(fecharVelocidade); fecharVelocidadeRef.current = fecharVelocidade;
 
@@ -179,7 +181,8 @@ export default function Simulador() {
       createdAt: new Date().toISOString(),
       instrumentId: "treino-simulador",
       acronym: "SIMULADOR",
-      instrumentName: "Simulador de escalas — Wechsler · Stanford-Binet · Cattell (v2 visual)",
+      instrumentName: `Simulador de escalas — Wechsler · Stanford-Binet · Cattell (v3 · ${modo} · velocidade ${janelaVel}s · semente ${seed})`,
+      notes: [`Semente ${seed} · versão 3`, `Modo ${modo}; velocidade ${janelaVel}s. Comparar apenas sessões com o mesmo protocolo.`],
       respondent: respondent.trim() ? respondent.trim().slice(0, 80) : undefined,
       totalScore: final.blocoAlcancado,
       maxScore: 3,
@@ -202,7 +205,7 @@ export default function Simulador() {
           for (const mItem of memoriaPorBloco.current[idx] ?? []) {
             out.push({ n: ++n, id: mItem.id, escolhida: mItem.digitado || null, correta: mItem.esperado, acertou: mItem.ok, regra: `${mItem.formato} · sequência ${mItem.sequencia}`, grupo: `bloco ${r.nivel} · memória` });
           }
-          out.push({ n: ++n, id: `vel-b${r.nivel}`, escolhida: `${r.velocidade.acertos} certos, ${r.velocidade.erros} erros, ${r.velocidade.pontos} pontos, TR médio ${r.velocidade.rtMedio} ms`, correta: `≥ ${CORTES[r.nivel].velocidade} pontos`, acertou: r.velocidade.pontos >= CORTES[r.nivel].velocidade, regra: "procura de símbolos, 60 s (acertos − erros)", grupo: `bloco ${r.nivel} · velocidade` });
+          out.push({ n: ++n, id: `vel-b${r.nivel}`, escolhida: `${r.velocidade.acertos} certos, ${r.velocidade.erros} erros, ${r.velocidade.pontos} pontos em ${janelaVel}s, ${pontosPorMinuto(r.velocidade)} pontos/min, TR médio ${r.velocidade.rtMedio} ms`, correta: `≥ ${CORTES[r.nivel].velocidade} pontos/min`, acertou: pontosPorMinuto(r.velocidade) >= CORTES[r.nivel].velocidade, regra: `Procura de símbolos, ${janelaVel}s. Meta interna em pontos/min; não é escore WAIS.`, grupo: `bloco ${r.nivel} · velocidade` });
           x.raciocinio.forEach((it, i) => {
             const m = esc.raciocinio[it.id];
             out.push({ n: ++n, id: it.id, escolhida: m === undefined ? null : m + 1, correta: it.answerIndex + 1, acertou: m === it.answerIndex, regra: it.explanation, grupo: `bloco ${r.nivel} · matriz ${i + 1}` });
@@ -226,7 +229,7 @@ export default function Simulador() {
       </div>
       {etapa !== "memoria" && (
         <span className="rounded-lg bg-slate-100 px-3 py-1.5 font-mono text-sm text-slate-700" aria-live="polite">
-          ⏱ {etapa === "velocidade" ? velRestante : restante}s
+          ⏱ {etapa !== "velocidade" && modo === "estudo" ? "Sem limite" : `${etapa === "velocidade" ? velRestante : restante}s`}
         </span>
       )}
     </div>
@@ -237,7 +240,7 @@ export default function Simulador() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <Link href="/treino" className="text-sm text-brand-600 hover:underline">← Bateria de treino</Link>
-        <p className="mt-3 inline-block rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">Treino · versão 2 · equivalência visual corrigida</p>
+        <p className="mt-3 inline-block rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">Treino · versão 3 · banco ampliado</p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">Wechsler → Stanford-Binet → Cattell</h1>
         <p className="mt-3 text-slate-600">
           Treino de compreensão verbal, memória operacional, procura visual e raciocínio
@@ -260,15 +263,31 @@ export default function Simulador() {
           convenções internas. O resultado não estima QI, percentil ou diagnóstico.
         </div>
         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
-          <p className="font-semibold text-slate-900">Como funciona cada bloco (≈ 12 min)</p>
+          <p className="font-semibold text-slate-900">Como funciona cada bloco</p>
           <ol className="mt-2 list-decimal space-y-1 pl-5">
-            <li><strong>Compreensão verbal</strong> — 8 itens de vocabulário, semelhanças e analogias (30 s por item).</li>
+            <li><strong>Compreensão verbal</strong> — 8 itens de vocabulário, semelhanças e analogias (4 min para os 8 itens no modo desafio; sem corte no estudo).</li>
             <li><strong>Memória operacional</strong> — sequências mostradas um elemento por vez; digite na ordem pedida (direta, inversa, ou números crescentes e depois letras).</li>
-            <li><strong>Velocidade</strong> — 60 s: dois símbolos-alvo à esquerda; algum deles aparece IGUAL na fileira? Responda Sim/Não (teclas S/N). Erro desconta ponto.</li>
-            <li><strong>Raciocínio</strong> — 4 matrizes 3×3 com tempo.</li>
+            <li><strong>Velocidade</strong> — 60 ou 120 s: dois símbolos-alvo à esquerda; algum deles aparece IGUAL na fileira? Responda Sim/Não (teclas S/N). Erro desconta ponto.</li>
+            <li><strong>Raciocínio</strong> — 4 matrizes 3×3: 4, 5 e 6 min por bloco no desafio; sem corte no estudo.</li>
           </ol>
-          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 22 / 24 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O sorteio varia os itens e as figuras, mas regras e itens podem se repetir. Repetição não mede transferência para tarefas novas.</p>
+          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mínimo de 50% por domínio e 22 / 24 / 26 pontos por minuto na velocidade. Essa conversão é uma meta do jogo, sem equivalência normativa entre janelas de tempo. Os blocos precisam ser fechados em ordem. O sorteio varia os itens e as figuras, mas regras e itens podem se repetir. Repetição não mede transferência para tarefas novas.</p>
         </div>
+        <fieldset className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
+          <legend className="px-2 font-semibold text-slate-900">Protocolo de treino</legend>
+          <label className="block text-sm text-slate-700">Verbal e matrizes
+            <select aria-label="Modo de treino" value={modo} onChange={(e) => setModo(e.target.value as "estudo" | "desafio")} className="mt-1 block w-full rounded border border-slate-300 p-2">
+              <option value="desafio">Desafio — limites de treino</option><option value="estudo">Estudo — sem limite eliminatório</option>
+            </select>
+          </label>
+          <label className="mt-3 block text-sm text-slate-700">Procura de símbolos
+            <select aria-label="Duração da velocidade" value={janelaVel} onChange={(e) => setJanelaVel(Number(e.target.value) as 60 | 120)} className="mt-1 block w-full rounded border border-slate-300 p-2">
+              <option value={120}>120 s — duração do subteste no caderno WAIS-III</option><option value={60}>60 s — sessão curta de treino</option>
+            </select>
+          </label>
+          <p className="mt-3 text-xs text-slate-600">120 s aproxima a duração, mas tela, símbolos, quantidade de candidatos e pontuação continuam autorais. O WAIS não impõe 30 s a todo item verbal; o SB5 também não é uma prova uniforme de 30 s por questão. Compare resultados usando o mesmo modo e duração.</p>
+        </fieldset>
+        <Link href="/treino/guia-exames" className="mt-4 block rounded-lg border border-indigo-200 bg-indigo-50 p-4 font-semibold text-indigo-900">Guia de exames reais: custos, tempos, percentis e mudanças dos guias →</Link>
+        <Link href="/treino/dojo?exame=stanford-binet" className="mt-3 block text-sm font-semibold text-brand-700 underline">SB5 ampliado: quantitativo, espacial, memória de palavras/posições e matrizes mais difíceis →</Link>
         <Link href="/treino/simulador/fontes" className="mt-5 block rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm font-semibold text-teal-900 hover:bg-teal-100">Plano de 8 semanas e 12 questões públicas do ICAR →</Link>
         <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="resp">Identificação (opcional)</label>
         <input id="resp" type="text" value={respondent} onChange={(e) => setRespondent(e.target.value)} className="mt-1 w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none" placeholder="Nome ou iniciais" />
@@ -431,7 +450,7 @@ export default function Simulador() {
       <p className="text-xs font-medium uppercase tracking-wide text-brand-600">Seu resultado</p>
       <h1 className="mt-1 text-2xl font-bold text-slate-900">Simulador de escalas — Wechsler · Stanford-Binet · Cattell</h1>
       <div className="mt-5 rounded-xl border border-slate-200 bg-white p-6">
-        <p className="text-sm text-slate-500">Blocos fechados em sequência</p>
+        <p className="text-sm text-slate-500">Blocos fechados em sequência · {modo} · velocidade {janelaVel}s</p>
         <p className="mt-1 text-4xl font-bold text-slate-900">{res.blocoAlcancado} <span className="text-lg font-normal text-slate-400">de 3</span></p>
         <span className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-semibold ${cor[res.faixa.severity]}`}>{res.faixa.label}</span>
         <p className="mt-3 text-slate-700">{res.faixa.description}</p>
@@ -463,7 +482,7 @@ export default function Simulador() {
                 <td className="px-3 py-2 font-medium">{todos[r.nivel - 1].nome}</td>
                 <td className="px-3 py-2">{r.verbal.acertos}/{r.verbal.total}</td>
                 <td className="px-3 py-2">{r.memoria.acertos}/{r.memoria.total}</td>
-                <td className="px-3 py-2">{r.velocidade.pontos} pts</td>
+                <td className="px-3 py-2">{r.velocidade.pontos} pts ({pontosPorMinuto(r.velocidade)} /min)</td>
                 <td className="px-3 py-2">{r.raciocinio.acertos}/{r.raciocinio.total}</td>
                 <td className="px-3 py-2">{res.blocos.find((x) => x.nivel === r.nivel)?.fechado ? "✓" : "—"}</td>
               </tr>

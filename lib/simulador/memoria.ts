@@ -7,7 +7,7 @@
 import { mulberry32 } from "../battery/rng";
 import type { Nivel } from "./verbal";
 
-export type FormatoMemoria = "direta" | "inversa" | "letras-numeros";
+export type FormatoMemoria = "direta" | "inversa" | "letras-numeros" | "ultima-palavra" | "posicoes";
 
 export interface ItemMemoria {
   id: string;
@@ -17,6 +17,9 @@ export interface ItemMemoria {
   sequencia: string[];
   /** Resposta esperada, sem separadores. */
   resposta: string;
+  /** Dojo: estímulos autorais de processamento + retenção ou posições espaciais. */
+  estimulos?: string[];
+  intervaloMs?: number;
 }
 
 const LETRAS = ["B", "D", "F", "G", "H", "K", "L", "M", "P", "R", "S", "T"];
@@ -80,9 +83,9 @@ export function gerarItensMemoria(nivel: Nivel, seed: number): ItemMemoria[] {
 
 /** Normaliza a digitação: maiúsculas, sem espaços, hífens ou vírgulas. */
 export function normalizar(entrada: string): string {
-  return entrada.toUpperCase().replace(/[^0-9A-Z]/g, "");
+  return entrada.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^0-9A-Z]/g, "");
 }
 
 export function conferirMemoria(item: ItemMemoria, entrada: string): boolean {
-  return normalizar(entrada) === item.resposta;
+  return normalizar(entrada) === normalizar(item.resposta);
 }

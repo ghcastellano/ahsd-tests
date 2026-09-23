@@ -37,7 +37,7 @@ registro central estiver ativado, também no banco da plataforma.
 | UPPS-P (curta) | Impulsividade em 5 facetas (Cyders 2014; Sediyama 2017) | TDAH | 20 | Média 1–4 por faceta, 12 invertidos |
 | VADPRS | Vanderbilt para pais (Wolraich 2003; NICHQ) | TDAH | 55 | ≥6 sintomas por domínio + prejuízo; comorbidades ≥4/≥3/≥3 |
 | Go/NoGo (tarefa) | Controle inibitório objetivo (`/treino/go-nogo`) | TDAH | 120 estímulos | % de comissão, omissões, TR médio, desvio e CV, d′ — faixas convencionais |
-| Simulador de escalas (`/treino/simulador`) | Wechsler · Stanford-Binet · Cattell — referências de formato: compreensão verbal, memória operacional, velocidade, raciocínio | Treino | 3 blocos | Blocos fechados em sequência (precisão ≥70/75/80% + velocidade ≥22/24/26 pts por bloco); sem conversão para QI |
+| Simulador de escalas (`/treino/simulador`) | Wechsler · Stanford-Binet · Cattell — referências de formato: compreensão verbal, memória operacional, velocidade, raciocínio | Treino | 3 blocos | Blocos fechados em sequência (precisão ≥70/75/80% + mínimo de 50% por domínio + velocidade ≥22/24/26 pts/min); sem conversão para QI |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
 | RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
 | PHQ-9 | Saúde do Paciente – Depressão | Humor | 9 | 0–27 (5/10/15/20) |
@@ -311,23 +311,17 @@ node scripts/e2e/verifica-visitas.mjs   # 17 verificações: IP dos cabeçalhos,
 
 ### Dojo — treino ativo por exame (`/treino/dojo`)
 
-Quatro exames — Mensa (admissão), Wechsler (WAIS-IV), Stanford-Binet 5 e
-Cattell Culture Fair — cada um com a descrição factual do que é, como é
-estruturado, o corte (percentil 98 e Triple Nine) e por que é difícil. Cada
-exame tem de 4 a 8 domínios que imitam subtestes reais (matrizes, matrizes
-avançadas, séries e classificação de figuras, condições/topologia, séries
-numéricas, vocabulário/semelhanças/analogias, aritmética mental, absurdos
-verbais, conhecimento, visuoespacial, memória de dígitos). Uma rodada tem 10
-itens intercalados (ou só de um domínio); após cada resposta aparecem a regra,
-"por que este tipo de item é difícil" e uma dica prática. O progresso por
-domínio, os erros por regra e os dias de prática ficam no aparelho
-(`lib/dojo/progresso.ts`) e alimentam o "plano de hoje" (domínio mais fraco,
-regras erradas, sequência de dias). A tela inicial traz dez princípios de
-prática inteligente e a explicação de qual teste é Mensa, o que são as outras
-escalas, a Triple Nine Society e os testes de alto alcance (Mega, Titan,
-Cooijmans) com a ressalva de validade. Bancos: `lib/dojo/bancos-texto.ts`;
-gerador de condições verificado por amostragem de pontos:
-`lib/dojo/condicoes.ts`.
+Quatro perfis de treino — Mensa (admissão), Wechsler (formatos WAIS III/IV),
+Stanford-Binet 5 e Cattell Culture Fair — com atividades autorais organizadas
+por domínio. A rodada tem dez itens intercalados ou de um domínio escolhido;
+a resposta revela explicação e dica. O progresso, erros por regra e dias de
+prática ficam no aparelho e alimentam o plano do dia.
+
+O guia `/treino/guia-exames` centraliza informações institucionais, custos,
+tempos e disponibilidade, com fontes e restrições. O Dojo prioriza estímulos
+não vistos recentemente; modelos e bancos finitos podem se repetir. A
+revisão de setembro adicionou quantitativo/espacial/lógica parametrizados,
+memória de palavras e posições e um domínio de matrizes de múltiplas regras.
 
 ### Auditoria de validade dos itens (setembro/2026)
 
@@ -362,13 +356,13 @@ que segue foi corrigido e coberto por testes:
   sentido sorteados) e as regras cíclicas mostram 4 figuras.
 - **Séries numéricas:** 40/40 gabaritos corretos; 8 séries extremas novas
   (banco de 48) e teste de regras alternativas.
-- **Fatos:** o SB5 usa desvio-padrão 15 (16 é do SB-IV); "Cattell DP 24" é a
-  escala III B; os cortes institucionais da Mensa são 130/132/148; os blocos
-  do simulador passam a "entrada/intermediário/topo" com as escalas só como
-  dificuldade-alvo; cortes de velocidade 22/24/26 e mínimo de 50% por
-  domínio; dígitos 0–9 na memória. Fontes: mensa.org.br (FAQ de testes),
-  triplenine.org (tests and scores), manuais WAIS-IV/SB5, Wikipedia (Cattell
-  Culture Fair; Mega Test).
+- **Fatos (atualizados pela revisão dos guias):** SB5 usa DP 15; SB-IV, 16.
+  Cattell III B não é CFIT. Percentis sob distribuição normal e critérios
+  operacionais das sociedades são apresentados separadamente. Os blocos
+  não têm dificuldade clínica calibrada. Cortes internos de velocidade são
+  22/24/26 pontos/min, com mínimo de 50% por domínio nos demais acertos.
+  Fontes e limites em [REVISAO-GUIAS-2026-09.md](docs/REVISAO-GUIAS-2026-09.md).
+
 
 **Alternativas visualmente distintas.** `lib/battery/visual-key.ts` define a
 chave visual de uma célula (um círculo girado 45° é o mesmo círculo; uma barra
@@ -408,3 +402,19 @@ A versão 2 da procura de símbolos corrige equivalências visuais ignoradas pel
 comparação antiga (simetrias, barras rotacionadas e preenchimentos invisíveis).
 Resultados anteriores não podem ser recalculados a partir de totais agregados;
 use uma nova linha de base. Novos registros identificam `v2 visual` no nome.
+
+
+### Revisão dos guias e banco ampliado (2026-09-23)
+
+`/treino/guia-exames` reúne Mensa versus WAIS, QI versus percentil, caminhos de
+agendamento, preços publicados, duração, critérios da Triple Nine e limitações
+da disponibilidade brasileira. Há links na inicial, em Treino, no Dojo e no
+simulador. Consulte [a revisão e os testes](docs/REVISAO-GUIAS-2026-09.md).
+
+O banco verbal tem 93 itens. Foram acrescentadas 16 famílias parametrizadas
+(192 instâncias por semente, sem confundir instâncias com modelos independentes),
+memória de palavras finais/posições e um domínio só de matrizes complexas. O Dojo
+prioriza estímulos não vistos recentemente; bancos finitos ainda podem repetir.
+O simulador permite estudo sem corte em verbal/matrizes, desafio cronometrado e
+procura de símbolos de 60 ou 120 s. Comparar apenas sessões do mesmo protocolo.
+Os itens novos são autorais: PDFs privados e baterias comerciais não são servidos.

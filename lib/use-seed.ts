@@ -12,10 +12,17 @@ import { useCallback, useEffect, useState } from "react";
 export function useSeed(): [number | null, () => void] {
   const [seed, setSeed] = useState<number | null>(null);
   useEffect(() => {
-    setSeed(seedFromLocation(window.location.search));
+    setSeed(seedFromLocation(window.location.search, sementeAleatoria()));
   }, []);
-  const nova = useCallback(() => setSeed(Date.now() % 1_000_000), []);
+  const nova = useCallback(() => setSeed((anterior) => {
+    const s = sementeAleatoria();
+    return s === anterior ? (s + 1) % 1_000_000 : s;
+  }), []);
   return [seed, nova];
+}
+
+function sementeAleatoria(): number {
+  return window.crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000;
 }
 
 export function seedFromLocation(search: string, now: number = Date.now()): number {

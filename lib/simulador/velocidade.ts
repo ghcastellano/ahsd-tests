@@ -104,6 +104,12 @@ export interface MetricasVelocidade {
   /** acertos − erros (mínimo 0). */
   pontos: number;
   rtMedio: number;
+  /** Janela da tarefa; ausente nos registros antigos de 60 s. */
+  duracaoSegundos?: number;
+}
+
+export function pontosPorMinuto(m: MetricasVelocidade): number {
+  return m.pontos * 60 / (m.duracaoSegundos ?? 60);
 }
 
 export function pontuarVelocidade(respostas: { presente: boolean; disse: boolean; rt: number }[]): MetricasVelocidade {

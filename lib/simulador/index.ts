@@ -6,9 +6,10 @@
 // Nomes são referências de formato. Itens e cortes não têm normas populacionais.
 
 import { advancedMatrixItems } from "../battery/advanced-matrices";
+import { mulberry32 } from "../battery/rng";
 import type { Item } from "../battery/types";
 import { itensVerbais, type ItemVerbal, type Nivel } from "./verbal";
-import { CONFIG } from "./velocidade";
+import { CONFIG, pontosPorMinuto } from "./velocidade";
 import type { MetricasVelocidade } from "./velocidade";
 
 export type Dominio = "verbal" | "memoria" | "velocidade" | "raciocinio";
@@ -36,6 +37,11 @@ export const NOMES_DOMINIO: Record<Dominio, string> = {
 
 export function blocos(seed = 0): Bloco[] {
   const matrizes = advancedMatrixItems(seed);
+  const rnd = mulberry32(seed * 131 + 19);
+  for (let i = matrizes.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [matrizes[i], matrizes[j]] = [matrizes[j], matrizes[i]];
+  }
   // Seleção por ESTRUTURA (kind), não por posição no banco: bloco 1 = operação
   // lógica exclusiva (XOR) + dois componentes; bloco 2 = XOR + distribuição de dois;
   // bloco 3 = lógica sobre D2 + três componentes (os tipos de teto).
@@ -89,14 +95,14 @@ export function blocoFechado(b: ResultadoBloco): boolean {
   const precisao = (pct(b.verbal) + pct(b.memoria) + pct(b.raciocinio)) / 3;
   const corte = CORTES[b.nivel];
   const minimo = [b.verbal, b.memoria, b.raciocinio].every((c) => pct(c) >= MINIMO_POR_DOMINIO);
-  return minimo && precisao >= corte.precisao && b.velocidade.pontos >= corte.velocidade;
+  return minimo && precisao >= corte.precisao && pontosPorMinuto(b.velocidade) >= corte.velocidade;
 }
 
 export interface Faixa { label: string; severity: "info" | "none" | "low" | "moderate" | "high"; description: string }
 
 export const FAIXAS: Faixa[] = [
   { label: "Nenhum bloco fechado", severity: "info", description: "Os cortes internos não foram atingidos em sequência. Reveja os erros e as condições da tarefa; o resultado não estima QI nem percentil." },
-  { label: "Bloco 1 fechado (entrada)", severity: "info", description: "Meta interna atingida: média de precisão ≥70%, mínimo de 50% por domínio e 22 pontos de velocidade. Sem equivalência clínica." },
+  { label: "Bloco 1 fechado (entrada)", severity: "info", description: "Meta interna atingida: média de precisão ≥70%, mínimo de 50% por domínio e 22 pontos/min de velocidade. Sem equivalência clínica." },
   { label: "Bloco 2 fechado (intermediário)", severity: "info", description: "Dois blocos fechados em sequência pelos critérios internos do treino. Não é um percentil populacional." },
   { label: "Bloco 3 fechado (avançado)", severity: "info", description: "Três blocos fechados, incluindo matrizes de múltiplas regras. Não constitui QI nem habilitação para sociedades." },
 ];

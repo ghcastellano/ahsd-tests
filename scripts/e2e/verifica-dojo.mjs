@@ -16,8 +16,7 @@ await p.goto(`${B}/treino/dojo?seed=5`);
 await p.locator('[data-dojo="escolha"]').waitFor();
 ok(await p.locator("[data-exame]").count() === 4, "4 exames na tela de escolha");
 ok(await p.getByText("Como praticar de forma inteligente").count() === 1 && await p.getByText(/Sono é treino/).count() === 1, "princípios de prática inteligente presentes");
-ok(await p.getByText(/Triple Nine Society/).count() >= 1 && await p.getByText(/Mega Test/).count() >= 1, "sociedades e testes de alto alcance explicados");
-ok(await p.getByText(/Mensa.*é uma sociedade, não um teste/).count() === 1, "explica que Mensa é sociedade, não teste");
+ok(await p.locator('a[href="/treino/guia-exames"]').count() >= 1, "guia de sociedades, custos e percentis acessível");
 
 async function rodada(exameId, dominioNome) {
   await p.goto(`${B}/treino/dojo?seed=5&exame=${exameId}`);
@@ -32,9 +31,9 @@ async function rodada(exameId, dominioNome) {
   for (let i = 0; i < 10; i++) {
     await p.locator('[data-dojo="treino"]').waitFor();
     const mem = p.locator("#dj-mem");
-    if (await p.getByText(/Digite na MESMA ordem|Digite na ordem INVERSA|Digite os NÚMEROS/).count() > 0) {
+    if (await p.getByText(/Digite na MESMA ordem|Digite na ordem INVERSA|Digite os NÚMEROS|ÚLTIMA PALAVRA|Memorize a ordem das posições/).count() > 0) {
       tipos.add("memoria");
-      await mem.waitFor({ timeout: 20000 });
+      await mem.waitFor({ timeout: 32000 });
       await mem.fill("1");
       await p.getByRole("button", { name: "Confirmar" }).click();
     } else {

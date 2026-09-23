@@ -121,6 +121,7 @@ export default function HomePage() {
             Versão mais leve, para o primeiro contato com o formato.
           </p>
         </Link>
+        <Link href="/treino/guia-exames" className="mt-4 block rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm font-semibold text-indigo-900 hover:bg-indigo-100">Exames reais: Mensa × WAIS · QI e percentil · custos e agendamento →</Link>
         <Link
           href="/treino/dojo"
           className="group mt-3 block rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4 transition hover:border-emerald-500"
@@ -148,7 +149,7 @@ export default function HomePage() {
             <span className="shrink-0 whitespace-nowrap rounded-md bg-violet-600 px-2 py-0.5 text-xs font-semibold text-white">
               SIMULADOR · 3 BLOCOS
             </span>
-            <span className="text-xs text-slate-500">3 blocos · ~35 min</span>
+            <span className="text-xs text-slate-500">3 blocos · tempo configurável</span>
           </div>
           <p className="mt-1 text-xs text-slate-500">Wechsler · Stanford-Binet · Cattell — referências de formato</p>
           <h3 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-violet-800">

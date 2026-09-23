@@ -20,6 +20,7 @@ async function jogarBloco(p, bloco, perfeito) {
   // memória
   for (const m of bloco.memoria) {
     const input = p.locator("#mem");
+    for (let j = 0; j < 11 && await input.count() === 0; j++) { await p.clock.fastForward(1100); await p.waitForTimeout(10); }
     await input.waitFor({ timeout: 20000 });
     await input.fill(perfeito ? m.resposta : "0");
     await p.getByRole("button", { name: /^Confirmar$/ }).click();
@@ -34,6 +35,7 @@ async function jogarBloco(p, bloco, perfeito) {
     await p.getByRole("button", { name: disse ? /^SIM/ : /^NÃO/ }).click();
     await p.waitForTimeout(20);
   }
+  await p.clock.fastForward(121000); // encerra a janela de 120 s após os 80 trials do roteiro
   // raciocínio
   await p.locator("text=Raciocínio fluido").first().waitFor({ timeout: 10000 });
   const mats = p.locator("ol > li");
@@ -47,6 +49,7 @@ async function jogarBloco(p, bloco, perfeito) {
 
 // ---- jogada perfeita, três blocos ----
 let p = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+await p.clock.install();
 await entrar(p, B);
 await p.goto(`${B}/treino/simulador?seed=12345`); await p.waitForTimeout(600);
 await p.getByRole("button", { name: /Começar pelo Bloco 1/i }).click();
@@ -61,17 +64,18 @@ for (let b = 0; b < 3; b++) {
 await p.waitForTimeout(800);
 let t = await p.locator("body").innerText();
 ok(/3\s+de 3/.test(t), "resultado: 3 de 3 blocos fechados");
-ok(/Bloco 3 fechado \(topo\)/.test(t), "faixa: Bloco 3 fechado (topo)");
+ok(/Bloco 3 fechado \(avançado\)/.test(t), "faixa: Bloco 3 fechado (avançado)");
 ok(/Compreensão verbal[\s\S]*24\/24 · 100%/.test(t), "verbal 24/24");
 ok(/Raciocínio fluido[\s\S]*12\/12 · 100%/.test(t), "raciocínio 12/12");
 ok(/Pontos \(acertos − erros\): 240/.test(t), "velocidade 240 pontos (80×3, todos certos)");
 ok(/O que fazer agora:/.test(t), "linha 'O que fazer agora' presente");
 ok((await p.evaluate(() => window.scrollY)) < 60, "resultado no topo");
-ok(/Nenhum simulador converte desempenho em QI|Nenhum simulador vira QI/.test(t), "aviso: não converte em QI");
+ok(/Não constitui QI|não estima QI/.test(t), "aviso: não converte em QI");
 await p.close();
 
 // ---- jogada fraca no bloco 1, para e vê o resultado ----
 p = await (await browser.newContext()).newPage();
+await p.clock.install();
 await entrar(p, B);
 await p.goto(`${B}/treino/simulador?seed=12345`); await p.waitForTimeout(600);
 await p.getByRole("button", { name: /Começar pelo Bloco 1/i }).click();

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ALTO_ALCANCE, EXAMES, exame as exameDe, rodada } from "@/lib/dojo/exames";
+import { EXAMES, exame as exameDe, rodada, assinaturaItem } from "@/lib/dojo/exames";
 import type { DominioDojo, ExameDojo, ItemDojo } from "@/lib/dojo/tipos";
 import { carregar, planoDoDia, registrar, salvar, sequencia, taxa, type ProgressoDojo, vazio } from "@/lib/dojo/progresso";
 import { useSeed } from "@/lib/use-seed";
@@ -20,15 +20,15 @@ type Fase = "escolha" | "exame" | "treino" | "fim";
 
 const PRINCIPIOS: { titulo: string; texto: string }[] = [
   { titulo: "Regra antes do item", texto: "Aprenda a taxonomia de regras (distribuição de três, de dois, operações lógicas, progressão) antes de resolver. Em estudo controlado, 14 minutos de instrução explícita renderam mais que horas de repetição." },
-  { titulo: "20 minutos por dia, não 3 horas no domingo", texto: "A memória consolida entre sessões. Sessões curtas e espaçadas transferem mais que maratonas; pare quando ainda está indo bem." },
-  { titulo: "Intercale domínios", texto: "Misture matrizes, séries, verbal e memória na mesma sessão. É mais desconfortável que blocos longos de um tipo só, e é exatamente por isso que funciona: obriga a escolher a estratégia a cada item." },
+  { titulo: "20 minutos por dia, não 3 horas no domingo", texto: "A memória consolida entre sessões. Distribua revisões ao longo da semana e avalie seu progresso com questões novas." },
+  { titulo: "Intercale domínios", texto: "Misture matrizes, séries, verbal e memória na mesma sessão. Isso exercita a escolha da estratégia a cada item. Registre o desempenho para avaliar o efeito no seu treino." },
   { titulo: "Caderno de erros por REGRA", texto: "Não anote 'errei o item 12'. Anote 'confundi XOR com OR' ou 'não vi a regra de quantidade'. Releia antes de cada sessão. O Dojo guarda seus erros por regra automaticamente." },
   { titulo: "Verbalize antes de olhar as alternativas", texto: "Diga a regra em voz alta ('forma em quadrado latino, preenchimento constante na linha') e só então procure a alternativa. Quem olha as alternativas primeiro é fisgado pelo distrator n−1." },
   { titulo: "Zero erros antes de velocidade", texto: "Nos subtestes cronometrados, treine primeiro sem relógio até a precisão ficar perto de 100%. Só depois acelere. Velocidade com erro é chute rápido." },
-  { titulo: "Uma prova completa por semana", texto: "Condições reais: cronômetro, silêncio, sem pausa. É o único treino que ensina a gerir o tempo e a ansiedade — os dois maiores ladrões de pontos no dia." },
-  { titulo: "Não decore itens", texto: "As questões aqui variam a cada tentativa justamente para que decorar não adiante. O que transfere é o método; o item decorado não aparece no teste." },
+  { titulo: "Uma prova completa por semana", texto: "Condições reais: cronômetro, silêncio, sem pausa. Isso ajuda a observar como o ritmo e a fadiga afetam sua precisão." },
+  { titulo: "Não decore itens", texto: "O sorteio prioriza questões não vistas recentemente. Regras podem repetir; reavalie com itens novos para distinguir memorização de aprendizagem." },
   { titulo: "Sono é treino", texto: "Raciocínio fluido cai com privação de sono mais do que com falta de prática. Na véspera do teste, treinar pouco e dormir bem vale mais que a última sessão." },
-  { titulo: "Meça e ataque o ponto fraco", texto: "Olhe a taxa por domínio. Treinar o que você já acerta é confortável e inútil; 60% do tempo deve ir para o domínio mais fraco." },
+  { titulo: "Meça e ataque o ponto fraco", texto: "Olhe a taxa por domínio. Reserve, como ponto de partida, 60% do tempo para o domínio com mais erros e mantenha revisões dos demais." },
 ];
 
 export default function Dojo() {
@@ -36,6 +36,10 @@ export default function Dojo() {
   const [fase, setFase] = useState<Fase>("escolha");
   const [exameId, setExameId] = useState<string | null>(null);
   const [dominioId, setDominioId] = useState<string | undefined>(undefined);
+  const [sementeRodada, setSementeRodada] = useState(0);
+  const [decorrido, setDecorrido] = useState(0);
+  const vistos = useRef<string[]>([]);
+  const sementeFixada = useRef(false);
   const [rodadaN, setRodadaN] = useState(0);
   const [itens, setItens] = useState<ItemDojo[]>([]);
   const [idx, setIdx] = useState(0);
@@ -56,6 +60,8 @@ export default function Dojo() {
   // ?exame=mensa abre direto no painel do exame.
   useEffect(() => {
     setProgresso(carregar());
+    try { const v: unknown = JSON.parse(localStorage.getItem("ahsd:dojo:vistos:v1") ?? "[]"); if (Array.isArray(v)) vistos.current = v.filter((x): x is string => typeof x === "string").slice(-300); } catch { /* progresso opcional */ }
+    sementeFixada.current = new URLSearchParams(window.location.search).has("seed");
     const q = new URLSearchParams(window.location.search).get("exame");
     if (q && exameDe(q)) { setExameId(q); setFase("exame"); }
   }, []);
@@ -68,7 +74,11 @@ export default function Dojo() {
     if (!ex) return;
     const s = (seed ?? 1) + rodadaN * 7919;
     setDominioId(dom);
-    setItens(rodada(ex.id, s, 10, dom));
+    const novos = rodada(ex.id, s, 10, dom, sementeFixada.current ? [] : vistos.current);
+    setItens(novos); setSementeRodada(s);
+    vistos.current = [...vistos.current, ...novos.map(assinaturaItem)].slice(-300);
+    try { localStorage.setItem("ahsd:dojo:vistos:v1", JSON.stringify(vistos.current)); } catch { /* treino funciona sem armazenamento */ }
+    setDecorrido(0);
     setRodadaN((n) => n + 1);
     setIdx(0); setEscolha(null); setEntrada(""); setRevelado(false); setRespostas([]);
     registrado.current = false;
@@ -85,9 +95,15 @@ export default function Dojo() {
   }, [fase, idx, item]);
   useEffect(() => {
     if (fase !== "treino" || !item || item.tipo !== "memoria" || mostrandoIdx < 0) return;
-    const t = window.setTimeout(() => setMostrandoIdx((i) => (i + 1 < item.item.sequencia.length ? i + 1 : -1)), 1000);
+    const t = window.setTimeout(() => setMostrandoIdx((i) => (i + 1 < item.item.sequencia.length ? i + 1 : -1)), item.item.intervaloMs ?? 1000);
     return () => window.clearTimeout(t);
   }, [fase, item, mostrandoIdx]);
+  useEffect(() => {
+    if (fase !== "treino" || revelado) return;
+    setDecorrido(0);
+    const t = window.setInterval(() => setDecorrido(Math.floor((Date.now() - inicioItem.current) / 1000)), 1000);
+    return () => window.clearInterval(t);
+  }, [fase, idx, revelado]);
 
   const respostaCorreta = (it: ItemDojo): number => {
     switch (it.tipo) {
@@ -155,7 +171,8 @@ export default function Dojo() {
         createdAt: new Date().toISOString(),
         instrumentId: "treino-dojo",
         acronym: "DOJO",
-        instrumentName: `Dojo — ${ex.nome}${dom ? ` · ${dom.nome}` : " · rodada mista"}`,
+        instrumentName: `Dojo v3 — ${ex.nome}${dom ? ` · ${dom.nome}` : " · rodada mista"} · semente ${sementeRodada}`,
+        notes: [`Versão 3 · semente ${sementeRodada} · estudo sem limite eliminatório`],
         totalScore: certos,
         maxScore: respostas.length,
         bandLabel: `${certos} de ${respostas.length} acertos`,
@@ -212,17 +229,8 @@ export default function Dojo() {
           ))}
         </div>
 
-        <h2 className="mt-10 text-xl font-semibold text-slate-900">Qual é Mensa, qual é o quê — e os testes mais difíceis do mundo</h2>
-        <div className="mt-3 space-y-3 text-sm text-slate-700">
-          <p><strong>Mensa</strong> é uma sociedade, não um teste: admite o percentil 98 em um teste supervisionado. No Brasil, aplica testes "culture fair" sorteados no dia (até 60 min) e aceita laudo de psicólogo com WAIS-III, WISC-IV, WASI, SON-R ou Matrizes Progressivas Avançadas de Raven.</p>
-          <p><strong>Wechsler (WAIS-IV)</strong>, <strong>Stanford-Binet 5</strong> e <strong>Cattell</strong> são escalas ou testes aplicados por psicólogos. Nenhum deles "é" a Mensa; a Mensa aceita alguns como comprovação. Percentil 98 = 130 nas escalas de desvio-padrão 15 (Wechsler, SB5), 132 na de 16 (SB-IV) e 148 na de 24 (Cattell III B).</p>
-          <p><strong>Triple Nine Society.</strong> {ALTO_ALCANCE.tripleNine}</p>
-          <p><strong>Os testes mais difíceis.</strong></p>
-          <ul className="list-disc space-y-1 pl-5">
-            {ALTO_ALCANCE.maisDificeis.map((t) => <li key={t}>{t}</li>)}
-          </ul>
-          <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-900">{ALTO_ALCANCE.ressalva}</p>
-        </div>
+        <Link href="/treino/guia-exames" className="mt-8 block rounded-xl border border-indigo-200 bg-indigo-50 p-5 font-semibold text-indigo-900">Mensa, WAIS, Stanford-Binet e Triple Nine: exames, custos, tempos e percentis →</Link>
+
       </div>
     );
   }
@@ -235,6 +243,8 @@ export default function Dojo() {
         <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{ex.sigla}</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{ex.nome}</h1>
         <p className="mt-3 text-slate-600">{ex.oQueE}</p>
+        <Link href="/treino/guia-exames" className="mt-3 block text-sm font-semibold text-brand-700 underline">Como fazer o exame real · preços e duração · o que mudou com os guias</Link>
+        <p className="mt-3 rounded-lg bg-slate-100 p-3 text-sm text-slate-700">Treino autoral, com gabarito verificável e dificuldade não normatizada. Para as matrizes mais exigentes deste banco, escolha “Desafio de matrizes: múltiplas regras”. O banco prioriza itens não vistos recentemente; regras e questões de bancos finitos podem voltar.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="font-medium text-slate-800">Como é o exame</p>
@@ -264,7 +274,7 @@ export default function Dojo() {
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <p className="font-medium text-slate-800">{d.nome}</p>
-                    <p className="text-xs text-slate-500">Imita: {d.subtesteReal}</p>
+                    <p className="text-xs text-slate-500">Referência: {d.subtesteReal}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-slate-500">{t === null ? "sem dados" : `${Math.round(t * 100)}% de acerto`}</span>
@@ -345,7 +355,9 @@ export default function Dojo() {
         <span className="text-sm text-slate-500">{ex.nome} · item {idx + 1} de {itens.length}</span>
         <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">{dominio.nome}</span>
       </div>
-      <p className="mt-1 text-xs text-slate-400">Imita: {dominio.subtesteReal}</p>
+      <p className="mt-1 text-xs text-slate-500">Referência de formato: {dominio.subtesteReal}</p>
+      <p className="mt-2 text-sm text-slate-600" data-tempo-item>Tempo no item: {decorrido}s · estudo sem corte automático</p>
+      <p className="text-xs text-slate-500">Semente {sementeRodada} · item autoral · a familiaridade não garante o mesmo desempenho no exame real.</p>
 
       {/* ----- enunciado + alternativas por tipo ----- */}
       {item.tipo === "figural" && !revelado && (
@@ -449,13 +461,18 @@ export default function Dojo() {
       {item.tipo === "memoria" && (
         <div className="mt-4 select-none">
           <p className="text-sm text-slate-600">
-            {item.item.formato === "direta" ? "Digite na MESMA ordem" : item.item.formato === "inversa" ? "Digite na ordem INVERSA (do último para o primeiro)" : "Digite os NÚMEROS em ordem crescente e depois as LETRAS em ordem alfabética"} · {item.item.sequencia.length} elementos
+            {item.item.formato === "ultima-palavra" ? "Leia cada frase em voz alta. Depois digite apenas a ÚLTIMA PALAVRA de cada frase, na ordem" : item.item.formato === "posicoes" ? "Memorize a ordem das posições acesas. Depois use a grade numerada para responder" : item.item.formato === "direta" ? "Digite na MESMA ordem" : item.item.formato === "inversa" ? "Digite na ordem INVERSA (do último para o primeiro)" : "Digite os NÚMEROS em ordem crescente e depois as LETRAS em ordem alfabética"} · {item.item.sequencia.length} elementos
           </p>
           <div className="mt-3 flex h-48 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white">
             {!revelado && mostrandoIdx >= 0 ? (
-              <span className="text-7xl font-bold text-slate-900">{item.item.sequencia[mostrandoIdx]}</span>
+              item.item.formato === "posicoes" ? (
+                <div className="grid grid-cols-3 gap-2" aria-label="Grade de memória">
+                  {Array.from({ length: 9 }, (_, i) => <div key={i} className={`h-10 w-10 rounded ${String(i + 1) === item.item.sequencia[mostrandoIdx] ? "bg-brand-600" : "bg-slate-200"}`} />)}
+                </div>
+              ) : <span className={`${item.item.formato === "ultima-palavra" ? "px-4 text-center text-xl" : "text-7xl"} font-bold text-slate-900`}>{item.item.estimulos?.[mostrandoIdx] ?? item.item.sequencia[mostrandoIdx]}</span>
             ) : !revelado ? (
               <form className="flex w-full max-w-sm flex-col items-center gap-3 px-4" onSubmit={(e) => { e.preventDefault(); responderMemoria(); }}>
+                {item.item.formato === "posicoes" && <p className="whitespace-pre text-center font-mono text-sm" aria-label="Referência de posições">{"1 2 3\n4 5 6\n7 8 9"}</p>}
                 <input id="dj-mem" autoFocus autoComplete="off" value={entrada} onChange={(e) => setEntrada(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-center font-mono text-2xl tracking-widest focus:border-brand-500 focus:outline-none" placeholder="…" aria-label="Sua resposta" />
                 <button type="submit" className="rounded-lg bg-brand-600 px-5 py-2 font-medium text-white hover:bg-brand-700">Confirmar</button>
               </form>
