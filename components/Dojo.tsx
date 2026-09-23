@@ -243,6 +243,7 @@ export default function Dojo() {
         <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{ex.sigla}</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">{ex.nome}</h1>
         <p className="mt-3 text-slate-600">{ex.oQueE}</p>
+        {ex.id === "mensa" && <Link href="/treino/mensa" className="mt-4 block rounded-xl border-2 border-brand-300 bg-brand-50 p-4 font-semibold text-brand-800">Mensa Brasil: fazer a preparação cronometrada e conferir evidências de 2026 →</Link>}
         <Link href="/treino/guia-exames" className="mt-3 block text-sm font-semibold text-brand-700 underline">Como fazer o exame real · preços e duração · o que mudou com os guias</Link>
         <p className="mt-3 rounded-lg bg-slate-100 p-3 text-sm text-slate-700">Treino autoral, com gabarito verificável e dificuldade não normatizada. Para as matrizes mais exigentes deste banco, escolha “Desafio de matrizes: múltiplas regras”. O banco prioriza itens não vistos recentemente; regras e questões de bancos finitos podem voltar.</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">

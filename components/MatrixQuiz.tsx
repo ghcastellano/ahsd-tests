@@ -161,12 +161,11 @@ export default function MatrixQuiz() {
         <h1 className="mt-2 text-2xl font-bold text-slate-900">
           Treino de Raciocínio Fluido — estilo Mensa
         </h1>
+        <Link href="/treino/mensa" className="mt-4 block rounded-lg bg-brand-50 p-3 font-semibold text-brand-700">Preparação Mensa Brasil: sessão completa e evidências atuais →</Link>
         <p className="mt-3 text-slate-600">
-          Matrizes progressivas 3×3 no mesmo formato dos testes de admissão da Mensa e das
-          Matrizes de Raven: em cada item, descubra o padrão (forma, preenchimento, rotação,
+          Matrizes progressivas 3×3 inspiradas em tarefas de raciocínio visual, sem confirmação de que esse seja o formato da sua admissão na Mensa Brasil: em cada item, descubra o padrão (forma, preenchimento, rotação,
           tamanho, quantidade) e escolha a figura que completa a matriz. A dificuldade aumenta ao
-          longo do teste. As questões são sorteadas de um banco a cada tentativa — decorar não
-          adianta; só o raciocínio.
+          longo do teste. As questões variam por semente; regras e itens podem se repetir.
         </p>
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <strong>Leia antes de começar:</strong> este é um <strong>treino original</strong> desta

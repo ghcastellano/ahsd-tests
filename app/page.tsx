@@ -41,6 +41,13 @@ export default function HomePage() {
         </div>
       </section>
 
+      <Link href="/treino/mensa" className="mb-8 block rounded-xl border-2 border-brand-300 bg-brand-50 p-5 hover:border-brand-500">
+        <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Preparação específica · Brasil</p>
+        <h2 className="mt-2 text-xl font-bold text-slate-900">Mensa Brasil</h2>
+        <p className="mt-2 text-sm text-slate-600">24 itens não verbais em 30 minutos, revisão ao final e complemento de dominós e mostradores. Veja o que está confirmado sobre a admissão e as ressalvas dos relatos.</p>
+        <p className="mt-3 font-semibold text-brand-700">Abrir preparação Mensa →</p>
+      </Link>
+
       {categories.map((cat) => {
         const items = instrumentsByCategory(cat.key);
         if (!items.length) return null;

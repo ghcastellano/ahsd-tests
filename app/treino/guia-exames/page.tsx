@@ -18,6 +18,8 @@ export default function GuiaExames() {
         {[["conceitos", "Mensa × WAIS"], ["pontuacao", "QI × percentil"], ["agendar", "Exames e custos"], ["tempos", "Tempos"], ["guias", "O que mudou com os guias"], ["dificuldade", "Mais difíceis e sorteio"]].map(([id, nome]) => <a key={id} href={`#${id}`} className="rounded-full border border-slate-300 bg-white px-3 py-2 hover:border-brand-500">{nome}</a>)}
       </nav>
 
+      <Link href="/treino/mensa" className="mt-5 block rounded-xl border border-brand-300 bg-brand-50 p-4 font-semibold text-brand-800">Seu objetivo é a Mensa Brasil? Preparação específica, auditoria dos relatos de 2026 e fontes →</Link>
+
       <section id="conceitos" className="mt-8 scroll-mt-6">
         <h2 className="text-2xl font-semibold text-slate-900">Mensa não é Wechsler</h2>
         <div className="mt-4 grid gap-3 md:grid-cols-2">

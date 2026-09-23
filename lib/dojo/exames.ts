@@ -40,7 +40,7 @@ const texto = (dominio: string, itens: ItemTexto[], rand: () => number): ItemDoj
 const matrizesBase: DominioDojo = {
   id: "matrizes",
   nome: "Matrizes progressivas",
-  subtesteReal: "Raven APM / testes de admissão da Mensa / WAIS-IV Raciocínio Matricial",
+  subtesteReal: "Raciocínio matricial: referência de formato, sem confirmação do instrumento usado pela Mensa Brasil",
   porQueDificil: "Cada matriz esconde de 1 a 3 regras em atributos diferentes (forma, preenchimento, rotação, tamanho, quantidade) ao mesmo tempo. O erro típico é fechar a primeira regra que aparece e parar. O item só está resolvido quando TODAS as regras batem na célula escolhida.",
   dica: "Leia a matriz por atributo, não por célula: primeiro só a forma (varia por linha? por coluna? quadrado latino?), depois só o preenchimento, e assim por diante. Elimine alternativas que violam qualquer regra já descoberta.",
   gerar: (seed, n) => {
@@ -181,19 +181,19 @@ const memoriaSB5: DominioDojo = {
 export const EXAMES: ExameDojo[] = [
   {
     id: "mensa",
-    nome: "Mensa (teste de admissão)",
+    nome: "Mensa Brasil (preparação)",
     sigla: "MENSA",
     oQueE: "A Mensa não é um teste: é uma sociedade que admite quem está no percentil 98 (2% superior) em um teste de inteligência supervisionado. No Brasil, a Mensa aplica testes psicométricos \"culture fair\" (independentes de língua e conhecimento), sorteados no dia, com até 60 minutos, e informa aptidão para ingresso e percentil, conforme a página de agendamento. Também aceita laudo de psicólogo com WAIS-III, WISC-IV, WASI, SON-R ou CPM (Matrizes Coloridas de Raven), sujeitos às restrições da lista oficial. Pode-se refazer após 1 ano, no máximo três vezes. Veja custos, disponibilidade e restrições no guia de exames reais.",
     estrutura: [
-      "Teste não verbal, em geral no formato de matrizes ou de séries/classificação de figuras (estilo Raven APM ou Cattell Culture Fair).",
-      "Aplicação coletiva, presencial, cronometrada, sem calculadora ou consulta.",
+      "Admissão não verbal confirmada; instrumentos e proporções atuais não divulgados nas páginas oficiais consultadas. Matrizes, séries e classificação são prioridades de treino, não composição confirmada.",
+      "Aplicação presencial, coletiva ou individual, com até 60 minutos conforme o instrumento. Siga as instruções do aplicador.",
       "Critério: percentil 98. Não existe uma conversão única independente da escala e das normas.",
     ],
     corte: "Percentil 98 na população normativa do teste aceito",
     porQueDificil: [
-      "Os itens finais combinam várias regras em atributos diferentes, sem pista de separação.",
-      "O tempo é curto para o número de itens: gestão de tempo é parte do teste.",
-      "Os distratores são construídos para satisfazer parte das regras — o erro por 'quase certo' é o mais comum.",
+      "Neste treino, as matrizes mais exigentes combinam várias regras sem pista de separação; isso não estabelece a dificuldade da sua prova real.",
+      "A prova real tem tempo definido pelo instrumento; o treino exercita gestão de tempo sem presumir a mesma relação entre itens e minutos.",
+      "Os distratores do treino satisfazem parte das regras: confira todos os atributos antes de escolher.",
     ],
     dominios: [matrizesBase, matrizesAvancadas, seriesFiguras, classificacao, matrizesTeto],
     dicas: [
