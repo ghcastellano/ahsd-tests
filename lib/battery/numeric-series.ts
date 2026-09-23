@@ -128,10 +128,19 @@ const SPECS: Spec[] = [
   { seq: ["Z", "X", "U", "Q"], answer: "L", distractors: ["K", "M", "N", "O", "P"], why: "Saltos decrescentes no alfabeto: −2, −3, −4, −5 posições (Z→X→U→Q→L).", difficulty: "dificil" },
   { seq: ["A", "B", "D", "G", "K", "P"], answer: "V", distractors: ["T", "U", "W", "X", "Y"], why: "Saltos crescentes: +1, +2, +3, +4, +5, +6 posições (P = 16 → V = 22).", difficulty: "extrema" },
   { seq: [1, 2, 6, 15, 31], answer: 56, distractors: [46, 50, 52, 57, 60], why: "As diferenças são os quadrados: +1, +4, +9, +16, +25.", difficulty: "extrema" },
+  // --- Teto (extrema, auditoria 2026-09): recorrências de 3 termos, operando variável, intercalação heterogênea ---
+  { seq: [1, 3, 10, 41, 206], answer: 1237, distractors: [1236, 1031, 1030, 824, 412], why: "Multiplica por um inteiro crescente e soma 1: ×2+1, ×3+1, ×4+1, ×5+1, ×6+1 (206·6 + 1 = 1237).", difficulty: "extrema" },
+  { seq: [2, 1, 6, 2, 18, 6, 54, 24, 162], answer: 120, distractors: [486, 48, 72, 96, 30], why: "Duas séries intercaladas com regras diferentes: nas posições ímpares 2, 6, 18, 54, 162 (×3); nas pares 1, 2, 6, 24 (fatorial: ×2, ×3, ×4) → ×5 = 120.", difficulty: "extrema" },
+  { seq: [1, 2, 2, 4, 8, 32], answer: 256, distractors: [64, 128, 40, 48, 512], why: "Fibonacci multiplicativo: cada termo é o PRODUTO dos dois anteriores (8 · 32 = 256).", difficulty: "extrema" },
+  { seq: [7, 14, 19, 29, 40, 44, 52], answer: 59, distractors: [57, 60, 61, 62, 66], why: "Cada termo é o anterior mais a soma dos seus dígitos: 52 + (5 + 2) = 59. As diferenças não têm padrão — a regra está nos dígitos.", difficulty: "extrema" },
+  { seq: [5, 10, 8, 16, 13, 26, 22, 44], answer: 39, distractors: [40, 41, 42, 48, 88], why: "Operações alternadas com operando crescente: ×2, −2, ×2, −3, ×2, −4, ×2, −5 (44 − 5 = 39).", difficulty: "extrema" },
+  { seq: ["A", "Z", "C", "X", "F", "U", "J", "R"], answer: "O", distractors: ["M", "N", "P", "K", "Q"], why: "Duas séries de letras intercaladas: A, C, F, J avança +2, +3, +4, +5 (→ O); Z, X, U, R recua −2, −3, −4. O próximo termo pertence à primeira: J + 5 = O.", difficulty: "extrema" },
+  { seq: [1, 1, 4, 3, 9, 4, 16, 7, 25], answer: 11, distractors: [36, 10, 12, 14, 18], why: "Duas séries intercaladas de tipos diferentes: quadrados (1, 4, 9, 16, 25) e uma recursão tipo Fibonacci (1, 3, 4, 7 → 4 + 7 = 11). O próximo termo é da segunda.", difficulty: "extrema" },
+  { seq: [1, 1, 2, 4, 7, 13, 24], answer: 44, distractors: [37, 48, 40, 42, 46], why: "Cada termo é a soma dos TRÊS anteriores (7 + 13 + 24 = 44). O distrator 37 é a soma de dois (Fibonacci).", difficulty: "extrema" },
 ];
 
 /** Quantos itens de cada dificuldade entram numa tentativa (a distribuição original de 20). */
-export const POR_DIFICULDADE: Record<Difficulty, number> = { media: 6, dificil: 12, extrema: 2 };
+export const POR_DIFICULDADE: Record<Difficulty, number> = { media: 5, dificil: 12, extrema: 3 };
 
 /**
  * 20 itens por tentativa, amostrados do banco de 40 por dificuldade, com a

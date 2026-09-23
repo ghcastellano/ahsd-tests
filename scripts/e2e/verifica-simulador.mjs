@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { entrar } from "./login.mjs";
 import { readFileSync } from "node:fs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const esperado = JSON.parse(readFileSync(new URL("./simulador-esperado.json", import.meta.url), "utf8"));
@@ -46,6 +47,7 @@ async function jogarBloco(p, bloco, perfeito) {
 
 // ---- jogada perfeita, três blocos ----
 let p = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
+await entrar(p, B);
 await p.goto(`${B}/treino/simulador?seed=12345`); await p.waitForTimeout(600);
 await p.getByRole("button", { name: /Começar pelo Bloco 1/i }).click();
 for (let b = 0; b < 3; b++) {
@@ -59,7 +61,7 @@ for (let b = 0; b < 3; b++) {
 await p.waitForTimeout(800);
 let t = await p.locator("body").innerText();
 ok(/3\s+de 3/.test(t), "resultado: 3 de 3 blocos fechados");
-ok(/Bloco 3 fechado \(nível Cattell ~149\)/.test(t), "faixa: Bloco 3 fechado (Cattell ~149)");
+ok(/Bloco 3 fechado \(topo\)/.test(t), "faixa: Bloco 3 fechado (topo)");
 ok(/Compreensão verbal[\s\S]*24\/24 · 100%/.test(t), "verbal 24/24");
 ok(/Raciocínio fluido[\s\S]*12\/12 · 100%/.test(t), "raciocínio 12/12");
 ok(/Pontos \(acertos − erros\): 240/.test(t), "velocidade 240 pontos (80×3, todos certos)");
@@ -70,6 +72,7 @@ await p.close();
 
 // ---- jogada fraca no bloco 1, para e vê o resultado ----
 p = await (await browser.newContext()).newPage();
+await entrar(p, B);
 await p.goto(`${B}/treino/simulador?seed=12345`); await p.waitForTimeout(600);
 await p.getByRole("button", { name: /Começar pelo Bloco 1/i }).click();
 await jogarBloco(p, esperado[0], false);

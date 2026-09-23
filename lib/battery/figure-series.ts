@@ -16,16 +16,21 @@ type SeriesRule = "rotacao" | "quantidade" | "tamanho" | "preenchimento" | "rota
 
 function build(rule: SeriesRule, seed: number): { seq: Cell[]; answer: Cell; distractors: Cell[]; why: string } {
   const rand = mulberry32(seed);
-  // Só formas SEM simetria de 90°: a cruz girada 90° é a mesma cruz, o que
-  // repetiria figuras na série e nas alternativas.
-  const shape = pick(SHAPES.filter((s) => s === "triangle" || s === "star"), rand);
+  // Só o triângulo gira: a estrela tem período de 72°, então 90° e 135° se
+  // desenham como 18° e −9° — a resposta ficaria a 9° de um distrator.
+  const shape: Mark = "triangle";
   const anyShape = pick(SHAPES, rand);
   const step = 4;
+  // Ponto de partida e sentido do giro sorteados: a série de rotação varia
+  // entre tentativas mesmo com a forma fixa.
+  const giroInicial = Math.floor(rand() * 4) * 45;
+  const sentido = rand() < 0.5 ? 1 : -1;
+  const giro = (i: number) => (((giroInicial + sentido * i * 45) % 360) + 360) % 360;
 
   const at = (i: number): Cell => {
     switch (rule) {
       case "rotacao":
-        return { marks: [shape], rotation: (i * 45) % 180 };
+        return { marks: [shape], rotation: giro(i) };
       case "quantidade":
         // O CellSvg desenha até 4 elementos; acima disso a figura repetiria a de 4.
         return { marks: [anyShape], count: Math.min(4, i + 1) as 1 | 2 | 3 | 4 };
@@ -38,16 +43,19 @@ function build(rule: SeriesRule, seed: number): { seq: Cell[]; answer: Cell; dis
       case "rotacao-quantidade":
         return {
           marks: [shape],
-          rotation: (i * 45) % 180,
+          rotation: giro(i),
           count: (i % 2 === 0 ? 1 : 2) as 1 | 2,
         };
     }
   };
 
-  const seq = [at(0), at(1), at(2)];
-  const answer = at(3);
+  // Regras cíclicas (1→2→3→1) mostram QUATRO figuras: com três, "ciclo" e
+  // "vai-e-volta" são igualmente simples e o item fica ambíguo.
+  const ciclica = rule === "tamanho" || rule === "preenchimento";
+  const seq = ciclica ? [at(0), at(1), at(2), at(3)] : [at(0), at(1), at(2)];
+  const answer = at(seq.length);
   const why: Record<SeriesRule, string> = {
-    rotacao: "A figura gira 45° a cada passo.",
+    rotacao: "A figura gira 45° a cada passo, sempre no mesmo sentido.",
     quantidade: "A quantidade de elementos aumenta de um em um.",
     tamanho: "O tamanho da figura avança em ciclo: pequeno → médio → grande → pequeno.",
     preenchimento: "O preenchimento avança em ciclo: vazio → metade → cheio.",
@@ -56,9 +64,9 @@ function build(rule: SeriesRule, seed: number): { seq: Cell[]; answer: Cell; dis
 
   const distractors: Cell[] = shuffle(
     [
-      at(2), // repete o anterior
-      at(4), // pula um passo
-      { ...answer, rotation: ((answer.rotation ?? 0) + 45) % 180 },
+      at(seq.length - 1), // repete o anterior
+      at(seq.length + 1), // pula um passo
+      { ...answer, rotation: ((answer.rotation ?? 0) + 45) % 360 },
       { ...answer, count: (((answer.count ?? 1) % 4) + 1) as 1 | 2 | 3 | 4 },
       { ...answer, innerFill: FILLS[(FILLS.indexOf((answer.innerFill ?? "none") as never) + 1) % 3] },
       { ...answer, size: (((answer.size ?? 2) % 3) + 1) as 1 | 2 | 3 },

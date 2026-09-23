@@ -40,6 +40,7 @@ export default function GoNoGoTask() {
   const sequencia = useRef<Estimulo[]>([]);
   const respostas = useRef<Resposta[]>([]);
   const inicioEstimulo = useRef<number>(0);
+  const inicioTarefa = useRef<number>(0);
   const respondeuNoAtual = useRef(false);
   const timers = useRef<number[]>([]);
 
@@ -82,6 +83,7 @@ export default function GoNoGoTask() {
     const n = qual === "treino" ? N_TREINO : N_PRINCIPAL;
     sequencia.current = gerarSequencia(n, qual === "treino" ? seed + 1 : seed);
     respostas.current = sequencia.current.map((e) => ({ tipo: e.tipo, rt: null }));
+    inicioTarefa.current = Date.now();
     setFase(qual);
     setIndice(-1);
     setFeedback(null);
@@ -132,6 +134,7 @@ export default function GoNoGoTask() {
       id: makeRecordId(),
       createdAt: new Date().toISOString(),
       instrumentId: "treino-go-nogo",
+      durationSeconds: inicioTarefa.current ? Math.round((Date.now() - inicioTarefa.current) / 1000) : undefined,
       acronym: "GO/NOGO",
       instrumentName: "Tarefa Go/NoGo — controle inibitório",
       respondent: respondent.trim() ? respondent.trim().slice(0, 80) : undefined,

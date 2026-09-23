@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { entrar } from "./login.mjs";
 import { readFileSync } from "node:fs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const esperados = JSON.parse(readFileSync("scripts/e2e/esperados.json", "utf8"));
@@ -11,6 +12,7 @@ let pass = 0, fail = 0; const falhas = [];
 for (const inst of esperados) {
   for (const [nome, p] of Object.entries(inst.padroes)) {
     const page = await (await browser.newContext()).newPage();
+    await entrar(page, B);
     try {
       await page.goto(`${B}/teste/${inst.id}`); await page.waitForTimeout(500);
       const itens = page.locator("ol > li");

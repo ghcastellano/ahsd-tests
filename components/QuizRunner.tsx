@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { getInstrument } from "@/lib/instruments";
 import { countAnswered, isComplete, optionsFor } from "@/lib/scoring";
@@ -22,6 +22,7 @@ export default function QuizRunner({ id }: { id: string }) {
   const [submitted, setSubmitted] = useState(false);
   const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
   const [showError, setShowError] = useState(false);
+  const inicio = useRef(Date.now());
 
   const answered = useMemo(
     () => (inst ? countAnswered(inst.questions, responses) : 0),
@@ -71,6 +72,7 @@ export default function QuizRunner({ id }: { id: string }) {
       makeRecordId(),
       new Date().toISOString(),
     );
+    record.durationSeconds = Math.round((Date.now() - inicio.current) / 1000);
     saveLocalRecord(record);
     // O envio ao registro central (com status na tela) acontece no ShareBlock.
     setSavedRecord(record);

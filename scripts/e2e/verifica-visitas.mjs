@@ -4,6 +4,7 @@
 // Uso: node scripts/e2e/supabase-falso.mjs & (site buildado com
 //      NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3222) node scripts/e2e/verifica-visitas.mjs
 import { chromium } from "playwright";
+import { entrar } from "./login.mjs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const F = process.env.FAKE_URL ?? "http://127.0.0.1:3222";
 const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
@@ -13,8 +14,10 @@ const ctx = await browser.newContext({ extraHTTPHeaders: {
   "x-vercel-ip-country": "BR", "x-vercel-ip-country-region": "SP", "x-vercel-ip-city": "S%C3%A3o%20Paulo",
 } });
 const p = await ctx.newPage();
+await entrar(p, B);
 const esperar = async (n) => { for (let i = 0; i < 40; i++) { const v = await (await fetch(`${F}/__visitas`)).json(); if (v.length >= n) return v; await new Promise((r) => setTimeout(r, 250)); } return (await fetch(`${F}/__visitas`)).json(); };
 
+await p.waitForTimeout(1200); // deixa o registro do login chegar antes de zerar
 await fetch(`${F}/__visitas`, { method: "DELETE" }); // começa do zero
 await p.goto(`${B}/teste-qi?seed=3`);
 let vs = await esperar(1);
@@ -99,6 +102,20 @@ ok(await p.getByText(/IP\(s\) distinto\(s\)/).count() === 1, "resumo com IPs dis
   const sync = await p.locator("[data-sync]").innerText();
   ok(/1 não enviado\(s\)/.test(sync) && /RLS/.test(sync), `painel avisa o registro que não entrou e o motivo: "${sync.slice(0, 90)}…"`);
   ok(await p.getByRole("button", { name: /Copiar link do resultado/ }).count() >= 2, "cada registro local tem 'copiar link'");
+  // Rastreabilidade: o registro do treino traz duração e a revisão item a item (o que errou, a certa, a regra, o tempo).
+  const linhaGabi = p.locator("tr").filter({ hasText: "Gabi" }).first();
+  ok((await linhaGabi.innerText()).includes("⏱"), "registro do treino mostra a duração");
+  await linhaGabi.getByRole("button", { name: "detalhes" }).click();
+  const det = p.locator("[data-detalhes]").first();
+  await det.waitFor();
+  const txt = await det.innerText();
+  ok(/Revisão item a item: \d+ erro\(s\) em 14/.test(txt), `painel: revisão item a item (${txt.split("\n")[0].slice(0, 80)})`);
+  await det.getByRole("button", { name: /ver todos os 14/ }).click();
+  ok(await det.locator("li").count() === 14, "painel: 'ver todos' lista os 14 itens com regra");
+  const gravados2 = await (await fetch(`${F}/__resultados`)).json();
+  const gabi = gravados2.find((r) => r.respondent === "Gabi");
+  ok(gabi && Array.isArray(gabi.detalhes) && gabi.detalhes.length === 14 && typeof gabi.duracao_segundos === "number", `banco recebeu duracao_segundos (${gabi?.duracao_segundos}) e detalhes (${gabi?.detalhes?.length} itens)`);
+  ok(gabi && gabi.detalhes.every((d) => typeof d.acertou === "boolean" && d.correta !== undefined && typeof d.regra === "string" && typeof d.tempoSeg === "number"), "cada detalhe tem acertou/correta/regra/tempo");
   await p.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   await p.getByRole("button", { name: /Copiar link do resultado/ }).first().click();
   const link = await p.evaluate(() => navigator.clipboard.readText());

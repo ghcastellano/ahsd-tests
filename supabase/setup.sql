@@ -37,7 +37,10 @@ create table if not exists public.resultados (
   severity text not null check (char_length(severity) <= 20),
   positive boolean,
   metric_is_mean boolean not null default false,
-  subscales jsonb check (pg_column_size(subscales) <= 16384)
+  subscales jsonb check (pg_column_size(subscales) <= 16384),
+  -- tempo total (s) e revisão item a item (só treinos) — ver detalhes.sql
+  duracao_segundos integer check (duracao_segundos >= 0 and duracao_segundos <= 86400),
+  detalhes jsonb check (pg_column_size(detalhes) <= 262144)
 );
 
 alter table public.resultados enable row level security;

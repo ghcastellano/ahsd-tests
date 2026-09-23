@@ -41,8 +41,8 @@ export default function SobrePage() {
       </ul>
 
       <h2 className="mt-8 text-lg font-semibold text-slate-900">Instrumentos disponíveis</h2>
-      <div className="mt-2 overflow-hidden rounded-lg border border-slate-200">
-        <table className="w-full text-sm">
+      <div className="mt-2 overflow-x-auto rounded-lg border border-slate-200">
+        <table className="w-full min-w-[480px] text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-3 py-2">Sigla</th>

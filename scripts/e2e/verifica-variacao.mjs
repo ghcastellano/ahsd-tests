@@ -3,6 +3,7 @@
 // Uso: npx vitest run scripts/e2e/dump-variacao.test.ts && BASE_URL=... node scripts/e2e/verifica-variacao.mjs
 import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
+import { entrar } from "./login.mjs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const esperado = JSON.parse(readFileSync(new URL("./variacao-esperado.json", import.meta.url), "utf8"));
 // Fora do localhost, respeita o proxy do ambiente (HTTPS_PROXY), se houver.
@@ -13,6 +14,7 @@ const rota = (id) => (id === "teste-qi" ? "/teste-qi" : `/treino/${id}`);
 
 async function jogar(seed, id, respostas) {
   const p = await browser.newPage();
+  await entrar(p, B);
   p.on("dialog", (d) => d.accept());
   await p.goto(`${B}${rota(id)}?seed=${seed}`);
   await p.getByRole("button", { name: /^Iniciar/ }).click();

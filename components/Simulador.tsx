@@ -5,7 +5,7 @@ import Link from "next/link";
 import CellSvg from "./CellSvg";
 import RevisaoItem from "./RevisaoItem";
 import ShareBlock from "./ShareBlock";
-import { blocos, pontuarSimulador, NOMES_DOMINIO, type Bloco, type ResultadoBloco, type Dominio } from "@/lib/simulador";
+import { blocos, pontuarSimulador, NOMES_DOMINIO, CORTES, type Bloco, type ResultadoBloco, type Dominio } from "@/lib/simulador";
 import { gerarItensMemoria, conferirMemoria, type ItemMemoria } from "@/lib/simulador/memoria";
 import { gerarTrials, pontuarVelocidade, type TrialVelocidade } from "@/lib/simulador/velocidade";
 import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
@@ -52,6 +52,9 @@ export default function Simulador() {
   const parcial = useRef<Partial<ResultadoBloco>>({});
   // escolhas de cada bloco (verbal e raciocínio), para a revisão no resultado
   const escolhasPorBloco = useRef<Record<number, { verbal: Record<string, number>; raciocinio: Record<string, number> }>>({});
+  // memória item a item e início da prova, para o histórico rastreável
+  const memoriaPorBloco = useRef<Record<number, { id: string; formato: string; sequencia: string; esperado: string; digitado: string; ok: boolean }[]>>({});
+  const inicioProva = useRef(0);
 
   useScrollTopOnScreenChange(`${etapa}-${b}-${im}`);
 
@@ -65,7 +68,7 @@ export default function Simulador() {
     setRestante(segundos);
     const fim = Date.now() + segundos * 1000;
     cronometro.current = window.setInterval(() => {
-      const r = Math.max(0, Math.round((fim - Date.now()) / 1000));
+      const r = Math.max(0, Math.ceil((fim - Date.now()) / 1000));
       setRestante(r);
       if (r <= 0) { pararCronometro(); aoZerar(); }
     }, 250);
@@ -74,6 +77,7 @@ export default function Simulador() {
 
   // ---------- transições ----------
   const irParaVerbal = (idx: number) => {
+    if (idx === 0) { inicioProva.current = Date.now(); memoriaPorBloco.current = {}; }
     setB(idx); parcial.current = {}; setEscolhas({}); setEtapa("verbal");
     iniciarCronometro(todos[idx].verbal.length * 30, () => fecharVerbalRef.current());
   };
@@ -102,6 +106,7 @@ export default function Simulador() {
   const responderMemoria = () => {
     const item = itensMem[im];
     const ok = conferirMemoria(item, entrada);
+    (memoriaPorBloco.current[b] ??= []).push({ id: item.id, formato: item.formato, sequencia: item.sequencia.join(" "), esperado: item.resposta, digitado: entrada, ok });
     const novos = acertosMem + (ok ? 1 : 0);
     setAcertosMem(novos); setEntrada("");
     if (im + 1 < itensMem.length) { setIm(im + 1); setMostrandoIdx(0); return; }
@@ -114,7 +119,7 @@ export default function Simulador() {
     const fim = Date.now() + bloco.segundosVelocidade * 1000;
     pararCronometro();
     cronometro.current = window.setInterval(() => {
-      const r = Math.max(0, Math.round((fim - Date.now()) / 1000));
+      const r = Math.max(0, Math.ceil((fim - Date.now()) / 1000));
       setVelRestante(r);
       if (r <= 0) { pararCronometro(); fecharVelocidadeRef.current(); }
     }, 250);
@@ -157,6 +162,7 @@ export default function Simulador() {
   useEffect(() => {
     if (etapa !== "velocidade") return;
     const onKey = (e: KeyboardEvent) => {
+      if (e.repeat) return; // segurar a tecla não pode disparar respostas em rajada
       if (e.key === "s" || e.key === "S") responderVelocidade(true);
       if (e.key === "n" || e.key === "N") responderVelocidade(false);
     };
@@ -180,6 +186,30 @@ export default function Simulador() {
       bandLabel: final.faixa.label,
       severity: final.faixa.severity,
       subscales: (Object.keys(NOMES_DOMINIO) as Dominio[]).map((d) => ({ name: NOMES_DOMINIO[d], raw: final.porDominio[d].acertos, max: final.porDominio[d].total })),
+      durationSeconds: inicioProva.current ? Math.round((Date.now() - inicioProva.current) / 1000) : undefined,
+      // Revisão item a item de todos os blocos feitos: verbal, memória, velocidade e matrizes.
+      detalhes: (() => {
+        const out: NonNullable<ResultRecord["detalhes"]> = [];
+        let n = 0;
+        for (const r of [...resultados].sort((a, c) => a.nivel - c.nivel)) {
+          const idx = r.nivel - 1;
+          const x = todos[idx];
+          const esc = escolhasPorBloco.current[idx] ?? { verbal: {}, raciocinio: {} };
+          for (const q of x.verbal) {
+            const m = esc.verbal[q.id];
+            out.push({ n: ++n, id: q.id, escolhida: m === undefined ? null : q.opcoes[m], correta: q.opcoes[q.resposta], acertou: m === q.resposta, regra: q.explicacao, grupo: `bloco ${r.nivel} · verbal` });
+          }
+          for (const mItem of memoriaPorBloco.current[idx] ?? []) {
+            out.push({ n: ++n, id: mItem.id, escolhida: mItem.digitado || null, correta: mItem.esperado, acertou: mItem.ok, regra: `${mItem.formato} · sequência ${mItem.sequencia}`, grupo: `bloco ${r.nivel} · memória` });
+          }
+          out.push({ n: ++n, id: `vel-b${r.nivel}`, escolhida: `${r.velocidade.acertos} certos, ${r.velocidade.erros} erros, ${r.velocidade.pontos} pontos, TR médio ${r.velocidade.rtMedio} ms`, correta: `≥ ${CORTES[r.nivel].velocidade} pontos`, acertou: r.velocidade.pontos >= CORTES[r.nivel].velocidade, regra: "procura de símbolos, 60 s (acertos − erros)", grupo: `bloco ${r.nivel} · velocidade` });
+          x.raciocinio.forEach((it, i) => {
+            const m = esc.raciocinio[it.id];
+            out.push({ n: ++n, id: it.id, escolhida: m === undefined ? null : m + 1, correta: it.answerIndex + 1, acertou: m === it.answerIndex, regra: it.explanation, grupo: `bloco ${r.nivel} · matriz ${i + 1}` });
+          });
+        }
+        return out;
+      })(),
     };
     saveLocalRecord(record);
     // O envio ao registro central (com status na tela) acontece no ShareBlock.
@@ -237,7 +267,7 @@ export default function Simulador() {
             <li><strong>Velocidade</strong> — 60 s: dois símbolos-alvo à esquerda; algum deles aparece IGUAL na fileira? Responda Sim/Não (teclas S/N). Erro desconta ponto.</li>
             <li><strong>Raciocínio</strong> — 4 matrizes 3×3 com tempo.</li>
           </ol>
-          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 18 / 22 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O sorteio varia os itens e as figuras, mas regras e itens podem se repetir. Repetição não mede transferência para tarefas novas.</p>
+          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 22 / 24 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O sorteio varia os itens e as figuras, mas regras e itens podem se repetir. Repetição não mede transferência para tarefas novas.</p>
         </div>
         <Link href="/treino/simulador/fontes" className="mt-5 block rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm font-semibold text-teal-900 hover:bg-teal-100">Plano de 8 semanas e 12 questões públicas do ICAR →</Link>
         <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="resp">Identificação (opcional)</label>

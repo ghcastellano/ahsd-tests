@@ -122,6 +122,25 @@ export default function HomePage() {
           </p>
         </Link>
         <Link
+          href="/treino/dojo"
+          className="group mt-3 block rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4 transition hover:border-emerald-500"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className="shrink-0 whitespace-nowrap rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white">
+              DOJO · TREINO ATIVO
+            </span>
+            <span className="text-xs text-slate-500">4 exames · 10 itens por rodada</span>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">Mensa · Wechsler · Stanford-Binet · Cattell</p>
+          <h3 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-emerald-800">
+            Dojo: treino ativo por exame
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Dez itens rápidos por rodada, com a regra, o porquê da dificuldade e uma dica após cada
+            resposta. O progresso por domínio monta o seu plano do dia.
+          </p>
+        </Link>
+        <Link
           href="/treino/simulador"
           className="group mt-3 block rounded-xl border-2 border-violet-300 bg-violet-50 p-4 transition hover:border-violet-500"
         >

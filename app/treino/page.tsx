@@ -43,6 +43,19 @@ export default function TreinoIndex() {
       </div>
 
       <Link
+        href="/treino/dojo"
+        className="group mt-8 block rounded-xl border-2 border-emerald-300 bg-emerald-50 p-5 transition hover:border-emerald-500 hover:shadow-md"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-semibold text-white">NOVO</span>
+          <span className="text-xs text-emerald-700">treino ativo · explicação após cada item · plano do dia</span>
+        </div>
+        <h2 className="mt-2 text-lg font-semibold text-slate-900">Dojo: Mensa, Wechsler, Stanford-Binet e Cattell</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Escolha o exame, faça 10 itens rápidos e veja, a cada resposta, a regra, o porquê da dificuldade e uma dica. O progresso por domínio fica no aparelho e monta o seu plano de treino.
+        </p>
+      </Link>
+      <Link
         href="/treino/simulador"
         className="group mt-8 block rounded-xl border-2 border-violet-300 bg-violet-50 p-5 transition hover:border-violet-500 hover:shadow-md"
       >

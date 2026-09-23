@@ -10,6 +10,7 @@ import type { Item, TestDef } from "@/lib/battery/types";
 import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import { useSeed } from "@/lib/use-seed";
+import { useTemposPorItem } from "@/lib/use-tempos";
 
 type Phase = "intro" | "running" | "done";
 
@@ -59,6 +60,7 @@ export default function BatteryQuiz({ id }: { id: string }) {
   const [savedRecord, setSavedRecord] = useState<ResultRecord | null>(null);
   const [reviewOnlyWrong, setReviewOnlyWrong] = useState(true);
   const finishedRef = useRef(false);
+  const { fechar: fecharTempos } = useTemposPorItem(current, phase === "running");
 
   const score = useMemo(
     () => items.reduce((acc, it, i) => acc + (chosen[i] === it.answerIndex ? 1 : 0), 0),
@@ -116,6 +118,20 @@ export default function BatteryQuiz({ id }: { id: string }) {
       bandLabel: b.label,
       severity: "info",
       subscales: byTier,
+      durationSeconds: test.timeLimitSeconds - timeLeft,
+      detalhes: (() => {
+        const tempos = fecharTempos();
+        return items.map((it, i) => ({
+          n: i + 1,
+          id: it.id,
+          escolhida: chosen[i] === null ? null : (it.textOptions ? it.textOptions[chosen[i]!] : chosen[i]! + 1),
+          correta: it.textOptions ? it.textOptions[it.answerIndex] : it.answerIndex + 1,
+          acertou: chosen[i] === it.answerIndex,
+          regra: it.explanation,
+          tempoSeg: Math.round(tempos[i] ?? 0),
+          grupo: it.difficulty,
+        }));
+      })(),
     };
     saveLocalRecord(record);
     // O envio ao registro central (com status na tela) acontece no ShareBlock.

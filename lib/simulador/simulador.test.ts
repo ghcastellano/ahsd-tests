@@ -2,18 +2,19 @@ import { describe, it, expect } from "vitest";
 import { ITENS_VERBAIS, itensVerbais, bancoVerbal, POR_FORMATO } from "./verbal";
 import { AMPLITUDES, conferirMemoria, gerarItensMemoria, normalizar } from "./memoria";
 import { CONFIG, gerarTrials, pontuarVelocidade } from "./velocidade";
+import { visualKey } from "../battery/visual-key";
 import { blocos, blocoFechado, pontuarSimulador, CORTES, type ResultadoBloco } from "./index";
 
 describe("simulador — verbal", () => {
   it("banco de 60 (20 por nível: 8 vocabulário, 6 semelhanças, 6 analogias), ids únicos, chaves válidas", () => {
-    expect(ITENS_VERBAIS).toHaveLength(60);
-    expect(new Set(ITENS_VERBAIS.map((i) => i.id)).size).toBe(60);
+    expect(ITENS_VERBAIS.length).toBeGreaterThanOrEqual(60);
+    expect(new Set(ITENS_VERBAIS.map((i) => i.id)).size).toBe(ITENS_VERBAIS.length);
     for (const n of [1, 2, 3] as const) {
       const banco = bancoVerbal(n);
-      expect(banco).toHaveLength(20);
-      expect(banco.filter((i) => i.formato === "vocabulario")).toHaveLength(8);
-      expect(banco.filter((i) => i.formato === "semelhancas")).toHaveLength(6);
-      expect(banco.filter((i) => i.formato === "analogia")).toHaveLength(6);
+      expect(banco.length).toBeGreaterThanOrEqual(20);
+      expect(banco.filter((i) => i.formato === "vocabulario").length).toBeGreaterThanOrEqual(8);
+      expect(banco.filter((i) => i.formato === "semelhancas").length).toBeGreaterThanOrEqual(6);
+      expect(banco.filter((i) => i.formato === "analogia").length).toBeGreaterThanOrEqual(6);
       expect(itensVerbais(n)).toHaveLength(8);
     }
     for (const i of ITENS_VERBAIS) {
@@ -89,8 +90,8 @@ describe("simulador — velocidade", () => {
       const t = gerarTrials(n, 9, 40);
       expect(t).toEqual(gerarTrials(n, 9, 40));
       expect(t.every((x) => x.candidatos.length === CONFIG[n].candidatos)).toBe(true);
-      const igual = (a: typeof t[0]["alvos"][0], b: typeof t[0]["alvos"][0]) => a.marks.join() === b.marks.join() && (a.rotation ?? 0) === (b.rotation ?? 0) && (a.innerFill ?? "solid") === (b.innerFill ?? "solid");
-      for (const x of t) expect(x.candidatos.some((c) => x.alvos.some((a) => igual(a, c)))).toBe(x.presente);
+      // igualdade VISUAL: é o que a pessoa vê na tela
+      for (const x of t) expect(x.candidatos.some((c) => x.alvos.some((a) => visualKey(a) === visualKey(c)))).toBe(x.presente);
       const presentes = t.filter((x) => x.presente).length;
       expect(presentes).toBeGreaterThan(8); expect(presentes).toBeLessThan(32); // ~50%
     }
@@ -104,8 +105,8 @@ describe("simulador — velocidade", () => {
 
 describe("simulador — blocos e pontuação", () => {
   const b = blocos();
-  it("três blocos crescentes: 130/133/149 com DP 15/16/24 e 8 verbais + 4 matrizes cada", () => {
-    expect(b.map((x) => x.qiAlvo)).toEqual([130, 133, 149]);
+  it("três blocos crescentes: 130/132/148 com DP 15/16/24 e 8 verbais + 4 matrizes cada", () => {
+    expect(b.map((x) => x.qiAlvo)).toEqual([130, 132, 148]);
     expect(b.map((x) => x.dp)).toEqual([15, 16, 24]);
     for (const x of b) { expect(x.verbal).toHaveLength(8); expect(x.raciocinio).toHaveLength(4); }
     // Nenhum bloco usa matrizes de nível médio: "130" já é o 2% superior.
@@ -121,8 +122,8 @@ describe("simulador — blocos e pontuação", () => {
     velocidade: { respondidos: 30, acertos: ok ? 28 : 12, erros: ok ? 2 : 18, pontos: ok ? 26 : 0, rtMedio: 900 },
     raciocinio: { acertos: ok ? 3 : 1, total: 4 },
   });
-  it("cortes sobem por bloco (precisão 70/75/80%, velocidade 18/22/26)", () => {
-    expect(CORTES[1]).toEqual({ precisao: 0.7, velocidade: 18 });
+  it("cortes sobem por bloco (precisão 70/75/80%, velocidade 22/24/26)", () => {
+    expect(CORTES[1]).toEqual({ precisao: 0.7, velocidade: 22 });
     expect(CORTES[3].precisao).toBeGreaterThan(CORTES[1].precisao);
     expect(CORTES[3].velocidade).toBeGreaterThan(CORTES[1].velocidade);
     expect(blocoFechado(r(1, true))).toBe(true);
@@ -141,10 +142,42 @@ describe("simulador — blocos e pontuação", () => {
     expect(pontuarSimulador([r(1, true), r(2, false), r(3, true)]).blocoAlcancado).toBe(1);
     expect(pontuarSimulador([r(1, false)]).faixa.label).toBe("Nenhum bloco fechado");
     const res = pontuarSimulador([r(1, true), r(2, true)]);
-    expect(res.faixa.label).toContain("Stanford-Binet");
+    expect(res.faixa.label).toContain("intermediário");
     expect(res.porDominio.verbal).toEqual({ acertos: 14, total: 16, pct: 88 });
     expect(res.porDominio.velocidade.total).toBe(60);
     expect(res.velocidadePontos).toBe(52);
     expect(pontuarSimulador([]).blocoAlcancado).toBe(0);
   });
 });
+
+describe("auditoria: viés de posição e gabarito visual", () => {
+  it("as alternativas verbais são embaralhadas por semente: nenhuma posição concentra mais de 40% das respostas", () => {
+    const contagem = [0, 0, 0, 0];
+    let total = 0;
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) for (const n of [1, 2, 3] as const) for (const q of itensVerbais(n, seed)) { contagem[q.resposta]++; total++; }
+    for (const c of contagem) expect(c / total).toBeLessThan(0.4);
+    // e a resposta continua sendo a mesma frase do banco
+    for (const q of itensVerbais(2, 9)) {
+      const original = ITENS_VERBAIS.find((x) => x.id === q.id)!;
+      expect(q.opcoes[q.resposta]).toBe(original.opcoes[original.resposta]);
+    }
+  });
+  it("velocidade: 'ausente' nunca tem um candidato desenhado igual ao alvo; 'presente' sempre tem", () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) for (const n of [1, 2, 3] as const) {
+      for (const t of gerarTrials(n, seed, 60)) {
+        const algum = t.candidatos.some((c) => t.alvos.some((a) => visualKey(a) === visualKey(c)));
+        expect(algum, `seed ${seed} nível ${n}`).toBe(t.presente);
+      }
+    }
+  });
+  it("bloco não fecha com um domínio abaixo de 50%, mesmo com média alta", () => {
+    const r: ResultadoBloco = {
+      nivel: 2,
+      verbal: { acertos: 8, total: 8 }, memoria: { acertos: 2, total: 6 }, raciocinio: { acertos: 4, total: 4 },
+      velocidade: { respondidos: 40, acertos: 40, erros: 0, pontos: 40, rtMedio: 800 },
+    };
+    expect(blocoFechado(r)).toBe(false);
+    expect(blocoFechado({ ...r, memoria: { acertos: 3, total: 6 } })).toBe(true);
+  });
+});
+

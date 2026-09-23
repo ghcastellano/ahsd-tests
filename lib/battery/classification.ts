@@ -7,14 +7,12 @@ import { mulberry32, pick, shuffle } from "./rng";
 // A dificuldade vem da propriedade compartilhada ser abstrata (número de lados,
 // simetria, presença de curva) em vez de perceptual (cor, tamanho).
 
-const CURVED: Mark[] = ["circle", "dot"];
-const STRAIGHT: Mark[] = ["square", "triangle", "diamond", "cross", "hbar", "vbar"];
-// Formas que DESENHAM o preenchimento (linhas e o ponto sólido não): só estas
-// entram em regras baseadas em preenchimento, senão a propriedade fica invisível.
-const FILLABLE: Mark[] = ["circle", "square", "triangle", "diamond", "cross"];
-const STRAIGHT_FILLABLE: Mark[] = ["square", "triangle", "diamond", "cross"];
-const THREE_SIDED: Mark[] = ["triangle"];
-const FOUR_SIDED: Mark[] = ["square", "diamond"];
+// Formas fechadas, retas, com simetria rotacional: 2 convexas e 2 côncavas.
+// Só elas entram como "ruído" nos conjuntos — assim nenhuma propriedade
+// secundária (única curva, única linha, único preenchimento) divide o conjunto
+// em 4-a-1 apontando para outra figura. Era o defeito clássico da versão anterior.
+const POOL_SIM: Mark[] = ["square", "diamond", "cross", "star"];
+const FILLS2 = ["none", "solid"] as const;
 
 type ClassRule =
   | "mesma-forma-um-diferente"
@@ -39,24 +37,25 @@ function build(rule: ClassRule, seed: number): Built {
   let why = "";
   let difficulty: Difficulty = "media";
 
+  /** 4 membros com preenchimento balanceado (2 vazios, 2 cheios): preenchimento nunca fica 4-a-1. */
+  const balanced = (shapes: Mark[]): Cell[] => shapes.map((m, i) => ({ marks: [m], innerFill: FILLS2[i % 2] }));
+
   switch (rule) {
     case "mesma-forma-um-diferente": {
-      const s = pick(STRAIGHT_FILLABLE, rand);
-      const other = pick(STRAIGHT.filter((x) => x !== s), rand);
-      // Três preenchimentos + uma variação de tamanho: quatro figuras distintas da mesma forma.
+      const s = pick(POOL_SIM, rand);
+      const other = pick(POOL_SIM.filter((x) => x !== s), rand);
+      // 2×2 de preenchimento × tamanho: nenhum membro é único em um atributo secundário.
       members = [
-        { marks: [s], innerFill: fills[0] },
-        { marks: [s], innerFill: fills[1] },
-        { marks: [s], innerFill: fills[2] },
-        { marks: [s], innerFill: fills[pick([0, 1, 2], rand)], size: pick([1, 3], rand) as 1 | 3 },
+        { marks: [s], innerFill: "none", size: 2 }, { marks: [s], innerFill: "solid", size: 2 },
+        { marks: [s], innerFill: "none", size: 3 }, { marks: [s], innerFill: "solid", size: 3 },
       ];
-      odd = { marks: [other], innerFill: fills[1] };
-      why = "Quatro figuras têm a mesma forma (variando só preenchimento ou tamanho); uma tem forma diferente.";
+      odd = { marks: [other], innerFill: pick([...FILLS2], rand), size: pick([2, 3], rand) as 2 | 3 };
+      why = "Quatro figuras têm a mesma forma (variando preenchimento e tamanho); uma tem forma diferente.";
       break;
     }
     case "curva-vs-reta": {
-      members = [0, 1, 2, 3].map((i) => ({ marks: [STRAIGHT[i % STRAIGHT.length]] }));
-      odd = { marks: [pick(CURVED, rand)] };
+      members = balanced(shuffle(POOL_SIM, rand));
+      odd = rand() < 0.5 ? { marks: ["circle"], innerFill: pick([...FILLS2], rand) } : { marks: ["dot"] };
       why = "Quatro figuras são formadas apenas por linhas retas; uma contém curva.";
       difficulty = "dificil";
       break;
@@ -64,26 +63,24 @@ function build(rule: ClassRule, seed: number): Built {
     case "mesmo-preenchimento": {
       const f = pick([...fills], rand);
       const other = pick(fills.filter((x) => x !== f), rand);
-      const shapes = shuffle(FILLABLE, rand);
-      members = [0, 1, 2, 3].map((i) => ({ marks: [shapes[i]], innerFill: f }));
-      odd = { marks: [shapes[4]], innerFill: other };
+      const pool = shuffle(POOL_SIM, rand);
+      members = pool.map((m) => ({ marks: [m], innerFill: f }));
+      odd = { marks: [pick(pool, rand)], innerFill: other }; // repete uma forma: a forma não fica 4-a-1
       why = "Quatro figuras compartilham o mesmo preenchimento, apesar de formas diferentes; uma destoa.";
       break;
     }
     case "mesma-quantidade": {
       const n = pick([2, 3], rand) as 2 | 3;
-      const shapes = shuffle([...STRAIGHT, ...CURVED], rand);
-      members = [0, 1, 2, 3].map((i) => ({ marks: [shapes[i]], count: n }));
-      odd = { marks: [shapes[4]], count: (n === 2 ? 3 : 2) as 2 | 3 };
+      const pool = shuffle(POOL_SIM, rand);
+      members = pool.map((m) => ({ marks: [m], count: n }));
+      odd = { marks: [pick(pool, rand)], count: (n === 2 ? 3 : 2) as 2 | 3 };
       why = "Quatro figuras repetem o mesmo número de elementos; uma tem quantidade diferente.";
       break;
     }
     case "simetria-rotacional": {
-      // Quadrado, losango, círculo e cruz voltam a si mesmos ao girar;
-      // o triângulo isósceles, não.
-      const sym: Mark[] = ["square", "diamond", "circle", "cross"];
-      members = sym.map((m) => ({ marks: [m] }));
-      odd = { marks: ["triangle"] };
+      // Quadrado, losango, cruz e estrela voltam a si mesmos ao girar; o triângulo isósceles, não.
+      members = balanced(shuffle(POOL_SIM, rand));
+      odd = { marks: ["triangle"], innerFill: pick([...FILLS2], rand) };
       why = "Quatro figuras têm simetria rotacional (giradas, coincidem consigo mesmas); o triângulo não.";
       difficulty = "extrema";
       break;
@@ -99,8 +96,8 @@ export function classificationItems(seed = 0): Item[] {
   const rules: ClassRule[] = [
     "mesma-forma-um-diferente", "mesmo-preenchimento", "mesma-quantidade",
     "curva-vs-reta", "mesma-forma-um-diferente", "mesmo-preenchimento",
-    "curva-vs-reta", "mesma-quantidade", "curva-vs-reta", "mesmo-preenchimento",
-    "simetria-rotacional", "mesma-quantidade", "curva-vs-reta", "simetria-rotacional",
+    "curva-vs-reta", "mesma-quantidade", "mesma-forma-um-diferente", "mesmo-preenchimento",
+    "mesma-quantidade", "curva-vs-reta", "mesmo-preenchimento", "simetria-rotacional",
   ];
   return rules.map((rule, i) => {
     const { set, oddIndex, why, difficulty } = build(rule, 8000 + i * 67 + k);

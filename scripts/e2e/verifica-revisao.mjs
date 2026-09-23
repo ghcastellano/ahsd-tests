@@ -4,6 +4,7 @@
 // Uso: BASE_URL=http://localhost:3111 node scripts/e2e/verifica-revisao.mjs
 import { readFileSync } from "node:fs";
 import { chromium } from "playwright";
+import { entrar } from "./login.mjs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const variacao = JSON.parse(readFileSync(new URL("./variacao-esperado.json", import.meta.url), "utf8"));
 const sim = JSON.parse(readFileSync(new URL("./simulador-esperado.json", import.meta.url), "utf8"));
@@ -45,6 +46,7 @@ async function conferirRevisao(p, nome, errados, total, idErrado) {
 }
 
 const p = await browser.newPage();
+await entrar(p, B);
 p.on("dialog", (d) => d.accept());
 
 // /teste-qi: erra os itens 3 e 7

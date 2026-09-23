@@ -37,7 +37,7 @@ registro central estiver ativado, também no banco da plataforma.
 | UPPS-P (curta) | Impulsividade em 5 facetas (Cyders 2014; Sediyama 2017) | TDAH | 20 | Média 1–4 por faceta, 12 invertidos |
 | VADPRS | Vanderbilt para pais (Wolraich 2003; NICHQ) | TDAH | 55 | ≥6 sintomas por domínio + prejuízo; comorbidades ≥4/≥3/≥3 |
 | Go/NoGo (tarefa) | Controle inibitório objetivo (`/treino/go-nogo`) | TDAH | 120 estímulos | % de comissão, omissões, TR médio, desvio e CV, d′ — faixas convencionais |
-| Simulador de escalas (`/treino/simulador`) | Wechsler · Stanford-Binet · Cattell — referências de formato: compreensão verbal, memória operacional, velocidade, raciocínio | Treino | 3 blocos | Blocos fechados em sequência (precisão ≥70/75/80% + velocidade ≥18/22/26 pts por bloco); sem conversão para QI |
+| Simulador de escalas (`/treino/simulador`) | Wechsler · Stanford-Binet · Cattell — referências de formato: compreensão verbal, memória operacional, velocidade, raciocínio | Treino | 3 blocos | Blocos fechados em sequência (precisão ≥70/75/80% + velocidade ≥22/24/26 pts por bloco); sem conversão para QI |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
 | RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
 | PHQ-9 | Saúde do Paciente – Depressão | Humor | 9 | 0–27 (5/10/15/20) |
@@ -112,6 +112,33 @@ via `GET /api/registro-central`: a sonda envia uma linha propositalmente
 inválida e lê a resposta — 23514 (restrição de valores) significa que a
 política RLS deixou passar e a gravação real funciona; 42501/401 significa
 bloqueada. Nada é gravado pela sonda.
+
+### Senha de entrada do site
+
+Todo o site exige uma senha na tela inicial (`/entrar`), como um portão:
+`middleware.ts` redireciona qualquer página para `/entrar?next=…` quando não
+há o cookie `ahsd_acesso`, um hash HttpOnly da senha com sal (nunca a senha).
+`POST /api/entrar` confere a senha e grava o cookie por 30 dias;
+`POST /api/sair` apaga. A senha padrão é `senha123`; para trocar sem alterar
+código, defina `SITE_SENHA` na Vercel e faça um novo deploy. As rotas de API
+ficam fora do portão porque têm proteção própria (senha do painel, restrições
+do banco). Os roteiros Playwright entram pela tela de senha
+(`scripts/e2e/login.mjs`); `verifica-portao.mjs` cobre redirecionamento,
+senha errada, cookie e saída.
+
+### Histórico rastreável: duração e revisão item a item
+
+Todo registro passa a gravar `duracao_segundos` (do início ao término). Os
+TREINOS (`treino-*`: matrizes, bateria, simulador, Dojo, Go/NoGo) gravam
+também `detalhes`: item a item, o que foi marcado, o que era certo, a regra
+e o tempo gasto (`lib/use-tempos.ts` mede o tempo por item). O painel mostra
+a duração ao lado da nota e, em "detalhes", a revisão com os erros primeiro
+e "ver todos". O CSV ganha `duracao_seg` e `itens_errados`. Os instrumentos
+clínicos continuam sem respostas individuais. Para o projeto Supabase já
+existente, rode uma vez [`supabase/detalhes.sql`](supabase/detalhes.sql);
+até lá o site grava o resumo sem a revisão e avisa na tela.
+`POST /api/exportar` (com a senha do painel) devolve resultados e acessos em
+JSON, para backup ou migração.
 
 ### Registro de acessos (IP)
 
@@ -268,6 +295,11 @@ BASE_URL=http://localhost:3111 node scripts/e2e/verifica-simulador.mjs
 # variação por semente: /teste-qi e os 4 treinos com ?seed=11 e ?seed=4242 —
 # provas diferentes entre si e jogada perfeita com nota máxima em cada uma
 BASE_URL=http://localhost:3111 node scripts/e2e/verifica-variacao.mjs
+# varredura responsiva: 23 telas × 3 larguras (celular 390, iPad 820, web 1280) — rolagem
+# horizontal, elementos que estouram a janela, texto cortado, erros de JavaScript; screenshots em SHOTS_DIR
+BASE_URL=http://localhost:3111 node scripts/e2e/verifica-responsivo.mjs
+# dojo (treino ativo por exame): 4 exames × rodada de 10 itens com feedback, progresso e plano
+BASE_URL=http://localhost:3111 node scripts/e2e/verifica-dojo.mjs
 # revisão de erros no resultado (/teste-qi, bateria e simulador): erra de propósito e
 # confere que a questão aparece com a alternativa marcada (vermelha) e a correta (verde)
 BASE_URL=http://localhost:3111 node scripts/e2e/verifica-revisao.mjs
@@ -276,6 +308,67 @@ node scripts/e2e/supabase-falso.mjs 3222 &
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3222 npm run build && npx next start -p 3111 &
 node scripts/e2e/verifica-visitas.mjs   # 17 verificações: IP dos cabeçalhos, painel, filtro, CSV
 ```
+
+### Dojo — treino ativo por exame (`/treino/dojo`)
+
+Quatro exames — Mensa (admissão), Wechsler (WAIS-IV), Stanford-Binet 5 e
+Cattell Culture Fair — cada um com a descrição factual do que é, como é
+estruturado, o corte (percentil 98 e Triple Nine) e por que é difícil. Cada
+exame tem de 4 a 8 domínios que imitam subtestes reais (matrizes, matrizes
+avançadas, séries e classificação de figuras, condições/topologia, séries
+numéricas, vocabulário/semelhanças/analogias, aritmética mental, absurdos
+verbais, conhecimento, visuoespacial, memória de dígitos). Uma rodada tem 10
+itens intercalados (ou só de um domínio); após cada resposta aparecem a regra,
+"por que este tipo de item é difícil" e uma dica prática. O progresso por
+domínio, os erros por regra e os dias de prática ficam no aparelho
+(`lib/dojo/progresso.ts`) e alimentam o "plano de hoje" (domínio mais fraco,
+regras erradas, sequência de dias). A tela inicial traz dez princípios de
+prática inteligente e a explicação de qual teste é Mensa, o que são as outras
+escalas, a Triple Nine Society e os testes de alto alcance (Mega, Titan,
+Cooijmans) com a ressalva de validade. Bancos: `lib/dojo/bancos-texto.ts`;
+gerador de condições verificado por amostragem de pontos:
+`lib/dojo/condicoes.ts`.
+
+### Auditoria de validade dos itens (setembro/2026)
+
+Quatro revisores independentes (agentes) auditaram todos os bancos; tudo o
+que segue foi corrigido e coberto por testes:
+
+- **Velocidade (simulador):** o gabarito comparava a rotação bruta, mas
+  círculo/quadrado/losango/cruz girados 90° se desenham iguais — ~19% dos
+  trials dos blocos 2–3 tinham o gabarito invertido. Agora a igualdade é
+  visual (`visualKey`) e o distrator "quase igual" é sempre visível.
+- **Verbal:** 55 dos 60 itens tinham a resposta na 2ª alternativa e a tela
+  não embaralhava. As alternativas são embaralhadas por semente; 6 itens
+  ambíguos foram reescritos, 7 fáceis demais substituídos e 9 novos
+  acrescentados (banco de 69).
+- **Matrizes (/teste-qi):** em ~1/3 das sementes, quadrados latinos
+  numéricos admitiam a leitura "terceira = |primeira − segunda|" com outra
+  resposta (permutações agora rejeitadas); o tamanho desenhado dependia da
+  quantidade (agora só de `size`); distratores dos itens difíceis eram
+  cópias de células visíveis (agora n−1: violam exatamente uma regra);
+  a estrela (período 72°) saiu das regras de rotação.
+- **Matrizes avançadas:** "extrema" era o mesmo XOR de "difícil" com outro
+  rótulo — entram dois tipos de teto (operação lógica sobre distribuição de
+  dois; três componentes com quatro regras em eixos distintos); a
+  distribuição de dois tinha layout fixo (agora 12 quadrados sorteados); os
+  blocos do simulador escolhem por estrutura (`kind`), não por posição.
+- **Classificação:** o mesmo conjunto aparecia com gabaritos opostos e havia
+  segundas exclusões salientes (única curva, única linha); o pool passou a 4
+  formas retas e simétricas, e um teste garante que toda partição 4-a-1
+  aponta para a resposta.
+- **Séries de figuras:** estrela em rotação (resposta a 9° do distrator) e
+  ciclos ambíguos com 3 figuras — só o triângulo gira (com ponto de partida e
+  sentido sorteados) e as regras cíclicas mostram 4 figuras.
+- **Séries numéricas:** 40/40 gabaritos corretos; 8 séries extremas novas
+  (banco de 48) e teste de regras alternativas.
+- **Fatos:** o SB5 usa desvio-padrão 15 (16 é do SB-IV); "Cattell DP 24" é a
+  escala III B; os cortes institucionais da Mensa são 130/132/148; os blocos
+  do simulador passam a "entrada/intermediário/topo" com as escalas só como
+  dificuldade-alvo; cortes de velocidade 22/24/26 e mínimo de 50% por
+  domínio; dígitos 0–9 na memória. Fontes: mensa.org.br (FAQ de testes),
+  triplenine.org (tests and scores), manuais WAIS-IV/SB5, Wikipedia (Cattell
+  Culture Fair; Mega Test).
 
 **Alternativas visualmente distintas.** `lib/battery/visual-key.ts` define a
 chave visual de uma célula (um círculo girado 45° é o mesmo círculo; uma barra

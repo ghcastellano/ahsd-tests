@@ -63,7 +63,7 @@ export const items: MatrixItem[] = [
   item(5, "facil", [{ attr: "count", kind: "byRow", values: [1, 2, 3] }], { shape: "diamond" }),
   item(6, "facil", [{ attr: "shape", kind: "latin", values: ["circle", "square", "triangle"] }]),
   item(7, "facil", [{ attr: "size", kind: "byRow", values: [1, 2, 3] }], { shape: "cross" }),
-  item(8, "facil", [{ attr: "rotation", kind: "byRow", values: [0, 45, 90] }], { shape: "star" }),
+  item(8, "facil", [{ attr: "rotation", kind: "byRow", values: [0, 45, 90] }], { shape: "triangle" }),
   item(9, "facil", [{ attr: "fill", kind: "byRow", values: ["solid", "half", "none"] }]),
   item(10, "facil", [{ attr: "shape", kind: "byCol", values: ["diamond", "cross", "star"] }]),
 
@@ -107,7 +107,7 @@ export const items: MatrixItem[] = [
   item(20, "medio", [
     { attr: "rotation", kind: "byCol", values: [0, 45, 90] },
     { attr: "count", kind: "byRow", values: [1, 2, 3] },
-  ], { shape: "star" }),
+  ], { shape: "triangle" }),
 
   // ---- Difíceis ----
   item(21, "dificil", [
@@ -139,7 +139,7 @@ export const items: MatrixItem[] = [
     { attr: "fill", kind: "latin", values: ["none", "solid", "half"] },
     { attr: "rotation", kind: "byRow", values: [0, 45, 90] },
     { attr: "size", kind: "byCol", values: [1, 3, 2] },
-  ], { shape: "star" }),
+  ], { shape: "triangle" }),
   item(27, "dificil", [
     { attr: "shape", kind: "latin2", values: ["circle", "square", "triangle"] },
     { attr: "fill", kind: "latin", values: ["none", "half", "solid"] },
@@ -179,10 +179,41 @@ export function itemsForSeed(seed: number): MatrixItem[] {
   return items.map((it) => {
     const temRotacao = it.rules.some((r) => r.attr === "rotation");
     const temForma = it.rules.some((r) => r.attr === "shape");
-    const formas: Shape[] = temRotacao ? ["triangle", "star"] : (DOMAINS.shape as Shape[]);
+    // Só o triângulo gira de forma inequívoca: a estrela tem período de 72°
+    // (90° vira 18° efetivos) e as demais formas são simétricas a 45°/90°.
+    const formas: Shape[] = temRotacao ? ["triangle"] : (DOMAINS.shape as Shape[]);
     const shape = temForma ? it.base.shape : formas[Math.floor(rand() * formas.length)];
-    return { ...it, base: { ...it.base, shape }, rules: it.rules.map((r) => ({ ...r, values: shuffle(r.values) })) };
+    return {
+      ...it,
+      base: { ...it.base, shape },
+      rules: it.rules.map((r) => {
+        // Rejeita ordens de valores numéricos em que as linhas/colunas completas
+        // também fecham por "terceira = |primeira − segunda|" (regra de
+        // subtração de Carpenter): a leitura alternativa preveria outra célula.
+        let values = shuffle(r.values);
+        let tentativas = 0;
+        while (admiteLeituraAritmetica(values, r.kind) && tentativas++ < 20) values = shuffle(r.values);
+        return { ...r, values };
+      }),
+    };
   });
+}
+
+/**
+ * Verdadeiro se, com esta ordem de valores num quadrado latino numérico, as duas
+ * primeiras linhas (ou colunas) admitem a leitura "terceira = |primeira − segunda|"
+ * ou "terceira = primeira + segunda" — que preveria outra resposta para (2,2).
+ */
+export function admiteLeituraAritmetica(values: (string | number)[], kind: Rule["kind"]): boolean {
+  if (typeof values[0] !== "number" || (kind !== "latin" && kind !== "latin2")) return false;
+  const v = values as number[];
+  const idx = (r: number, c: number) => (kind === "latin" ? r + c : 2 * r + c) % 3;
+  const linha = (r: number) => [0, 1, 2].map((c) => v[idx(r, c)]);
+  const coluna = (c: number) => [0, 1, 2].map((r) => v[idx(r, c)]);
+  // Uma MESMA regra (subtração ou adição) tem de fechar as duas linhas (ou as duas colunas).
+  const sub = ([a, b, c]: number[]) => Math.abs(a - b) === c;
+  const add = ([a, b, c]: number[]) => a + b === c;
+  return [linha, coluna].some((f) => (sub(f(0)) && sub(f(1))) || (add(f(0)) && add(f(1))));
 }
 
 export function cellAt(it: MatrixItem, row: number, col: number): CellSpec {
@@ -244,12 +275,27 @@ export function optionsFor(it: MatrixItem, seed = 0): { options: CellSpec[]; ans
   const seen = new Set([key(answer)]);
   const distractors: CellSpec[] = [];
 
-  const candidates: CellSpec[] = [
-    cellAt(it, 2, 1),
-    cellAt(it, 1, 2),
-    cellAt(it, 2, 0),
-    cellAt(it, 0, 2),
-  ];
+  const candidates: CellSpec[] = [];
+  // 1) Distratores n−1: violam exatamente UMA regra, com um valor que existe
+  //    na matriz. São os erros plausíveis de quem viu quase tudo.
+  for (const rule of it.rules) {
+    for (const v of rule.values) {
+      if (v !== answer[rule.attr]) candidates.push({ ...answer, [rule.attr]: v } as CellSpec);
+    }
+  }
+  // 2) Violam duas regras (itens com 3+ regras): ainda "parecem do item".
+  for (let i = 0; i < it.rules.length; i++) {
+    for (let j = i + 1; j < it.rules.length; j++) {
+      const a = it.rules[i], b = it.rules[j];
+      const va = a.values.find((v) => v !== answer[a.attr]);
+      const vb = b.values.find((v) => v !== answer[b.attr]);
+      if (va !== undefined && vb !== undefined) candidates.push({ ...answer, [a.attr]: va, [b.attr]: vb } as CellSpec);
+    }
+  }
+  // 3) Só então vizinhos da grade e mutações fora das regras (antes eram os
+  //    primeiros: 4 dos 5 distratores dos itens difíceis eram células visíveis,
+  //    elimináveis sem resolver o item).
+  candidates.push(cellAt(it, 2, 1), cellAt(it, 1, 2), cellAt(it, 2, 0), cellAt(it, 0, 2));
   const attrs: Attr[] = ["shape", "fill", "count", "size", "rotation"];
   for (const attr of attrs) {
     candidates.push(mutate(answer, attr, 1), mutate(answer, attr, -1));
@@ -257,7 +303,7 @@ export function optionsFor(it: MatrixItem, seed = 0): { options: CellSpec[]; ans
 
   for (const c of candidates) {
     // Rotação só é usada como distrator em formas sem simetria ambígua.
-    if (c.rotation !== 0 && c.shape !== "triangle" && c.shape !== "star") continue;
+    if (c.rotation !== 0 && c.shape !== "triangle") continue;
     const k = key(c);
     if (!seen.has(k)) {
       seen.add(k);
