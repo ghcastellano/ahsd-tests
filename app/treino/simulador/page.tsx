@@ -4,7 +4,7 @@ import Simulador from "@/components/Simulador";
 export const metadata: Metadata = {
   title: "Simulador de escalas — Wechsler · Stanford-Binet · Cattell",
   description:
-    "Três blocos crescentes com compreensão verbal, memória operacional, velocidade de processamento e raciocínio fluido — os quatro domínios das escalas completas de inteligência.",
+    "Três blocos de treino com compreensão verbal, memória operacional, procura visual e matrizes. Itens autorais e suplemento ICAR; sem estimativa de QI.",
 };
 
 export default function SimuladorPage() {

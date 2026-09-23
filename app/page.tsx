@@ -131,7 +131,7 @@ export default function HomePage() {
             </span>
             <span className="text-xs text-slate-500">3 blocos · ~35 min</span>
           </div>
-          <p className="mt-1 text-xs text-slate-500">Wechsler 130 → Stanford-Binet 133 → Cattell 149</p>
+          <p className="mt-1 text-xs text-slate-500">Wechsler · Stanford-Binet · Cattell — referências de formato</p>
           <h3 className="mt-2 text-sm font-semibold text-slate-900 group-hover:text-violet-800">
             Simulador de escalas completas
           </h3>

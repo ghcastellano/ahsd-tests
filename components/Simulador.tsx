@@ -173,7 +173,7 @@ export default function Simulador() {
       createdAt: new Date().toISOString(),
       instrumentId: "treino-simulador",
       acronym: "SIMULADOR",
-      instrumentName: "Simulador de escalas — Wechsler · Stanford-Binet · Cattell",
+      instrumentName: "Simulador de escalas — Wechsler · Stanford-Binet · Cattell (v2 visual)",
       respondent: respondent.trim() ? respondent.trim().slice(0, 80) : undefined,
       totalScore: final.blocoAlcancado,
       maxScore: 3,
@@ -190,7 +190,7 @@ export default function Simulador() {
   const Cabecalho = ({ titulo, sub }: { titulo: string; sub: string }) => (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <p className="text-xs font-medium uppercase tracking-wide text-brand-600">{bloco.nome} · {bloco.escala} · referência {bloco.qiAlvo}</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-brand-600">{bloco.nome} · treino não normatizado</p>
         <h1 className="mt-1 text-xl font-bold text-slate-900">{titulo}</h1>
         <p className="text-sm text-slate-500">{sub}</p>
       </div>
@@ -207,28 +207,27 @@ export default function Simulador() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
         <Link href="/treino" className="text-sm text-brand-600 hover:underline">← Bateria de treino</Link>
-        <p className="mt-3 inline-block rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">Simulador de escalas completas</p>
+        <p className="mt-3 inline-block rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">Treino · versão 2 · equivalência visual corrigida</p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">Wechsler → Stanford-Binet → Cattell</h1>
         <p className="mt-3 text-slate-600">
-          O teste de matrizes mede só raciocínio fluido. As escalas completas de inteligência medem também{" "}
-          <strong>compreensão verbal</strong> (inteligência cristalizada), <strong>memória operacional</strong> e{" "}
-          <strong>velocidade de processamento</strong>. Este simulador reproduz os quatro domínios em três blocos de
-          dificuldade crescente.
+          Treino de compreensão verbal, memória operacional, procura visual e raciocínio
+          com matrizes. Os itens principais são autorais ou gerados por regras; não são
+          questões oficiais das escalas citadas. A dificuldade dos blocos não foi normatizada.
         </p>
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {todos.map((x) => (
             <div key={x.nivel} className="rounded-xl border border-slate-200 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{x.nome}</p>
-              <p className="mt-1 text-2xl font-bold text-slate-900">{x.qiAlvo}</p>
-              <p className="text-xs text-slate-500">{x.escala}</p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">Etapa {x.nivel}</p>
+              <p className="text-xs text-slate-500">Referência de formato</p>
               <p className="mt-2 text-xs text-slate-600">{x.descricao}</p>
             </div>
           ))}
         </div>
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-          <strong>Leia antes:</strong> 130, 133 e 149 são o <em>mesmo</em> ponto — o percentil 98 (2% superior) — expresso em três
-          escalas com desvios-padrão diferentes (15, 16 e 24). Aqui eles dão nome à dificuldade-alvo de cada bloco. Nenhum
-          simulador converte desempenho em QI: o resultado diz qual bloco você fechou e como foi em cada domínio.
+          <strong>Leia antes:</strong> os nomes Wechsler, Stanford-Binet e Cattell não
+          estabelecem uma progressão entre escalas nem validam este treino. Os cortes são
+          convenções internas. O resultado não estima QI, percentil ou diagnóstico.
         </div>
         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-700">
           <p className="font-semibold text-slate-900">Como funciona cada bloco (≈ 12 min)</p>
@@ -238,12 +237,13 @@ export default function Simulador() {
             <li><strong>Velocidade</strong> — 60 s: dois símbolos-alvo à esquerda; algum deles aparece IGUAL na fileira? Responda Sim/Não (teclas S/N). Erro desconta ponto.</li>
             <li><strong>Raciocínio</strong> — 4 matrizes 3×3 com tempo.</li>
           </ol>
-          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 18 / 22 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O bloco 1 já é a entrada do 2% superior: não fechar é o esperado para a maioria. Os itens verbais, as sequências de memória, os símbolos e as matrizes são sorteados de um banco a cada tentativa — não dá para decorar.</p>
+          <p className="mt-2 text-xs text-slate-500">Um bloco "fecha" com precisão média de 70% (bloco 1), 75% (bloco 2) ou 80% (bloco 3) nos domínios de acerto, mais 18 / 22 / 26 pontos na velocidade. Os blocos precisam ser fechados em ordem. O sorteio varia os itens e as figuras, mas regras e itens podem se repetir. Repetição não mede transferência para tarefas novas.</p>
         </div>
+        <Link href="/treino/simulador/fontes" className="mt-5 block rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm font-semibold text-teal-900 hover:bg-teal-100">Plano de 8 semanas e 12 questões públicas do ICAR →</Link>
         <label className="mt-5 block text-sm font-medium text-slate-700" htmlFor="resp">Identificação (opcional)</label>
         <input id="resp" type="text" value={respondent} onChange={(e) => setRespondent(e.target.value)} className="mt-1 w-full max-w-sm rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none" placeholder="Nome ou iniciais" />
         <button type="button" onClick={() => irParaVerbal(0)} disabled={seed === null} className="mt-6 rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700 disabled:opacity-50">
-          Começar pelo Bloco 1 (Wechsler · 130)
+          Começar pelo Bloco 1
         </button>
       </div>
     );
@@ -383,7 +383,7 @@ export default function Simulador() {
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <button type="button" onClick={() => irParaVerbal(b + 1)} className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700">
-            Seguir para o {prox.nome} ({prox.qiAlvo}) →
+            Seguir para o {prox.nome} →
           </button>
           <button type="button" onClick={() => setEtapa("done")} className="rounded-lg border border-slate-300 px-5 py-2.5 font-medium text-slate-700 hover:bg-slate-100">
             Parar aqui e ver o resultado
@@ -406,9 +406,10 @@ export default function Simulador() {
         <span className={`mt-3 inline-block rounded-full px-3 py-1 text-sm font-semibold ${cor[res.faixa.severity]}`}>{res.faixa.label}</span>
         <p className="mt-3 text-slate-700">{res.faixa.description}</p>
         <p className="mt-4 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-900">
-          <strong>O que fazer agora:</strong> veja o domínio mais fraco abaixo e treine nele — a familiaridade com o formato é o que mais muda o resultado. Nenhum simulador vira QI; o que vale é a avaliação supervisionada.
+          <strong>O que fazer agora:</strong> revise a regra dos itens errados e compare precisão e ritmo separadamente. Consulte o plano e as questões públicas com gabarito no treino suplementar.
         </p>
       </div>
+      <Link href="/treino/simulador/fontes" className="mt-5 block rounded-lg border border-teal-200 bg-teal-50 p-4 text-sm font-semibold text-teal-900 hover:bg-teal-100">Plano de 8 semanas e 12 questões públicas do ICAR →</Link>
       <h2 className="mt-6 text-lg font-semibold text-slate-900">Por domínio (todos os blocos feitos)</h2>
       <div className="mt-3 space-y-3">
         {(Object.keys(NOMES_DOMINIO) as Dominio[]).map((d) => {
@@ -427,9 +428,9 @@ export default function Simulador() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500"><tr><th className="px-3 py-2">Bloco</th><th className="px-3 py-2">Verbal</th><th className="px-3 py-2">Memória</th><th className="px-3 py-2">Velocidade</th><th className="px-3 py-2">Raciocínio</th><th className="px-3 py-2">Fechou?</th></tr></thead>
           <tbody>
-            {resultados.sort((a, c) => a.nivel - c.nivel).map((r) => (
+            {[...resultados].sort((a, c) => a.nivel - c.nivel).map((r) => (
               <tr key={r.nivel} className="border-t border-slate-100">
-                <td className="px-3 py-2 font-medium">{todos[r.nivel - 1].nome} ({todos[r.nivel - 1].qiAlvo})</td>
+                <td className="px-3 py-2 font-medium">{todos[r.nivel - 1].nome}</td>
                 <td className="px-3 py-2">{r.verbal.acertos}/{r.verbal.total}</td>
                 <td className="px-3 py-2">{r.memoria.acertos}/{r.memoria.total}</td>
                 <td className="px-3 py-2">{r.velocidade.pontos} pts</td>
@@ -449,7 +450,7 @@ export default function Simulador() {
         const errosRac = x.raciocinio.filter((q) => esc.raciocinio[q.id] !== q.answerIndex).length;
         return (
           <div key={x.nivel} className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{x.nome} ({x.qiAlvo})</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{x.nome}</p>
             <details className="mt-2" open={errosVerbal > 0}>
               <summary className="cursor-pointer text-sm font-medium text-slate-700">Compreensão verbal — {errosVerbal === 0 ? "sem erros" : `${errosVerbal} erro(s)`}</summary>
               <ul className="mt-2 space-y-2 text-sm">

@@ -50,11 +50,11 @@ export default function TreinoIndex() {
           <span className="shrink-0 whitespace-nowrap rounded-md bg-violet-600 px-2 py-0.5 text-xs font-semibold text-white">SIMULADOR · 3 BLOCOS</span>
           <span className="text-xs text-slate-500">3 blocos · ~35 min</span>
         </div>
-        <p className="mt-1 text-xs text-slate-500">Wechsler 130 → Stanford-Binet 133 → Cattell 149</p>
+        <p className="mt-1 text-xs text-slate-500">Wechsler · Stanford-Binet · Cattell — referências de formato</p>
         <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-violet-800">Simulador de escalas completas</h3>
         <p className="mt-1 text-sm text-slate-600">
           Compreensão verbal, memória operacional, velocidade de processamento e raciocínio fluido, em três
-          blocos de dificuldade crescente. Os três números são o mesmo ponto (percentil 98) em escalas diferentes.
+          blocos de treino. Os itens e cortes são autorais, sem equivalência com QI ou percentis.
         </p>
         <p className="mt-3 text-sm font-medium text-violet-700">Fazer o simulador →</p>
       </Link>

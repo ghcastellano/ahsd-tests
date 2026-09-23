@@ -37,7 +37,7 @@ registro central estiver ativado, também no banco da plataforma.
 | UPPS-P (curta) | Impulsividade em 5 facetas (Cyders 2014; Sediyama 2017) | TDAH | 20 | Média 1–4 por faceta, 12 invertidos |
 | VADPRS | Vanderbilt para pais (Wolraich 2003; NICHQ) | TDAH | 55 | ≥6 sintomas por domínio + prejuízo; comorbidades ≥4/≥3/≥3 |
 | Go/NoGo (tarefa) | Controle inibitório objetivo (`/treino/go-nogo`) | TDAH | 120 estímulos | % de comissão, omissões, TR médio, desvio e CV, d′ — faixas convencionais |
-| Simulador de escalas (`/treino/simulador`) | Wechsler 130 → Stanford-Binet 133 → Cattell 149: compreensão verbal, memória operacional, velocidade, raciocínio | Treino | 3 blocos | Blocos fechados em sequência (precisão ≥70/75/80% + velocidade ≥18/22/26 pts por bloco); sem conversão para QI |
+| Simulador de escalas (`/treino/simulador`) | Wechsler · Stanford-Binet · Cattell — referências de formato: compreensão verbal, memória operacional, velocidade, raciocínio | Treino | 3 blocos | Blocos fechados em sequência (precisão ≥70/75/80% + velocidade ≥18/22/26 pts por bloco); sem conversão para QI |
 | AQ-50 | Quociente do Espectro Autista | Autismo | 50 | 0–50 (corte 32; 26 sensível) |
 | RAADS-R | Escala de Ritvo revisada (adultos) | Autismo | 80 | 0–240 (corte 65; 17 itens reversos) |
 | PHQ-9 | Saúde do Paciente – Depressão | Humor | 9 | 0–27 (5/10/15/20) |
@@ -301,3 +301,17 @@ por bloco de um banco de 20 por nível, além de sequências de memória, símbo
 e matrizes próprios da semente. Os testes unitários (`battery.test.ts`,
 `engine.test.ts`, `simulador.test.ts`) garantem que sementes diferentes dão
 provas diferentes com a mesma distribuição de dificuldade.
+
+
+## Plano de prática e questões publicadas
+
+`/treino/simulador/fontes` reúne uma proposta de oito semanas e 12 itens públicos
+ICAR (quatro verbais/quantitativos, quatro séries e quatro matrizes), com texto
+original, tradução de apoio, correção explicada e referências. Consulte
+[proveniência e limites](docs/ICAR-PROVENIENCIA.md). Não é o ICAR-16 completo,
+nem uma adaptação brasileira validada, e não fornece percentil ou QI.
+
+A versão 2 da procura de símbolos corrige equivalências visuais ignoradas pela
+comparação antiga (simetrias, barras rotacionadas e preenchimentos invisíveis).
+Resultados anteriores não podem ser recalculados a partir de totais agregados;
+use uma nova linha de base. Novos registros identificam `v2 visual` no nome.

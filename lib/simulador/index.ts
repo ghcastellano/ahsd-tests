@@ -3,11 +3,8 @@
 // matrizes não cobre: compreensão verbal (cristalizada), memória
 // operacional, velocidade de processamento e raciocínio fluido.
 //
-// Os rótulos dos blocos (Wechsler 130 / Stanford-Binet 133 / Cattell 149) são
-// o MESMO ponto — percentil 98, o 2% superior — expresso nas três escalas
-// (desvio-padrão 15, 16 e 24). Aqui eles nomeiam a dificuldade-alvo de cada
-// bloco, do mais acessível ao mais difícil. NÃO são pontuações: este
-// simulador não é normatizado e não converte desempenho em QI.
+// Os nomes são referências históricas de formato. Os itens e cortes são
+// convenções de treino, sem calibração empírica de QI ou percentil.
 
 import { advancedMatrixItems } from "../battery/advanced-matrices";
 import type { Item } from "../battery/types";
@@ -21,7 +18,7 @@ export interface Bloco {
   nivel: Nivel;
   nome: string;
   escala: string;
-  /** Ponto de referência na escala (percentil 98). */
+  /** Rótulo numérico legado; não exibir como nível ou estimativa de QI. */
   qiAlvo: number;
   dp: number;
   descricao: string;
@@ -47,17 +44,17 @@ export function blocos(seed = 0): Bloco[] {
   return [
     {
       nivel: 1, nome: "Bloco 1 — Wechsler", escala: "Wechsler (DP 15)", qiAlvo: 130, dp: 15,
-      descricao: "Entrada do percentil 98 no formato Wechsler: vocabulário pouco comum, 7–8 dígitos, matrizes de dois componentes.",
+      descricao: "Vocabulário, sequências de memória e matrizes de dois componentes. Dificuldade não normatizada.",
       verbal: itensVerbais(1, seed), raciocinio: matrizes.filter((i) => i.difficulty === "dificil").slice(4, 8), segundosVelocidade: CONFIG[1].segundos, segundosRaciocinio: 4 * 60,
     },
     {
       nivel: 2, nome: "Bloco 2 — Stanford-Binet", escala: "Stanford-Binet (DP 16)", qiAlvo: 133, dp: 16,
-      descricao: "Vocabulário raro, 8–9 dígitos, distratores parecidos e matrizes de distribuição de dois — a regra de maior carga.",
+      descricao: "Vocabulário, sequências mais longas, procura visual e matrizes de distribuição de dois.",
       verbal: itensVerbais(2, seed), raciocinio: matrizes.filter((i) => i.difficulty === "dificil").slice(13, 17), segundosVelocidade: CONFIG[2].segundos, segundosRaciocinio: 5 * 60,
     },
     {
       nivel: 3, nome: "Bloco 3 — Cattell", escala: "Cattell (DP 24)", qiAlvo: 149, dp: 24,
-      descricao: "O topo: abstração verbal, 9 dígitos e 7–8 na inversa, nove candidatos por fileira e matrizes de carga extrema.",
+      descricao: "Abstração verbal, sequências longas, nove candidatos por fileira e matrizes com operações lógicas.",
       verbal: itensVerbais(3, seed), raciocinio: escolher("extrema", 4), segundosVelocidade: CONFIG[3].segundos, segundosRaciocinio: 6 * 60,
     },
   ];
@@ -73,11 +70,7 @@ export interface ResultadoBloco {
   raciocinio: Contagem;
 }
 
-/**
- * Cortes por bloco. Sobem com o nível porque cada bloco já é mais difícil e a
- * meta é o 2% superior: exige-se mais precisão E mais pontos de velocidade.
- * Sem norma para este formato — são convenções declaradas.
- */
+/** Cortes convencionais do jogo. Não estabelecem percentis nem equivalência clínica. */
 export const CORTES: Record<Nivel, { precisao: number; velocidade: number }> = {
   1: { precisao: 0.7, velocidade: 18 },
   2: { precisao: 0.75, velocidade: 22 },
@@ -94,10 +87,10 @@ export function blocoFechado(b: ResultadoBloco): boolean {
 export interface Faixa { label: string; severity: "info" | "none" | "low" | "moderate" | "high"; description: string }
 
 export const FAIXAS: Faixa[] = [
-  { label: "Nenhum bloco fechado", severity: "info", description: "O bloco 1 já é a entrada do 2% superior — não fechar é o esperado para a maioria das pessoas, e a primeira tentativa costuma ser prejudicada pela falta de familiaridade com o formato. Veja o domínio mais fraco e refaça." },
-  { label: "Bloco 1 fechado (nível Wechsler ~130)", severity: "low", description: "Você fechou a entrada do percentil 98 no formato Wechsler: ≥70% de precisão com vocabulário pouco comum, 7–8 dígitos e matrizes de dois componentes, mais 18 pontos de velocidade. O bloco 2 sobe a exigência." },
-  { label: "Bloco 2 fechado (nível Stanford-Binet ~133)", severity: "moderate", description: "Dois blocos fechados: precisão e ritmo sustentados com vocabulário raro, sequências longas e matrizes de dois componentes." },
-  { label: "Bloco 3 fechado (nível Cattell ~149)", severity: "high", description: "Os três blocos fechados, incluindo o de carga extrema. Lembre: os rótulos são dificuldades-alvo, não pontuações — nenhum simulador converte isso em QI." },
+  { label: "Nenhum bloco fechado", severity: "info", description: "Os cortes internos de precisão e velocidade não foram atingidos em sequência. Este resultado não estima QI nem posição na população. Reveja os erros e as condições da tarefa." },
+  { label: "Bloco 1 fechado (treino Wechsler)", severity: "low", description: "Você atingiu os cortes internos do primeiro bloco: média de precisão ≥70% e velocidade ≥18 pontos. São metas de treino, sem equivalência com QI." },
+  { label: "Bloco 2 fechado (treino Stanford-Binet)", severity: "moderate", description: "Dois blocos fechados em sequência segundo os cortes internos. O resultado descreve desempenho neste treino, sem percentil populacional." },
+  { label: "Bloco 3 fechado (treino Cattell)", severity: "high", description: "Os três blocos foram fechados segundo os cortes internos. Isso não constitui resultado de uma escala clínica nem habilitação para sociedades de alto QI." },
 ];
 
 export interface ResultadoSimulador {

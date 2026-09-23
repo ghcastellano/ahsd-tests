@@ -8,6 +8,7 @@
 import { mulberry32 } from "../battery/rng";
 import type { Cell, Mark } from "../battery/types";
 import type { Nivel } from "./verbal";
+import { visualKey } from "../battery/visual-key";
 
 export interface TrialVelocidade {
   alvos: Cell[];
@@ -24,8 +25,23 @@ export const CONFIG: Record<Nivel, { candidatos: number; segundos: number; distr
   3: { candidatos: 9, segundos: 60, distratorParecido: true },
 };
 
+/** Equivalência dos símbolos simples usados nesta tarefa, conforme CellSvg. */
+export function chaveSimbolo(c: Cell): string {
+  let mark = c.marks[0];
+  let rotation = ((c.rotation ?? 0) % 360 + 360) % 360;
+  const periodo: Partial<Record<Mark, number>> = { circle: 1, square: 90, diamond: 90, cross: 90, star: 72 };
+  if (mark === "hbar" || mark === "vbar") {
+    rotation = (rotation + (mark === "vbar" ? 90 : 0)) % 180;
+    mark = "hbar";
+  } else if (mark === "slash" || mark === "backslash") {
+    rotation = (rotation + (mark === "backslash" ? 90 : 0)) % 180;
+    mark = "slash";
+  } else rotation %= periodo[mark] ?? 360;
+  return visualKey({ ...c, marks: [mark], rotation });
+}
+
 function igual(a: Cell, b: Cell): boolean {
-  return a.marks.join() === b.marks.join() && (a.rotation ?? 0) === (b.rotation ?? 0) && (a.innerFill ?? "solid") === (b.innerFill ?? "solid");
+  return chaveSimbolo(a) === chaveSimbolo(b);
 }
 
 function celula(mark: Mark, rotation = 0, fill: Cell["innerFill"] = "solid"): Cell {
@@ -51,14 +67,24 @@ export function gerarTrials(nivel: Nivel, seed: number, quantidade = 60): TrialV
     if (cfg.distratorParecido) {
       // distrator "quase igual": mesmo símbolo do alvo, rotação ou preenchimento diferente
       const a = alvos[Math.floor(rnd() * 2)];
-      const quase: Cell = { ...a, rotation: ((a.rotation ?? 0) + 90) % 360 };
+      const linha = ["hbar", "vbar", "slash", "backslash"].includes(a.marks[0]);
+      const quase: Cell = linha
+        ? { ...a, rotation: ((a.rotation ?? 0) + 90) % 360 }
+        : { ...a, innerFill: a.innerFill === "solid" ? "none" : "solid" };
       candidatos[Math.floor(rnd() * candidatos.length)] = quase;
+    }
+    // Uma rotação pode coincidir com o OUTRO alvo. Remova toda coincidência
+    // visual antes de inserir o alvo das tentativas positivas.
+    for (let i = 0; i < candidatos.length; i++) {
+      if (alvos.some((a) => igual(a, candidatos[i]))) {
+        candidatos[i] = MARCAS.map((m) => celula(m)).find((c) => !alvos.some((a) => igual(a, c)))!;
+      }
     }
     if (presente) {
       const a = alvos[Math.floor(rnd() * 2)];
       candidatos[Math.floor(rnd() * candidatos.length)] = { ...a };
     }
-    // garante que "ausente" é de fato ausente (o quase-igual não conta)
+    // O gabarito depende do desenho visível, não de diferenças no objeto.
     const realmente = candidatos.some((c) => alvos.some((a) => igual(a, c)));
     trials.push({ alvos, candidatos, presente: realmente });
   }
