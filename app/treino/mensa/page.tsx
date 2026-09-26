@@ -14,8 +14,18 @@ export default function MensaPage() {
       <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Preparação Mensa Brasil</h1>
       <p className="mt-4 max-w-3xl text-slate-600">Pratique relações visuais, composição de regras e gestão do tempo. A preparação principal prioriza matrizes, depois séries e classificação. Essa é uma ordem de estudo, não uma previsão da ordem ou composição da sua prova.</p>
       <p className="mt-3 text-sm text-slate-500">Material autoral e independente, sem afiliação à Mensa. Não reproduz testes oficiais nem estima QI, percentil ou aprovação.</p>
-      <nav aria-label="Seções Mensa" className="mt-5 flex flex-wrap gap-2 text-sm">{[["mensa-treino", "Iniciar preparação"], ["dificuldade", "Como o desafio funciona"], ["evidencias", "O que está confirmado"], ["relatos", "Relatos de 2026"], ["plano", "Ordem de estudo"]].map(([id, text]) => <a key={id} href={`#${id}`} className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">{text}</a>)}</nav>
+      <nav aria-label="Seções Mensa" className="mt-5 flex flex-wrap gap-2 text-sm"><Link href="/treino/mensa/explicador" className="rounded-full border-2 border-brand-500 bg-brand-50 px-4 py-2 font-semibold text-brand-800">Explicador visual passo a passo</Link>{[["mensa-treino", "Iniciar preparação"], ["dificuldade", "Como o desafio funciona"], ["evidencias", "O que está confirmado"], ["relatos", "Relatos de 2026"], ["plano", "Ordem de estudo"]].map(([id, text]) => <a key={id} href={`#${id}`} className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">{text}</a>)}</nav>
     </header>
+    <Link href="/treino/mensa/explicador" className="mb-6 block rounded-2xl border-2 border-brand-400 bg-brand-50 p-5 shadow-sm transition hover:border-brand-600 hover:shadow-md">
+      <p className="text-xs font-semibold uppercase tracking-wider text-brand-700">Novo · tutorial visual</p>
+      <div className="mt-2 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Entender a lógica dos itens 1, 2, 23 e 24</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">Veja os mesmos blocos 3×3 do quiz, no mesmo formato visual, e avance operação por operação até a resposta: XOR, espelhamento, transposição, AND, rotação e inversão.</p>
+        </div>
+        <span className="shrink-0 text-2xl text-brand-700">→</span>
+      </div>
+    </Link>
     <MensaPrep/>
 
     <section id="dificuldade" className="mt-10 scroll-mt-6">
