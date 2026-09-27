@@ -7,7 +7,7 @@ export const DIAS_COOKIE = 30;
 const SAL = "ahsd-portao-v1";
 
 export function senhaDoSite(): string {
-  return process.env.SITE_SENHA || "senha123";
+  return process.env.SITE_SENHA || "senha321";
 }
 
 async function sha256Hex(texto: string): Promise<string> {
