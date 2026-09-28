@@ -6,12 +6,33 @@ import { classificationItems } from "../battery/classification";
 import { buildOptions, mulberry32, shuffle } from "../battery/rng";
 import type { Item } from "../battery/types";
 
-export const VERSION = "mensa-br-2";
-export type Mode = "principal" | "desafio" | "complemento";
+export const VERSION = "mensa-br-3";
+export type Mode = "principal" | "velocidade" | "brasil" | "desafio";
 export const PROTOCOLS = {
-  desafio: { name: "Desafio avançado", count: 24, seconds: 2400, description: "12 matrizes com transformações e operações → 6 séries compostas → 6 classificações por relação. Mais etapas de raciocínio; dificuldade não normatizada." },
-  principal: { name: "Preparação principal", count: 24, seconds: 1800, description: "12 matrizes → 6 séries de figuras → 6 classificações. Inclui cinco matrizes de carga extrema do nosso banco." },
-  complemento: { name: "Complemento de formatos", count: 12, seconds: 720, description: "6 dominós → 6 mostradores. Familiarização opcional; uso atual desses formatos pela Mensa Brasil não confirmado." },
+  principal: {
+    name: "Matrizes · referência Norway online",
+    count: 35,
+    seconds: 1500,
+    description: "35 matrizes em 25 min, dificuldade crescente. É o modo-base: reproduz o regime público do desafio Mensa Norway que a própria Mensa Brasil indica como referência online, sem copiar itens oficiais.",
+  },
+  velocidade: {
+    name: "Matrizes · velocidade Norway supervisionado",
+    count: 45,
+    seconds: 1200,
+    description: "45 matrizes em 20 min. Treina o regime oficialmente descrito pela Mensa Norge para o teste supervisionado: reconhecimento rápido de padrões figurais, sem as composições extremas do banco antigo.",
+  },
+  brasil: {
+    name: "Cobertura Mensa Brasil",
+    count: 30,
+    seconds: 1800,
+    description: "24 matrizes + 3 séries + 3 classificações visuais. Cobertura exploratória para o Brasil, onde a Mensa informa que diferentes testes podem ser sorteados; não pretende reproduzir um instrumento específico.",
+  },
+  desafio: {
+    name: "Overtraining · acima do alvo",
+    count: 24,
+    seconds: 2400,
+    description: "Banco deliberadamente mais difícil, com composições de várias operações. Serve para overtraining e NÃO representa a dificuldade esperada da preparação principal.",
+  },
 } as const;
 export type Pair = [number, number];
 export interface PairItem {
@@ -96,26 +117,61 @@ export function complementItems(seed: number): PairItem[] {
   return [...shuffle(domino, rand), ...shuffle(clocks, rand)];
 }
 
+function matrixBand(item: Item): 1 | 2 | 3 | 4 | 99 {
+  if (item.kind === "logic-or" || item.kind === "logic-and") return 1;
+  if (item.kind === "d3" || item.kind === "d2") return 2;
+  if (item.kind === "logic-xor") return 3;
+  if (item.kind === "dual") return 4;
+  return 99; // exclui logicD2 e triad: ficam somente no overtraining.
+}
+
+function matrixSession(seed: number, count: number, speed: boolean): FigureItem[] {
+  const rand = mulberry32(seed ^ (speed ? 0x41f3 : 0x83af));
+  const buckets = new Map<number, FigureItem[]>([[1, []], [2, []], [3, []], [4, []]]);
+  const seen = new Set<string>();
+
+  for (let batch = 0; batch < 18; batch++) {
+    for (const item of advancedMatrixItems(seed + batch * 104729)) {
+      const band = matrixBand(item);
+      if (band === 99 || (speed && band === 4)) continue;
+      const q: FigureItem = { type: "figura", id: `${item.id}-n${batch}`, domain: "Matrizes", item };
+      const signature = stimulusKey(q);
+      if (seen.has(signature)) continue;
+      seen.add(signature);
+      buckets.get(band)!.push(q);
+    }
+  }
+
+  for (const [band, xs] of buckets) buckets.set(band, shuffle(xs, rand));
+
+  const quotas = speed
+    ? [Math.ceil(count * 0.34), Math.ceil(count * 0.36), count - Math.ceil(count * 0.34) - Math.ceil(count * 0.36), 0]
+    : [Math.ceil(count * 0.23), Math.ceil(count * 0.31), Math.ceil(count * 0.29), count - Math.ceil(count * 0.23) - Math.ceil(count * 0.31) - Math.ceil(count * 0.29)];
+
+  const selected: FigureItem[] = [];
+  [1, 2, 3, 4].forEach((band, i) => selected.push(...buckets.get(band)!.slice(0, quotas[i])));
+  if (selected.length !== count) throw new Error(`Banco de matrizes insuficiente: ${selected.length}/${count}`);
+
+  // Progressão editorial: regras simples primeiro, XOR depois e apenas no modo
+  // de 35 itens algumas questões de dois componentes no final.
+  return selected.sort((a, b) => matrixBand(a.item) - matrixBand(b.item));
+}
+
+function mixedBrazilSession(seed: number): MensaItem[] {
+  const matrices = matrixSession(seed, 24, false);
+  const rand = mulberry32(seed ^ 0x53b2);
+  const wrap = (items: Item[], domain: string, count: number) =>
+    shuffle(items, rand).slice(0, count).map((item, i): FigureItem => ({
+      type: "figura", id: `${item.id}-br${i}`, domain, item,
+    }));
+  return [...matrices, ...wrap(figureSeriesItems(seed + 17), "Séries", 3), ...wrap(classificationItems(seed + 31), "Classificação", 3)];
+}
+
 export function makeMensaItems(mode: Mode, seed: number): MensaItem[] {
   if (mode === "desafio") return challengeItems(seed);
-  if (mode === "complemento") return complementItems(seed);
-  const rand = mulberry32(seed ^ 0x83af);
-  const seen = new Set<string>();
-  const take = (count: number, domain: string, generate: (seed: number) => Item[], predicate: (q: Item) => boolean = () => true): FigureItem[] => {
-    const selected: FigureItem[] = [];
-    for (let batch = 0; batch < 20 && selected.length < count; batch++) {
-      for (const item of shuffle(generate(seed + batch * 104729).filter(predicate), rand)) {
-        const q: FigureItem = { type: "figura", id: `${item.id}-m${batch}`, domain, item };
-        const signature = stimulusKey(q);
-        if (seen.has(signature)) continue;
-        seen.add(signature); selected.push(q);
-        if (selected.length === count) break;
-      }
-    }
-    if (selected.length !== count) throw new Error(`Banco insuficiente: ${domain}`);
-    return selected;
-  };
-  return [...take(7, "Matrizes", advancedMatrixItems, q => q.difficulty === "dificil"), ...take(5, "Matrizes", advancedMatrixItems, q => q.difficulty === "extrema"), ...take(6, "Séries", figureSeriesItems), ...take(6, "Classificação", classificationItems)];
+  if (mode === "velocidade") return matrixSession(seed, PROTOCOLS.velocidade.count, true);
+  if (mode === "brasil") return mixedBrazilSession(seed);
+  return matrixSession(seed, PROTOCOLS.principal.count, false);
 }
 
 export function remainingSeconds(deadline: number, now: number) { return Math.max(0, Math.ceil((deadline - now) / 1000)); }
