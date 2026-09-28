@@ -2,76 +2,209 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import MensaPrep from "@/components/MensaPrep";
 
-export const metadata: Metadata = { title: "Mensa Brasil — preparação não verbal e evidências", description: "Preparação independente para a Mensa Brasil: matrizes, séries e classificação; complemento de dominós e mostradores. Fontes e limites da pesquisa de 2026." };
+export const metadata: Metadata = {
+  title: "Mensa Brasil — preparação calibrada por referências oficiais",
+  description: "Preparação independente para a Mensa Brasil, recalibrada com referências oficiais da Mensa Norge e da Mensa Brasil: matrizes visuais, velocidade e limites da inferência.",
+};
+
 const link = "font-medium text-brand-700 underline underline-offset-2";
 const card = "rounded-xl border border-slate-200 bg-white p-5";
 
 export default function MensaPage() {
   return <main className="mx-auto max-w-4xl px-4 py-8 text-slate-800">
     <Link href="/treino" className={link}>← Todos os treinos</Link>
+
     <header className="mb-8 mt-6">
-      <p className="text-xs font-semibold uppercase tracking-widest text-brand-700">Objetivo: admissão brasileira · revisão em 23/09/2026</p>
+      <p className="text-xs font-semibold uppercase tracking-widest text-brand-700">Objetivo: admissão brasileira · revisão em 28/09/2026</p>
       <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Preparação Mensa Brasil</h1>
-      <p className="mt-4 max-w-3xl text-slate-600">Pratique relações visuais, composição de regras e gestão do tempo. A preparação principal prioriza matrizes, depois séries e classificação. Essa é uma ordem de estudo, não uma previsão da ordem ou composição da sua prova.</p>
-      <p className="mt-3 text-sm text-slate-500">Material autoral e independente, sem afiliação à Mensa. Não reproduz testes oficiais nem estima QI, percentil ou aprovação.</p>
-      <nav aria-label="Seções Mensa" className="mt-5 flex flex-wrap gap-2 text-sm"><Link href="/treino/mensa/explicador" className="rounded-full border-2 border-brand-500 bg-brand-50 px-4 py-2 font-semibold text-brand-800">Explicador visual passo a passo</Link>{[["mensa-treino", "Iniciar preparação"], ["dificuldade", "Como o desafio funciona"], ["evidencias", "O que está confirmado"], ["relatos", "Relatos de 2026"], ["plano", "Ordem de estudo"]].map(([id, text]) => <a key={id} href={`#${id}`} className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">{text}</a>)}</nav>
+      <p className="mt-4 max-w-3xl text-slate-600">
+        Recalibramos esta área depois de comparar o nosso banco com o processo oficial da Mensa Norge e com as regras publicadas pela Mensa Brasil.
+        O foco principal agora é <strong>matriz visual com dificuldade crescente + velocidade</strong>, e não composições artificiais de muitas operações.
+      </p>
+      <p className="mt-3 text-sm text-slate-500">
+        Material autoral e independente. Não reproduz itens oficiais, não estima aprovação, QI ou percentil e não pressupõe que Brasil e Noruega usem o mesmo instrumento.
+      </p>
+      <nav aria-label="Seções Mensa" className="mt-5 flex flex-wrap gap-2 text-sm">
+        <a href="#mensa-treino" className="rounded-full border-2 border-brand-500 bg-brand-50 px-4 py-2 font-semibold text-brand-800">Iniciar treino calibrado</a>
+        <a href="#noruega" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">O que a Noruega confirma</a>
+        <a href="#inferencia" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">O que inferimos para o Brasil</a>
+        <a href="#calibracao" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">Como recalibramos</a>
+        <Link href="/treino/mensa/explicador" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">Explicador avançado</Link>
+      </nav>
     </header>
-    <Link href="/treino/mensa/explicador" className="mb-6 block rounded-2xl border-2 border-brand-400 bg-brand-50 p-5 shadow-sm transition hover:border-brand-600 hover:shadow-md">
-      <p className="text-xs font-semibold uppercase tracking-wider text-brand-700">Novo · tutorial visual</p>
-      <div className="mt-2 flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-bold text-slate-900">Entender a lógica dos itens 1, 2, 23 e 24</h2>
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">Veja os mesmos blocos 3×3 do quiz, no mesmo formato visual, e avance operação por operação até a resposta: XOR, espelhamento, transposição, AND, rotação e inversão.</p>
-        </div>
-        <span className="shrink-0 text-2xl text-brand-700">→</span>
-      </div>
-    </Link>
+
+    <section className="mb-7 rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5">
+      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800">Mudança principal</p>
+      <h2 className="mt-2 text-xl font-bold text-slate-900">As questões extremas saíram do fluxo principal</h2>
+      <p className="mt-2 text-sm leading-relaxed text-slate-700">
+        O banco anterior misturava transformações como rotação, transposição e operação lógica na mesma questão. Isso é útil como overtraining,
+        mas ficou mais complexo do que o benchmark público mais defensável. Agora esse conteúdo fica separado no modo <strong>Overtraining · acima do alvo</strong>.
+      </p>
+    </section>
+
     <MensaPrep/>
 
-    <section id="dificuldade" className="mt-10 scroll-mt-6">
-      <h2 className="text-2xl font-bold">Dificuldade pelo raciocínio exigido</h2>
+    <section id="noruega" className="mt-12 scroll-mt-6">
+      <h2 className="text-2xl font-bold">O que a Mensa Norge confirma oficialmente</h2>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        A Noruega fornece uma referência excepcionalmente concreta porque publica tanto o formato do teste supervisionado quanto um teste online de familiarização.
+      </p>
+
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <article className={card}><h3 className="font-semibold">Desafio avançado · 24 itens</h3><p className="mt-2 text-sm">Matrizes combinam transformação espacial e operação lógica, por linhas ou colunas. Séries intercalam sequências ou alternam transformações. Na classificação, compare a relação entre os dois mosaicos de cada par. Figuras e combinações são sorteadas por semente; são quatro famílias estruturais, não milhares de regras distintas.</p></article>
-        <article className={card}><h3 className="font-semibold">Aprender antes de acelerar</h3><p className="mt-2 text-sm">Comece em estudo sem limite: formule uma hipótese antes de mostrar as alternativas. Depois faça uma sessão cronometrada com outra semente. O desafio tem 40 minutos; a preparação principal, 30; o complemento, 12. Esses tempos são escolhas de treino, sem corte individual por item e sem equivalência oficial.</p></article>
-        <article className={card}><h3 className="font-semibold">Como conferimos as respostas</h3><p className="mt-2 text-sm">Os mosaicos são conferidos por regras de rotação, reflexão, união, interseção e exclusão. Um segundo solucionador nos testes usa coordenadas e conjuntos, sem ler o gabarito. Itens com respostas divergentes dentro das regras verificadas são rejeitados. Isso reduz ambiguidades; não prova unicidade entre todas as regras imagináveis.</p></article>
-        <article className={card}><h3 className="font-semibold">O que o progresso significa</h3><p className="mt-2 text-sm">O resultado separa itens já vistos dos sem exposição anterior registrada neste aparelho. Uma figura nova ainda pode usar uma regra conhecida. Compare acertos, omissões e tempo apenas no mesmo banco, versão e regime. Equivalência com a dificuldade da Mensa Brasil e percentis exigiriam estudos com participantes e normas adequadas.</p></article>
+        <article className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+          <p className="text-xs font-semibold uppercase text-emerald-800">Teste supervisionado</p>
+          <h3 className="mt-2 font-semibold">45 questões em 20 minutos</h3>
+          <p className="mt-2 text-sm leading-relaxed">
+            A página oficial informa 45 questões, 20 minutos de prova, resposta em folha separada e aplicação presencial.
+            Isso equivale a cerca de <strong>27 segundos por questão</strong> em média.
+          </p>
+          <a href="https://mensa.no/iq-test/" className={link + " mt-3 inline-block"}>Mensa Norge · IQ-test →</a>
+        </article>
+
+        <article className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+          <p className="text-xs font-semibold uppercase text-emerald-800">Tipo de tarefa</p>
+          <h3 className="mt-2 font-semibold">Matrizes figurais com a célula inferior direita ausente</h3>
+          <p className="mt-2 text-sm leading-relaxed">
+            A descrição oficial é de reconhecimento de padrões por figuras: cada item é uma matriz e falta o símbolo do canto inferior direito.
+            O candidato escolhe a alternativa que completa a matriz.
+          </p>
+          <a href="https://mensa.no/iq-test/" className={link + " mt-3 inline-block"}>Descrição oficial →</a>
+        </article>
+
+        <article className={card}>
+          <p className="text-xs font-semibold uppercase text-brand-700">Teste online oficial de familiarização</p>
+          <h3 className="mt-2 font-semibold">35 padrões visuais em 25 minutos</h3>
+          <p className="mt-2 text-sm leading-relaxed">
+            O teste online tem dificuldade crescente, todas as questões valem um ponto, não há penalidade por erro e não exige conhecimento específico ou matemática.
+            A média é de aproximadamente <strong>43 segundos por item</strong>.
+          </p>
+          <a href="https://test.mensa.no/Home/Test/pt-BR" className={link + " mt-3 inline-block"}>Abrir Mensa Norway online →</a>
+        </article>
+
+        <article className={card}>
+          <p className="text-xs font-semibold uppercase text-brand-700">Ligação entre online e supervisionado</p>
+          <h3 className="mt-2 font-semibold">A própria Mensa Norge diz que é o mesmo tipo de tarefa</h3>
+          <p className="mt-2 text-sm leading-relaxed">
+            A organização deixa explícito que o online não é um teste autorizado, mas usa o <strong>mesmo tipo de questões</strong> do teste autorizado para familiarização.
+            Isso torna o Norway online uma âncora de estilo muito melhor do que bancos de puzzles arbitrariamente difíceis.
+          </p>
+          <a href="https://mensa.no/iq-test/" className={link + " mt-3 inline-block"}>Fonte oficial →</a>
+        </article>
       </div>
-      <p className="mt-4 text-sm text-slate-600">As alternativas de mosaicos equilibram a frequência de cada posição preta; dominós e mostradores equilibram os valores de cada componente. As sessões removem estímulos repetidos. Isso corrige os atalhos identificados na revisão, sem prometer ausência de toda estratégia possível de eliminação.</p>
+
+      <details className={card + " mt-4"}>
+        <summary className="cursor-pointer font-semibold">Exemplos públicos de regras usadas pela própria Mensa Norge</summary>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          Na campanha do Dia Nacional de Testes de 2025, a Mensa Norge publicou soluções de puzzles promocionais envolvendo espelhamento,
+          rotação de 90°/180°, distribuição de cores e mudanças independentes de atributos. Há composição de regras, mas elas permanecem visualmente rastreáveis;
+          isso é diferente de exigir uma cadeia longa e pouco natural de operações algorítmicas em quase todo item.
+        </p>
+        <a href="https://mensa.no/nasjonal-testdag-2025/" className={link + " mt-3 inline-block"}>Nasjonal Testdag 2025 →</a>
+      </details>
     </section>
 
-    <section id="evidencias" className="mt-10 scroll-mt-6">
-      <h2 className="text-2xl font-bold">O que sabemos sobre a prova brasileira</h2>
+    <section id="inferencia" className="mt-12 scroll-mt-6">
+      <h2 className="text-2xl font-bold">O que isso permite inferir — e o que não permite — para a Mensa Brasil</h2>
+
       <div className="mt-5 space-y-3">
-        <article className="rounded-xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-xs font-semibold uppercase text-emerald-800">Confirmado por fonte oficial</p><h3 className="mt-2 font-semibold">Não verbal, com instrumento variável</h3><p className="mt-2 text-sm">A Mensa Brasil descreve a admissão como não verbal/culture fair; coletivo e individual têm o mesmo conteúdo e critério. Há diferentes testes sorteados no dia, com duração de até 60 minutos. O critério é percentil 98 ou superior. A FAQ informa aprovação/reprovação e percentil mediante interesse do candidato. <a href="https://mensa.org.br/faq-testes" className={link}>FAQ oficial</a> · <a href="https://mensa.org.br/testagem" className={link}>Agendamento</a>.</p></article>
-        <article className={card}><p className="text-xs font-semibold uppercase text-amber-800">Não confirmado para 2026</p><h3 className="mt-2 font-semibold">APM, G36/G38, R1, D48/D70, Clocks e TIG-NV</h3><p className="mt-2 text-sm">Essa lista aparece em um comentário comunitário de março de 2023. Não encontramos nas páginas oficiais consultadas uma relação atual dos instrumentos sorteados. Ela não estabelece frequência, probabilidade ou uso na sua sessão. “Alta confiança em Raven” e “70–90% da prova” vão além da evidência encontrada. <a href="https://www.reddit.com/r/cognitiveTesting/comments/11ku55q/mensa_admission_tests/" className={link}>Origem histórica da lista</a>.</p></article>
-        <article className={card}><h3 className="font-semibold">Brasil, Estados Unidos e laudos são caminhos distintos</h3><p className="mt-2 text-sm">A American Mensa descreve RAIT e Wonderlic em sua comunicação sobre a bateria americana. Relatos de vocabulário e conhecimentos gerais dos EUA não comprovam esse conteúdo na admissão brasileira. WAIS é uma escala clínica; submeter um laudo aceito é outra via de ingresso. Na lista brasileira, idade, edição e data importam — inclusive para SON-R; não é correto reduzir automaticamente as opções adultas a WAIS e WASI. <a href="https://www.us.mensa.org/featured-content/changes-to-american-mensas-admission-test-course/" className={link}>American Mensa (2022)</a> · <a href="https://mensa.org.br/admissao" className={link}>Critérios brasileiros para laudos</a>.</p></article>
+        <article className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
+          <p className="text-xs font-semibold uppercase text-emerald-800">Confirmado no Brasil</p>
+          <h3 className="mt-2 font-semibold">Culture fair, presencial e percentil 98</h3>
+          <p className="mt-2 text-sm leading-relaxed">
+            A Mensa Brasil informa que o teste é culture fair, independente de língua e conhecimentos específicos; testes online não têm validade para admissão.
+            O critério é estar no percentil 98 ou acima.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-4 text-sm">
+            <a href="https://mensa.org.br/faq-testes" className={link}>FAQ oficial →</a>
+            <a href="https://mensa.org.br/admissao" className={link}>Admissão →</a>
+          </div>
+        </article>
+
+        <article className={card}>
+          <p className="text-xs font-semibold uppercase text-amber-800">Diferença importante</p>
+          <h3 className="mt-2 font-semibold">O Brasil diz usar diferentes testes sorteados no dia</h3>
+          <p className="mt-2 text-sm leading-relaxed">
+            A FAQ brasileira fala em diferentes testes de admissão com tempos distintos, de até 60 minutos. Portanto não é correto dizer
+            “a prova brasileira é 45 matrizes em 20 minutos”. A referência norueguesa serve para calibrar <strong>estilo, progressão e velocidade</strong>, não para identificar o instrumento brasileiro.
+          </p>
+          <a href="https://mensa.org.br/faq-testes" className={link + " mt-3 inline-block"}>FAQ oficial →</a>
+        </article>
+
+        <article className="rounded-xl border border-brand-200 bg-brand-50 p-5">
+          <p className="text-xs font-semibold uppercase text-brand-800">Inferência forte, não confirmação</p>
+          <h3 className="mt-2 font-semibold">Matrizes devem ser o núcleo do treino</h3>
+          <p className="mt-2 text-sm leading-relaxed">
+            A Mensa Brasil escolheu justamente o teste online da Mensa Norway para seu “Desafio de QI”.
+            Somando isso ao caráter culture fair do teste brasileiro, faz sentido usar matrizes visuais como o núcleo da preparação.
+            Ainda assim, mantemos um modo de cobertura visual adicional porque a própria Mensa Brasil informa variabilidade de instrumentos.
+          </p>
+          <a href="https://mensa.org.br/desafio-de-qi-mensa" className={link + " mt-3 inline-block"}>Desafio de QI da Mensa Brasil →</a>
+        </article>
+
+        <article className={card}>
+          <p className="text-xs font-semibold uppercase text-slate-600">Limite da comparação</p>
+          <h3 className="mt-2 font-semibold">Países podem usar procedimentos e instrumentos diferentes</h3>
+          <p className="mt-2 text-sm leading-relaxed">
+            A própria Mensa Brasil explica que grupos nacionais possuem regras e procedimentos próprios e que a comparação relevante entre testes é pelo percentil,
+            não pelo número bruto ou pelo “QI” mostrado em plataformas diferentes.
+          </p>
+          <a href="https://mensa.org.br/quem-somos" className={link + " mt-3 inline-block"}>Mensa Brasil · quem somos →</a>
+        </article>
       </div>
-      <p className="mt-4 text-sm text-slate-600"><strong>Sobre os tempos do anexo:</strong> o número de itens ou tempo de uma edição comercial não confirma qual versão a Mensa aplicará. Por exemplo, a editora estima 30 minutos para G36, mas isso não comprova que ele será sorteado. Não adotamos os números do anexo como regras da admissão. <a className={link} href="https://www.vetoreditora.com.br/produto/g-36-livro-de-exercicio-70897">Vetor: G36</a>.</p>
     </section>
 
-    <section id="relatos" className="mt-10 scroll-mt-6">
-      <h2 className="text-2xl font-bold">A busca por relatos recentes</h2>
-      <p className="mt-3 text-sm text-slate-600">Pesquisa pública em português e inglês, combinando Mensa Brasil/Brazil, “fiz”, “teste”, “relato”, nomes de instrumentos e os meses pedidos; consultas direcionadas a Reddit, comunidades e páginas da associação. Critério de inclusão: experiência em primeira pessoa, aplicação brasileira, mês da prova identificável e descrição do instrumento ou formato. Data de publicação sozinha não basta. Isso não cobre grupos privados nem prova que relatos inexistam.</p>
-      <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200"><table className="w-full text-left text-sm"><thead className="bg-slate-100"><tr><th className="p-3">Aplicação solicitada</th><th className="p-3">Conclusão em 23/09/2026</th></tr></thead><tbody className="divide-y divide-slate-200 bg-white">{["Junho de 2026", "Julho de 2026", "Agosto de 2026", "Setembro, até dia 23"].map(month => <tr key={month}><td className="p-3 align-top font-medium">{month}</td><td className="p-3">Nenhum relato público localizado que satisfaça todos os critérios e confirme o instrumento brasileiro.</td></tr>)}<tr><td className="p-3 align-top font-medium">Outubro de 2026</td><td className="p-3">Ainda futuro. Anúncios de agenda não são relatos de provas realizadas.</td></tr></tbody></table></div>
-      <details className={`${card} mt-4`}><summary className="cursor-pointer font-semibold">Exemplos encontrados e por que não confirmam o conteúdo</summary><ul className="mt-3 list-disc space-y-3 pl-5 text-sm text-slate-600">
-        <li><a href="https://evento.mensa.org.br/eventos/santos-2026/" className={link}>Santos, junho de 2026</a>: programação oficial inclui admissão; não identifica instrumento nem relata uma aplicação. A janela do evento não é a duração individual da prova.</li>
-        <li><a href="https://www.reddit.com/r/mensa/comments/1ustnv5/just_got_in/" className={link}>Just Got In</a> e <a href="https://www.reddit.com/r/mensa/comments/1vohrux/got_admitted/" className={link}>Got Admitted!</a>: experiências de admissão recuperadas na busca de 2026, mas os textos consultados não estabelecem aplicação brasileira e instrumento. Comentários sobre a Mensa americana não identificam o país do autor.</li>
-        <li><a href="https://www.reddit.com/r/cognitiveTesting/comments/1nh2qcp/" className={link}>Pergunta sobre a Mensa Brasil, setembro de 2025</a>: fora do período solicitado; uma resposta comunitária sobre formatos não é registro de uma prova brasileira de 2026.</li>
-      </ul></details>
-      <p className="mt-4 rounded-lg bg-amber-50 p-4 text-sm text-amber-950"><strong>Conclusão da auditoria:</strong> alta confiança nas regras públicas da associação; evidência insuficiente para afirmar qual instrumento cairá, em que proporção ou com qual dificuldade. O texto anexo é útil como hipótese de estudo, mas exagera a certeza sobre a lista e a cobertura da prova.</p>
+    <section id="calibracao" className="mt-12 scroll-mt-6">
+      <h2 className="text-2xl font-bold">Como o nosso treino foi recalibrado</h2>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <article className={card}>
+          <span className="text-xs font-semibold text-brand-700">01 · PADRÃO</span>
+          <h3 className="mt-2 font-semibold">35 matrizes / 25 minutos</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            É o ponto de partida. Imita o regime público do Norway online: dificuldade crescente, uma matriz por item e sem questões “extremas” de quatro regras independentes.
+          </p>
+        </article>
+        <article className={card}>
+          <span className="text-xs font-semibold text-brand-700">02 · VELOCIDADE</span>
+          <h3 className="mt-2 font-semibold">45 matrizes / 20 minutos</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Treina o ritmo oficial publicado pela Mensa Norge. Removemos do banco desse modo os itens de dois componentes mais pesados e todos os itens extremos.
+          </p>
+        </article>
+        <article className={card}>
+          <span className="text-xs font-semibold text-brand-700">03 · BRASIL</span>
+          <h3 className="mt-2 font-semibold">Cobertura visual exploratória</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Mantém forte predominância de matrizes, com uma pequena quantidade de séries e classificação visual. É uma proteção contra a incerteza brasileira, não uma previsão do teste sorteado.
+          </p>
+        </article>
+        <article className={card}>
+          <span className="text-xs font-semibold text-rose-700">04 · OVERTRAINING</span>
+          <h3 className="mt-2 font-semibold">Questões antigas de alta composição</h3>
+          <p className="mt-2 text-sm text-slate-600">
+            XOR + transformação, relações compostas e outros itens deliberadamente acima do alvo continuam disponíveis para desafio pessoal,
+            mas deixaram de contaminar a referência principal de dificuldade.
+          </p>
+        </article>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-relaxed text-amber-950">
+        <strong>O que não tratamos mais como evidência:</strong> listas comunitárias de APM, G36/G38, R1, D48/D70, Clocks ou TIG-NV não são apresentadas como composição atual da prova brasileira sem confirmação oficial.
+        Elas podem ser contexto histórico, mas não determinam o banco principal.
+      </div>
     </section>
 
-    <section id="plano" className="mt-10 scroll-mt-6">
-      <h2 className="text-2xl font-bold">Ordem de estudo para o seu objetivo</h2>
-      <p className="mt-3 text-sm text-slate-600">Nos resultados enviados, os erros de matrizes envolveram separar forma externa e quantidade interna e distinguir XOR de união. Esses são pontos concretos de treino. Os percentuais do simulador, com poucos itens e sem normas, não medem sua posição na população.</p>
-      <ol className="mt-5 grid gap-3 sm:grid-cols-2">
-        <li className={card}><span className="text-xs font-semibold text-brand-700">01 · PRIMEIRA PRIORIDADE</span><h3 className="mt-2 font-semibold">Matrizes e relações entre atributos</h3><p className="mt-2 text-sm">Três sessões semanais de 20 minutos: isole forma, número, orientação e preenchimento; confira a regra em duas linhas antes de responder. Treine distribuição, ausência, XOR, AND e OR. Após dominar essas relações, pratique as matrizes compostas do Desafio avançado.</p></li>
-        <li className={card}><span className="text-xs font-semibold text-brand-700">02 · AMPLIAR FORMATOS</span><h3 className="mt-2 font-semibold">Séries e classificação</h3><p className="mt-2 text-sm">Duas sessões de 15 minutos: acompanhe transformações separadamente e procure o atributo comum do grupo. Matrizes também exercitam analogias visuais. A prioridade é editorial; não estima a incidência na prova.</p></li>
-        <li className={card}><span className="text-xs font-semibold text-brand-700">03 · OPCIONAL</span><h3 className="mt-2 font-semibold">Dominós e mostradores</h3><p className="mt-2 text-sm">Uma sessão curta por semana para conhecer representações diferentes. Selecione estudo sem limite; depois use os 12 minutos do complemento. As relações podem envolver troca de metades ou de papéis dos ponteiros. São novas famílias autorais, sem equivalência com D48/D70 ou Clocks.</p></li>
-        <li className={card}><span className="text-xs font-semibold text-brand-700">04 · ACOMPANHAR</span><h3 className="mt-2 font-semibold">Uma sessão completa por semana</h3><p className="mt-2 text-sm">Faça a preparação principal em 30 minutos ou o desafio avançado em 40. São 24 itens em cada; compare resultados no mesmo protocolo, reveja erros e omissões e anote regra e tempo. Após 48–72 horas, pratique outra semente. Progresso significa menos erros recorrentes e melhor gestão do tempo; não uma previsão de aprovação. Na véspera, priorize descanso.</p></li>
+    <section className="mt-12 rounded-2xl border border-slate-200 bg-white p-6">
+      <h2 className="text-xl font-bold">Ordem de uso recomendada</h2>
+      <ol className="mt-4 list-decimal space-y-3 pl-5 text-sm leading-relaxed text-slate-600">
+        <li><strong>Estudo sem limite</strong> no modo Norway online até reconhecer rapidamente rotação, espelho, distribuição, OR/AND/XOR e mudanças de atributos.</li>
+        <li><strong>35 / 25 min</strong> em outra semente. Revise somente os erros e explique a regra com suas palavras.</li>
+        <li>Quando a precisão estiver estável, passe para <strong>45 / 20 min</strong> para treinar velocidade e triagem.</li>
+        <li>Use <strong>Cobertura Mensa Brasil</strong> ocasionalmente para não ficar preso a um único formato visual.</li>
+        <li>Use <strong>Overtraining</strong> apenas como desafio extra. Errar ali não é evidência de que você esteja abaixo do nível esperado para a Mensa.</li>
       </ol>
-      <p className="mt-4 text-sm">A orientação oficial é comparecer descansado; a Mensa não exige preparação prévia. Este plano atende ao seu objetivo de familiarização e não garante aumento de inteligência ou transferência para uma avaliação formal.</p>
-      <div className="mt-5 flex flex-wrap gap-4 text-sm"><Link href="/treino/dojo?exame=mensa" className={link}>Praticar no Dojo Mensa →</Link><Link href="/treino/regras" className={link}>Estudar as regras →</Link><Link href="/treino/guia-exames#agendar" className={link}>Custos, requisitos e agendamento →</Link></div>
+      <p className="mt-4 text-xs text-slate-500">
+        O desempenho neste site não é normatizado. A admissão real depende do instrumento oficial aplicado e de suas normas populacionais.
+      </p>
     </section>
   </main>;
 }
