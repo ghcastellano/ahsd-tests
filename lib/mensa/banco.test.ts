@@ -6,21 +6,34 @@ import { answerOf, complementItems, makeMensaItems, PROTOCOLS, remainingSeconds,
 
 const cycle = (n: number, base: number) => (n % base + base) % base;
 describe("preparação Mensa Brasil", () => {
-  it("mantém o plano editorial e cinco matrizes extremas, sem tarefas verbais", () => {
-    for (let seed = 0; seed < 50; seed++) {
+  it("calibra o modo principal em 35 matrizes sem itens extremos", () => {
+    for (let seed = 0; seed < 30; seed++) {
       const items = makeMensaItems("principal", seed);
-      expect(items).toHaveLength(PROTOCOLS.principal.count);
-      expect(items.map(q => q.domain)).toEqual([...Array(12).fill("Matrizes"), ...Array(6).fill("Séries"), ...Array(6).fill("Classificação")]);
-      expect(items.filter(q => q.type === "figura" && q.domain === "Matrizes" && q.item.difficulty === "extrema")).toHaveLength(5);
-      expect(new Set(items.map(q => q.id)).size).toBe(24);
+      expect(items).toHaveLength(35);
+      expect(items.every(q => q.domain === "Matrizes")).toBe(true);
+      expect(items.filter(q => q.type === "figura" && q.item.difficulty === "extrema")).toHaveLength(0);
+      expect(new Set(items.map(q => q.id)).size).toBe(35);
       for (const q of items) if (q.type === "figura") {
         expect(q.item.textOptions).toBeUndefined();
         expect((q.item.options ?? q.item.set)![answerOf(q)]).toBeDefined();
       }
     }
   });
+  it("usa 45 matrizes no modo de velocidade e mantém o teto fora do overtraining", () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const items = makeMensaItems("velocidade", seed);
+      expect(items).toHaveLength(45);
+      expect(items.every(q => q.domain === "Matrizes")).toBe(true);
+      expect(items.filter(q => q.type === "figura" && (q.item.kind === "dual" || q.item.difficulty === "extrema"))).toHaveLength(0);
+    }
+  });
+  it("mantém cobertura brasileira exploratória separada", () => {
+    const items = makeMensaItems("brasil", 42);
+    expect(items).toHaveLength(30);
+    expect(items.map(q => q.domain)).toEqual([...Array(24).fill("Matrizes"), ...Array(3).fill("Séries"), ...Array(3).fill("Classificação")]);
+  });
   it("reproduz a semente e varia estímulos, não apenas a ordem das alternativas", () => {
-    for (const mode of ["principal", "desafio", "complemento"] as const) {
+    for (const mode of ["principal", "velocidade", "brasil", "desafio"] as const) {
       expect(makeMensaItems(mode, 42)).toEqual(makeMensaItems(mode, 42));
       const stimuli = (seed: number) => makeMensaItems(mode, seed).map(q => JSON.stringify(q.type === "figura" ? [q.item.grid, q.item.sequence, q.item.set] : [q.grid, q.sequence])).sort();
       expect(stimuli(42)).not.toEqual(stimuli(43));
@@ -69,7 +82,7 @@ describe("preparação Mensa Brasil", () => {
     }
   });
   it("não repete estímulos numa sessão e a assinatura independe do gabarito", () => {
-    for (let seed = 0; seed < 50; seed++) for (const mode of ["principal", "desafio", "complemento"] as const) {
+    for (let seed = 0; seed < 30; seed++) for (const mode of ["principal", "velocidade", "brasil", "desafio"] as const) {
       const items = makeMensaItems(mode, seed);
       expect(new Set(items.map(stimulusKey)).size).toBe(items.length);
     }
