@@ -7,6 +7,7 @@ import { useSeed } from "@/lib/use-seed";
 import MensaStimulus, { MensaOption } from "./MensaStimulus";
 import { readExposure, saveExposure } from "@/lib/mensa/exposicao";
 import ShareBlock from "./ShareBlock";
+import MensaItemLesson from "./MensaItemLesson";
 
 const button = "rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 hover:border-brand-500 disabled:opacity-40";
 const time = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -31,7 +32,8 @@ export default function MensaPrep() {
   const [expired, setExpired] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const [respondent, setRespondent] = useState("");
-  const [onlyWrong, setOnlyWrong] = useState(true);
+  const [onlyWrong, setOnlyWrong] = useState(false);
+  const [openReview, setOpenReview] = useState<number[]>([]);
   const items = useMemo(() => makeMensaItems(mode, seed ?? 0), [mode, seed]);
   const protocol = PROTOCOLS[mode];
   const session = useRef({ start: 0, deadline: 0, mark: 0, index: 0, times: [] as number[], finished: false });
@@ -91,7 +93,7 @@ export default function MensaPrep() {
     setPrevious(prior); setExposureAvailable(prior !== null); exposure.current = new Set(prior ?? []);
     markSeen([0]); setRevealed([]); setRuleNotes({});
     const empty = items.map(() => null);
-    answersRef.current = empty; setAnswers(empty); setCurrent(0); setFlags([]); setRecord(null); setConfirmFinish(false); setOnlyWrong(true); setLeft(timed ? protocol.seconds : 0); setPhase("running");
+    answersRef.current = empty; setAnswers(empty); setCurrent(0); setFlags([]); setRecord(null); setConfirmFinish(false); setOnlyWrong(false); setOpenReview([]); setLeft(timed ? protocol.seconds : 0); setPhase("running");
   }
   function withinTime() { if (session.current.finished) return false; if (Date.now() >= session.current.deadline) { finish(true); return false; } return true; }
   function move(index: number) { if (!withinTime()) return; account(); markSeen([index]); session.current.index = index; setCurrent(index); setConfirmFinish(false); requestAnimationFrame(() => document.getElementById("mensa-treino")?.scrollIntoView({ block: "start" })); }
@@ -122,9 +124,41 @@ export default function MensaPrep() {
       </div>
       {saveFailed && <p role="alert" className="text-amber-900">Não foi possível gravar no histórico deste aparelho. Guarde o link do resultado abaixo.</p>}
       <ShareBlock record={record}/>
-      <div><h3 className="text-xl font-semibold">Revisão por item</h3><p className="mt-2 text-xs text-slate-500">O tempo soma suas visitas ao item, inclusive com a aba oculta. Não mede somente atenção ativa.</p><label className="mt-3 flex gap-2 text-sm"><input type="checkbox" checked={onlyWrong} onChange={e => setOnlyWrong(e.target.checked)}/>Mostrar apenas erros e omissões</label></div>
-      {onlyWrong && result.correct === items.length && <p>Todos os itens corretos. Desmarque o filtro para revisar as regras.</p>}
-      {items.map((q, i) => onlyWrong && answers[i] === answerOf(q) ? null : <details key={q.id} onToggle={event => { if (event.currentTarget.open) markSeen([i]); }} className="rounded-xl border border-slate-200 bg-white p-4"><summary className="cursor-pointer font-semibold">{i + 1}. {q.domain} · {answers[i] == null ? "Não respondido" : answers[i] === answerOf(q) ? "Correto" : "Erro"} · {record.detalhes?.[i].tempoSeg ?? 0} s</summary><MensaStimulus q={q} uid={`review-${i}`}/><div className={`grid gap-2 ${q.type === "padrao" && q.pairs ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-3 sm:grid-cols-6"}`}>{Array.from({ length: q.type === "figura" ? (q.item.options ?? q.item.set)!.length : q.options.length }, (_, j) => <div key={j} className={`flex flex-col items-center rounded-lg border-2 p-1 ${j === answerOf(q) ? "border-emerald-500 bg-emerald-50" : j === answers[i] ? "border-rose-500 bg-rose-50" : "border-slate-200"}`}><MensaOption q={q} index={j} uid={`rev-${i}-${j}`}/><span className="text-xs">{j + 1}{j === answerOf(q) ? " · correta" : ""}{j === answers[i] ? " · sua" : ""}</span></div>)}</div><p className="mt-4 text-sm text-slate-700">{explanationOf(q)}</p>{ruleNotes[i]?.trim() && <p className="mt-2 rounded-lg bg-slate-50 p-3 text-sm"><strong>Minha hipótese:</strong> {ruleNotes[i]}</p>}</details>)}
+      <div className="rounded-2xl border border-brand-200 bg-brand-50 p-5">
+        <h3 className="text-xl font-semibold text-slate-900">Revisão pedagógica de todas as questões</h3>
+        <p className="mt-2 text-sm leading-relaxed text-slate-700">Abra qualquer item para rever a questão, ver a resposta correta e assistir a uma microanimação que ensina a lógica em passos. Itens errados ou omitidos recebem um diagnóstico adicional da sua alternativa e um modelo mental reutilizável para questões semelhantes.</p>
+        <p className="mt-2 text-xs text-slate-500">O tempo soma suas visitas ao item, inclusive com a aba oculta. Não mede somente atenção ativa.</p>
+        <label className="mt-3 flex gap-2 text-sm font-medium"><input type="checkbox" checked={onlyWrong} onChange={e => setOnlyWrong(e.target.checked)}/>Mostrar apenas erros e omissões</label>
+      </div>
+      {onlyWrong && result.correct === items.length && <p>Todos os itens corretos. Desmarque o filtro para revisar as regras mesmo assim.</p>}
+      {items.map((q, i) => {
+        const correct = answers[i] === answerOf(q);
+        if (onlyWrong && correct) return null;
+        const status = answers[i] == null ? "Não respondido" : correct ? "Correto" : "Erro";
+        const open = openReview.includes(i);
+        return <details
+          key={q.id}
+          onToggle={event => {
+            const isOpen = event.currentTarget.open;
+            if (isOpen) markSeen([i]);
+            setOpenReview(prev => isOpen ? (prev.includes(i) ? prev : [...prev, i]) : prev.filter(x => x !== i));
+          }}
+          className={`rounded-xl border-2 bg-white p-4 ${correct ? "border-emerald-200" : "border-rose-200"}`}
+        >
+          <summary className="cursor-pointer font-semibold">
+            {i + 1}. {q.domain} · <span className={correct ? "text-emerald-700" : "text-rose-700"}>{status}</span> · {record.detalhes?.[i].tempoSeg ?? 0} s
+            <span className="ml-2 text-xs font-normal text-slate-500">— abrir correção + vídeo</span>
+          </summary>
+          {open && <>
+            <MensaStimulus q={q} uid={`review-${i}`}/>
+            <div className={`grid gap-2 ${q.type === "padrao" && q.pairs ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-3 sm:grid-cols-6"}`}>
+              {Array.from({ length: q.type === "figura" ? (q.item.options ?? q.item.set)!.length : q.options.length }, (_, j) => <div key={j} className={`flex flex-col items-center rounded-lg border-2 p-1 ${j === answerOf(q) ? "border-emerald-500 bg-emerald-50" : j === answers[i] ? "border-rose-500 bg-rose-50" : "border-slate-200"}`}><MensaOption q={q} index={j} uid={`rev-${i}-${j}`}/><span className="text-xs">{j + 1}{j === answerOf(q) ? " · correta" : ""}{j === answers[i] ? " · sua" : ""}</span></div>)}
+            </div>
+            {ruleNotes[i]?.trim() && <p className="mt-3 rounded-lg bg-slate-50 p-3 text-sm"><strong>Minha hipótese durante a prova:</strong> {ruleNotes[i]}</p>}
+            <MensaItemLesson q={q} chosen={answers[i]} itemNumber={i + 1} emphasized={!correct}/>
+          </>}
+        </details>;
+      })}
     </section>;
   }
 
