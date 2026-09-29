@@ -44,7 +44,7 @@ export default function HomePage() {
       <Link href="/treino/mensa" className="mb-8 block rounded-xl border-2 border-brand-300 bg-brand-50 p-5 hover:border-brand-500">
         <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Preparação específica · Brasil</p>
         <h2 className="mt-2 text-xl font-bold text-slate-900">Mensa Brasil</h2>
-        <p className="mt-2 text-sm text-slate-600">Treino recalibrado por referências oficiais: 35 matrizes / 25 min, 45 / 20 min para velocidade, cobertura visual Brasil e overtraining separado.</p>
+        <p className="mt-2 text-sm text-slate-600">Treino recalibrado: Norway 35/25, velocidade 45/20 e cobertura Brasil por famílias Raven/APM-like, G36/G38/R1-like, TIG-NV-like e dominós.</p>
         <p className="mt-3 font-semibold text-brand-700">Abrir preparação Mensa →</p>
       </Link>
 
