@@ -1,0 +1,48 @@
+.stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid rgb(226 232 240);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 14px;
+}
+.pulse {
+  animation: pulse 1.35s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(79,70,229,0); }
+  50% { transform: scale(1.035); box-shadow: 0 0 0 6px rgba(79,70,229,.12); }
+}
+.dim { opacity: .18; filter: grayscale(.55); }
+.slideLeft { animation: slideLeft 1.6s ease-in-out infinite; }
+.slideRight { animation: slideRight 1.6s ease-in-out infinite; }
+@keyframes slideLeft {
+  0%,100% { transform: translateX(0); }
+  50% { transform: translateX(8px); }
+}
+@keyframes slideRight {
+  0%,100% { transform: translateX(0); }
+  50% { transform: translateX(-8px); }
+}
+.answerGlow { animation: answerGlow 1.4s ease-in-out infinite; }
+@keyframes answerGlow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  50% { box-shadow: 0 0 0 7px rgba(16,185,129,.14); }
+}
+.progress {
+  animation: progress var(--phase-ms, 2400ms) linear forwards;
+  transform-origin: left center;
+}
+@keyframes progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.ruleBadge { animation: ruleBadge 1.2s ease-in-out infinite; }
+@keyframes ruleBadge {
+  0%,100% { transform: scale(.98); opacity: .78; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+.paused, .paused * { animation-play-state: paused !important; }
+@media (prefers-reduced-motion: reduce) {
+  .pulse,.slideLeft,.slideRight,.answerGlow,.progress,.ruleBadge { animation: none !important; }
+}
