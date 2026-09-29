@@ -103,6 +103,7 @@ export function classificationItems(seed = 0): Item[] {
     const { set, oddIndex, why, difficulty } = build(rule, 8000 + i * 67 + k);
     return {
       id: `cl${String(i + 1).padStart(2, "0")}`,
+      kind: `class-${rule}`,
       difficulty,
       set,
       answerIndex: oddIndex,
