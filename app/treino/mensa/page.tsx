@@ -28,6 +28,7 @@ export default function MensaPage() {
         <a href="#mensa-treino" className="rounded-full border-2 border-brand-500 bg-brand-50 px-4 py-2 font-semibold text-brand-800">Iniciar treino calibrado</a>
         <a href="#noruega" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">O que a Noruega confirma</a>
         <a href="#inferencia" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">O que inferimos para o Brasil</a>
+        <a href="#familias" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">Famílias candidatas</a>
         <a href="#calibracao" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">Como recalibramos</a>
         <Link href="/treino/mensa/explicador" className="rounded-full border border-slate-300 bg-white px-4 py-2 hover:border-brand-500">Explicador avançado</Link>
       </nav>
@@ -153,6 +154,73 @@ export default function MensaPage() {
       </div>
     </section>
 
+    <section id="familias" className="mt-12 scroll-mt-6">
+      <h2 className="text-2xl font-bold">Famílias candidatas usadas no modo Brasil</h2>
+      <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        Os nomes abaixo vêm de pistas comunitárias sobre instrumentos historicamente associados à Mensa Brasil, mas o uso atual de cada um
+        <strong> não foi confirmado pela Mensa Brasil</strong>. Por isso o treino usa apenas formatos autorais inspirados nas descrições públicas de cada família.
+      </p>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <article className="rounded-xl border border-brand-200 bg-brand-50 p-5">
+          <p className="text-xs font-semibold uppercase text-brand-800">16 itens no treino Brasil</p>
+          <h3 className="mt-2 font-semibold">Raven / APM-like</h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            Matrizes progressivas com dificuldade crescente, distribuição, transformação espacial e operações visuais. É a família com melhor convergência entre
+            o benchmark Norway indicado pela Mensa Brasil e relatos comunitários brasileiros.
+          </p>
+        </article>
+
+        <article className={card}>
+          <p className="text-xs font-semibold uppercase text-slate-600">8 itens no treino Brasil</p>
+          <h3 className="mt-2 font-semibold">G-36 / G-38 / R-1-like</h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            A Vetor descreve o G-36 como 36 matrizes gráficas não verbais que exploram identidade simples, analogia, raciocínio numérico e espacial;
+            o G-38 tem 38 itens de dificuldade crescente; e o R-1 possui 40 itens progressivos e é explicitamente descrito como baseado no modelo de Raven.
+            Nossos itens são novos e apenas treinam essas categorias gerais.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3 text-sm">
+            <a href="https://www.vetoreditora.com.br/produto/colecao-g-36-teste-nao-verbal-de-inteligencia-70739" className={link}>G-36 →</a>
+            <a href="https://www.vetoreditora.com.br/produto/colecao-g-38-teste-nao-verbal-de-inteligencia-70740" className={link}>G-38 →</a>
+            <a href="https://www.vetoreditora.com.br/produto/colecao-r-1-teste-nao-verbal-de-inteligencia-70738" className={link}>R-1 →</a>
+          </div>
+        </article>
+
+        <article className={card}>
+          <p className="text-xs font-semibold uppercase text-slate-600">4 itens no treino Brasil</p>
+          <h3 className="mt-2 font-semibold">TIG-NV-like</h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            A descrição pública do TIG-NV informa 30 matrizes de figuras com seis alternativas e avaliação de diferentes raciocínios não verbais.
+            Portanto ele entra como outra família de matrizes — <strong>não</strong> como teste de dominós.
+          </p>
+          <a href="https://sinopsyseditora.com.br/testes-psicologicos/tig-nv-teste-de-inteligencia-geral-nao-verbal-cad-de-aplicacao-pearson-casa-do-psicologo-292" className={link + " mt-3 inline-block"}>Descrição pública do TIG-NV →</a>
+        </article>
+
+        <article className={card}>
+          <p className="text-xs font-semibold uppercase text-slate-600">4 itens no treino Brasil</p>
+          <h3 className="mt-2 font-semibold">D-48 / D-70-like · dominós</h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            O D-70 é publicamente descrito como prova de dominós para abstração e compreensão de relações, derivada do D-48, com dificuldade crescente.
+            O nosso módulo usa dominós inteiramente autorais apenas para familiarização com esse tipo de relação.
+          </p>
+          <a href="https://www.hogrefe.com/pt/shop/teste-de-dominos-92742.html" className={link + " mt-3 inline-block"}>D-70 · descrição pública →</a>
+        </article>
+
+        <article className={card + " sm:col-span-2"}>
+          <p className="text-xs font-semibold uppercase text-slate-600">4 itens no treino Brasil</p>
+          <h3 className="mt-2 font-semibold">Exploratório · séries e classificação</h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            Dois itens de séries visuais e dois de classificação ficam como proteção contra a incerteza sobre o instrumento sorteado.
+            Eles têm peso pequeno justamente porque não encontramos confirmação oficial recente de que esses formatos componham a admissão brasileira atual.
+          </p>
+        </article>
+      </div>
+
+      <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
+        <strong>Importante:</strong> os rótulos “-like” significam apenas família de raciocínio e formato geral. Não usamos, copiamos ou reconstruímos itens protegidos dos instrumentos psicológicos.
+      </p>
+    </section>
+
     <section id="calibracao" className="mt-12 scroll-mt-6">
       <h2 className="text-2xl font-bold">Como o nosso treino foi recalibrado</h2>
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -172,9 +240,9 @@ export default function MensaPage() {
         </article>
         <article className={card}>
           <span className="text-xs font-semibold text-brand-700">03 · BRASIL</span>
-          <h3 className="mt-2 font-semibold">Cobertura visual exploratória</h3>
+          <h3 className="mt-2 font-semibold">36 itens / 45 minutos · famílias rotuladas</h3>
           <p className="mt-2 text-sm text-slate-600">
-            Mantém forte predominância de matrizes, com uma pequena quantidade de séries e classificação visual. É uma proteção contra a incerteza brasileira, não uma previsão do teste sorteado.
+            16 Raven/APM-like, 8 G36/G38/R1-like, 4 TIG-NV-like, 4 dominós D48/D70-like e 4 exploratórios. O mix aumenta cobertura sem fingir que conhecemos o teste sorteado.
           </p>
         </article>
         <article className={card}>
@@ -188,8 +256,8 @@ export default function MensaPage() {
       </div>
 
       <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-relaxed text-amber-950">
-        <strong>O que não tratamos mais como evidência:</strong> listas comunitárias de APM, G36/G38, R1, D48/D70, Clocks ou TIG-NV não são apresentadas como composição atual da prova brasileira sem confirmação oficial.
-        Elas podem ser contexto histórico, mas não determinam o banco principal.
+        <strong>Como tratamos as pistas comunitárias:</strong> APM/Raven, G36/G38, R1, D48/D70 e TIG-NV podem orientar familiarização porque existem descrições públicas consistentes desses instrumentos,
+        mas a lista comunitária não confirma que qualquer um deles esteja sendo sorteado hoje pela Mensa Brasil. “Clocks” permanece fora do modo Brasil por falta de suporte público comparável.
       </div>
     </section>
 
@@ -199,7 +267,7 @@ export default function MensaPage() {
         <li><strong>Estudo sem limite</strong> no modo Norway online até reconhecer rapidamente rotação, espelho, distribuição, OR/AND/XOR e mudanças de atributos.</li>
         <li><strong>35 / 25 min</strong> em outra semente. Revise somente os erros e explique a regra com suas palavras.</li>
         <li>Quando a precisão estiver estável, passe para <strong>45 / 20 min</strong> para treinar velocidade e triagem.</li>
-        <li>Use <strong>Cobertura Mensa Brasil</strong> ocasionalmente para não ficar preso a um único formato visual.</li>
+        <li>Use <strong>Cobertura Mensa Brasil · famílias candidatas</strong> para alternar Raven/APM-like, G36/G38/R1-like, TIG-NV-like, dominós e uma pequena parcela exploratória.</li>
         <li>Use <strong>Overtraining</strong> apenas como desafio extra. Errar ali não é evidência de que você esteja abaixo do nível esperado para a Mensa.</li>
       </ol>
       <p className="mt-4 text-xs text-slate-500">
