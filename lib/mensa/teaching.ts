@@ -220,7 +220,7 @@ export function teachingFor(q: MensaItem): TeachingGuide {
 
   return {
     patternName: "Padrão visual",
-    oneLine: q.explanation,
+    oneLine: q.type === "figura" ? q.item.explanation : q.explanation,
     mentalModel: "Quebre o problema em direção + atributo + transformação.",
     transfer: "Use a regra mais simples que explique todos os exemplos completos antes de aplicá-la à lacuna.",
     commonTrap: "Aceitar uma hipótese depois de apenas um exemplo.",
