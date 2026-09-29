@@ -160,11 +160,29 @@ function matrixSession(seed: number, count: number, speed: boolean): FigureItem[
 function mixedBrazilSession(seed: number): MensaItem[] {
   const matrices = matrixSession(seed, 24, false);
   const rand = mulberry32(seed ^ 0x53b2);
-  const wrap = (items: Item[], domain: string, count: number) =>
-    shuffle(items, rand).slice(0, count).map((item, i): FigureItem => ({
-      type: "figura", id: `${item.id}-br${i}`, domain, item,
-    }));
-  return [...matrices, ...wrap(figureSeriesItems(seed + 17), "Séries", 3), ...wrap(classificationItems(seed + 31), "Classificação", 3)];
+  const seen = new Set(matrices.map(stimulusKey));
+
+  const takeUnique = (domain: string, count: number, generate: (s: number) => Item[], offset: number): FigureItem[] => {
+    const out: FigureItem[] = [];
+    for (let batch = 0; batch < 20 && out.length < count; batch++) {
+      for (const item of shuffle(generate(seed + offset + batch * 104729), rand)) {
+        const q: FigureItem = { type: "figura", id: `${item.id}-br${batch}-${out.length}`, domain, item };
+        const signature = stimulusKey(q);
+        if (seen.has(signature)) continue;
+        seen.add(signature);
+        out.push(q);
+        if (out.length === count) break;
+      }
+    }
+    if (out.length !== count) throw new Error(`Banco insuficiente para cobertura Brasil: ${domain}`);
+    return out;
+  };
+
+  return [
+    ...matrices,
+    ...takeUnique("Séries", 3, figureSeriesItems, 17),
+    ...takeUnique("Classificação", 3, classificationItems, 31),
+  ];
 }
 
 export function makeMensaItems(mode: Mode, seed: number): MensaItem[] {
