@@ -42,7 +42,7 @@ export default function TreinoIndex() {
         </Link>
       </div>
 
-      <Link href="/treino/mensa" className="mt-5 block rounded-xl border-2 border-brand-300 bg-brand-50 p-5 hover:border-brand-500"><h2 className="text-xl font-bold text-slate-900">Preparação Mensa Brasil</h2><p className="mt-2 text-sm text-slate-600">Matrizes visuais calibradas: Norway online 35/25 · velocidade supervisionada 45/20 · cobertura Brasil e overtraining separado.</p><p className="mt-3 font-semibold text-brand-700">Começar a preparação específica →</p></Link>
+      <Link href="/treino/mensa" className="mt-5 block rounded-xl border-2 border-brand-300 bg-brand-50 p-5 hover:border-brand-500"><h2 className="text-xl font-bold text-slate-900">Preparação Mensa Brasil</h2><p className="mt-2 text-sm text-slate-600">Norway 35/25 · velocidade 45/20 · Brasil com Raven/APM-like, G36/G38/R1-like, TIG-NV-like e dominós · overtraining separado.</p><p className="mt-3 font-semibold text-brand-700">Começar a preparação específica →</p></Link>
       <Link href="/treino/guia-exames" className="mt-4 block rounded-xl border border-indigo-200 bg-indigo-50 p-4 text-sm font-semibold text-indigo-900 hover:bg-indigo-100">Exames reais: Mensa × WAIS · QI e percentil · custos e agendamento →</Link>
         <Link
         href="/treino/dojo"
