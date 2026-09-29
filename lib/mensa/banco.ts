@@ -22,10 +22,10 @@ export const PROTOCOLS = {
     description: "45 matrizes em 20 min. Treina o regime oficialmente descrito pela Mensa Norge para o teste supervisionado: reconhecimento rápido de padrões figurais, sem as composições extremas do banco antigo.",
   },
   brasil: {
-    name: "Cobertura Mensa Brasil",
-    count: 30,
-    seconds: 1800,
-    description: "24 matrizes + 3 séries + 3 classificações visuais. Cobertura exploratória para o Brasil, onde a Mensa informa que diferentes testes podem ser sorteados; não pretende reproduzir um instrumento específico.",
+    name: "Cobertura Mensa Brasil · famílias candidatas",
+    count: 36,
+    seconds: 2700,
+    description: "16 Raven/APM-like + 8 G36/G38/R1-like + 4 TIG-NV-like + 4 dominós D48/D70-like + 4 itens exploratórios. Mistura autoral para cobertura, não previsão do teste sorteado.",
   },
   desafio: {
     name: "Overtraining · acima do alvo",
@@ -125,7 +125,7 @@ function matrixBand(item: Item): 1 | 2 | 3 | 4 | 99 {
   return 99; // exclui logicD2 e triad: ficam somente no overtraining.
 }
 
-function matrixSession(seed: number, count: number, speed: boolean): FigureItem[] {
+function matrixSession(seed: number, count: number, speed: boolean, domain = "Raven/APM-like"): FigureItem[] {
   const rand = mulberry32(seed ^ (speed ? 0x41f3 : 0x83af));
   const buckets = new Map<number, FigureItem[]>([[1, []], [2, []], [3, []], [4, []]]);
   const seen = new Set<string>();
@@ -134,7 +134,7 @@ function matrixSession(seed: number, count: number, speed: boolean): FigureItem[
     for (const item of advancedMatrixItems(seed + batch * 104729)) {
       const band = matrixBand(item);
       if (band === 99 || (speed && band === 4)) continue;
-      const q: FigureItem = { type: "figura", id: `${item.id}-n${batch}`, domain: "Matrizes", item };
+      const q: FigureItem = { type: "figura", id: `${item.id}-n${batch}`, domain, item };
       const signature = stimulusKey(q);
       if (seen.has(signature)) continue;
       seen.add(signature);
@@ -152,37 +152,76 @@ function matrixSession(seed: number, count: number, speed: boolean): FigureItem[
   [1, 2, 3, 4].forEach((band, i) => selected.push(...buckets.get(band)!.slice(0, quotas[i])));
   if (selected.length !== count) throw new Error(`Banco de matrizes insuficiente: ${selected.length}/${count}`);
 
-  // Progressão editorial: regras simples primeiro, XOR depois e apenas no modo
-  // de 35 itens algumas questões de dois componentes no final.
   return selected.sort((a, b) => matrixBand(a.item) - matrixBand(b.item));
 }
 
-function mixedBrazilSession(seed: number): MensaItem[] {
-  const matrices = matrixSession(seed, 24, false);
-  const rand = mulberry32(seed ^ 0x53b2);
-  const seen = new Set(matrices.map(stimulusKey));
+function matrixFamily(
+  seed: number,
+  count: number,
+  domain: string,
+  allowedKinds: string[],
+  offset: number,
+): FigureItem[] {
+  const rand = mulberry32(seed ^ offset);
+  const seen = new Set<string>();
+  const pool: FigureItem[] = [];
 
-  const takeUnique = (domain: string, count: number, generate: (s: number) => Item[], offset: number): FigureItem[] => {
-    const out: FigureItem[] = [];
-    for (let batch = 0; batch < 20 && out.length < count; batch++) {
-      for (const item of shuffle(generate(seed + offset + batch * 104729), rand)) {
-        const q: FigureItem = { type: "figura", id: `${item.id}-br${batch}-${out.length}`, domain, item };
-        const signature = stimulusKey(q);
-        if (seen.has(signature)) continue;
-        seen.add(signature);
-        out.push(q);
-        if (out.length === count) break;
-      }
+  for (let batch = 0; batch < 24 && pool.length < count * 6; batch++) {
+    for (const item of shuffle(advancedMatrixItems(seed + offset + batch * 104729), rand)) {
+      if (!allowedKinds.includes(item.kind ?? "") || item.difficulty === "extrema") continue;
+      const q: FigureItem = { type: "figura", id: `${item.id}-f${offset}-${batch}`, domain, item };
+      const signature = stimulusKey(q);
+      if (seen.has(signature)) continue;
+      seen.add(signature);
+      pool.push(q);
     }
-    if (out.length !== count) throw new Error(`Banco insuficiente para cobertura Brasil: ${domain}`);
-    return out;
-  };
+  }
 
-  return [
-    ...matrices,
-    ...takeUnique("Séries", 3, figureSeriesItems, 17),
-    ...takeUnique("Classificação", 3, classificationItems, 31),
-  ];
+  const ordered = pool.sort((a, b) => matrixBand(a.item) - matrixBand(b.item));
+  if (ordered.length < count) throw new Error(`Banco insuficiente: ${domain} ${ordered.length}/${count}`);
+  return ordered.slice(0, count);
+}
+
+function mixedBrazilSession(seed: number): MensaItem[] {
+  const rand = mulberry32(seed ^ 0x53b2);
+
+  // Estas famílias são rótulos editoriais baseados apenas em descrições públicas
+  // de formato/construto. Os itens são autorais e não reproduzem instrumentos
+  // psicológicos restritos ou seus estímulos.
+  const raven = matrixSession(seed + 101, 16, false, "Raven/APM-like");
+  const gSeries = matrixFamily(
+    seed + 211,
+    8,
+    "G36/G38/R1-like",
+    ["d3", "d2", "dual", "logic-or"],
+    0x361,
+  );
+  const tig = matrixFamily(
+    seed + 307,
+    4,
+    "TIG-NV-like",
+    ["logic-or", "logic-and", "d3", "dual"],
+    0x71a,
+  );
+
+  const dominoes = complementItems(seed + 401)
+    .filter((q) => q.type === "domino")
+    .slice(0, 4)
+    .map((q, i): PairItem => ({
+      ...q,
+      id: `${q.id}-br-${i}`,
+      domain: "D48/D70-like · dominós",
+      explanation: `Formato autoral de dominós para familiarização com relações abstratas. ${q.explanation}`,
+    }));
+
+  const series = shuffle(figureSeriesItems(seed + 503), rand).slice(0, 2).map((item, i): FigureItem => ({
+    type: "figura", id: `${item.id}-expl-ser-${i}`, domain: "Exploratório · séries visuais", item,
+  }));
+  const classification = shuffle(classificationItems(seed + 607), rand).slice(0, 2).map((item, i): FigureItem => ({
+    type: "figura", id: `${item.id}-expl-class-${i}`, domain: "Exploratório · classificação", item,
+  }));
+
+  return [...raven, ...gSeries, ...tig, ...dominoes, ...series, ...classification];
 }
 
 export function makeMensaItems(mode: Mode, seed: number): MensaItem[] {
