@@ -94,6 +94,7 @@ export function figureSeriesItems(seed = 0): Item[] {
     const difficulty: Difficulty = rule === "rotacao-quantidade" ? "dificil" : "media";
     return {
       id: `fs${String(i + 1).padStart(2, "0")}`,
+      kind: `series-${rule}`,
       difficulty,
       sequence: seq,
       options,
