@@ -99,8 +99,8 @@ describe("preparação Mensa Brasil", () => {
   });
   it("separa erros de omissões e atualiza prazo por tempo real, mesmo após suspensão", () => {
     const items = makeMensaItems("principal", 42);
-    expect(summarize(items, items.map(answerOf))).toEqual({ correct: 24, wrong: 0, omitted: 0 });
-    expect(summarize(items, [answerOf(items[0]), (answerOf(items[1]) + 1) % 6])).toEqual({ correct: 1, wrong: 1, omitted: 22 });
+    expect(summarize(items, items.map(answerOf))).toEqual({ correct: 35, wrong: 0, omitted: 0 });
+    expect(summarize(items, [answerOf(items[0]), (answerOf(items[1]) + 1) % 6])).toEqual({ correct: 1, wrong: 1, omitted: 33 });
     expect(remainingSeconds(1800000, 0)).toBe(1800);
     expect(remainingSeconds(1800000, 1250400)).toBe(550);
     expect(remainingSeconds(1800000, 1900000)).toBe(0);
