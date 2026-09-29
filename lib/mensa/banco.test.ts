@@ -27,10 +27,20 @@ describe("preparação Mensa Brasil", () => {
       expect(items.filter(q => q.type === "figura" && (q.item.kind === "dual" || q.item.difficulty === "extrema"))).toHaveLength(0);
     }
   });
-  it("mantém cobertura brasileira exploratória separada", () => {
+  it("mantém cobertura brasileira separada por famílias explicitamente rotuladas", () => {
     const items = makeMensaItems("brasil", 42);
-    expect(items).toHaveLength(30);
-    expect(items.map(q => q.domain)).toEqual([...Array(24).fill("Matrizes"), ...Array(3).fill("Séries"), ...Array(3).fill("Classificação")]);
+    expect(items).toHaveLength(36);
+    const counts = items.reduce<Record<string, number>>((acc, q) => {
+      acc[q.domain] = (acc[q.domain] ?? 0) + 1;
+      return acc;
+    }, {});
+    expect(counts["Raven/APM-like"]).toBe(16);
+    expect(counts["G36/G38/R1-like"]).toBe(8);
+    expect(counts["TIG-NV-like"]).toBe(4);
+    expect(counts["D48/D70-like · dominós"]).toBe(4);
+    expect(counts["Exploratório · séries visuais"]).toBe(2);
+    expect(counts["Exploratório · classificação"]).toBe(2);
+    expect(items.filter(q => q.type === "figura" && q.item.difficulty === "extrema")).toHaveLength(0);
   });
   it("reproduz a semente e varia estímulos, não apenas a ordem das alternativas", () => {
     for (const mode of ["principal", "velocidade", "brasil", "desafio"] as const) {
