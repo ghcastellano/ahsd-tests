@@ -139,6 +139,7 @@ function PairBoard({ q, phase }: { q: Extract<MensaItem, { type: "domino" | "mos
 function LessonBoard({ q, phase }: { q: MensaItem; phase: number }) {
   if (q.type === "padrao") return <PatternBoard q={q} phase={phase}/>;
   if (q.type === "domino" || q.type === "mostrador") return <PairBoard q={q} phase={phase}/>;
+  if (q.type !== "figura") return null;
   if (q.item.grid) return <MatrixBoard q={q} phase={phase}/>;
   if (q.item.sequence) return <FigureSequenceBoard q={q} phase={phase}/>;
   if (q.item.set) return <FigureSetBoard q={q} phase={phase}/>;
