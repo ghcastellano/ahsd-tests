@@ -3,9 +3,9 @@ import { destinoSeguro, senhaConfere, tokenEsperado } from "./portao";
 
 describe("portão de entrada", () => {
   it("confere a senha padrão e rejeita variações", () => {
-    expect(senhaConfere("senha123")).toBe(true);
-    expect(senhaConfere("Senha123")).toBe(false);
-    expect(senhaConfere("senha1234")).toBe(false);
+    expect(senhaConfere("senha321")).toBe(true);
+    expect(senhaConfere("Senha321")).toBe(false);
+    expect(senhaConfere("senha3214")).toBe(false);
     expect(senhaConfere("")).toBe(false);
   });
   it("token é um hash estável de 64 hex, e não contém a senha", async () => {
