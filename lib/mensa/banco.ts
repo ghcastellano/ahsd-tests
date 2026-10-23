@@ -218,12 +218,22 @@ function mixedBrazilSession(seed: number): MensaItem[] {
       explanation: `Formato autoral de dominós para familiarização com relações abstratas. ${q.explanation}`,
     }));
 
-  const series = shuffle(figureSeriesItems(seed + 503), rand).slice(0, 2).map((item, i): FigureItem => ({
-    type: "figura", id: `${item.id}-expl-ser-${i}`, domain: "Exploratório · séries visuais", item,
-  }));
-  const classification = shuffle(classificationItems(seed + 607), rand).slice(0, 2).map((item, i): FigureItem => ({
-    type: "figura", id: `${item.id}-expl-class-${i}`, domain: "Exploratório · classificação", item,
-  }));
+  // Séries e classificação também respeitam o conjunto compartilhado: o banco de
+  // séries pode gerar dois itens visualmente idênticos para a mesma semente.
+  const pickFigures = (pool: FigureItem["item"][], count: number, domain: string, tag: string): FigureItem[] => {
+    const out: FigureItem[] = [];
+    for (const item of shuffle(pool, rand)) {
+      if (out.length >= count) break;
+      const q: FigureItem = { type: "figura", id: `${item.id}-expl-${tag}-${out.length}`, domain, item };
+      const signature = stimulusKey(q);
+      if (seen.has(signature)) continue;
+      seen.add(signature);
+      out.push(q);
+    }
+    return out;
+  };
+  const series = pickFigures(figureSeriesItems(seed + 503), 2, "Exploratório · séries visuais", "ser");
+  const classification = pickFigures(classificationItems(seed + 607), 2, "Exploratório · classificação", "class");
 
   return [...raven, ...gSeries, ...tig, ...dominoes, ...series, ...classification];
 }
