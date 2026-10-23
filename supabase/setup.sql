@@ -1,4 +1,10 @@
 -- =============================================================================
+-- ATENÇÃO: este script vale para o backend SUPABASE (fallback, usado quando a
+-- variável DATABASE_URL não existe). Com Postgres/Neon (DATABASE_URL definida)
+-- NÃO é preciso rodar nada: o site cria o schema sozinho na primeira
+-- requisição (lib/registro/postgres.ts) e confere a senha no servidor, sem
+-- RLS nem funções SQL. Veja GUIA-NEON.md.
+-- =============================================================================
 -- Schema do registro central de resultados (Supabase) — projeto dedicado.
 --
 -- Este é o schema canônico, já aplicado no projeto do AHSD. Use este arquivo

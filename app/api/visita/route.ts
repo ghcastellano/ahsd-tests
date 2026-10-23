@@ -1,4 +1,5 @@
-import { insertVisit, visitaDaRequisicao } from "@/lib/visitas";
+import { visitaDaRequisicao } from "@/lib/visitas";
+import { backendAtual } from "@/lib/registro";
 
 // Registro de acesso. O cliente só informa caminho e página de origem; o IP,
 // a localização, o navegador e o idioma vêm dos cabeçalhos da requisição —
@@ -17,7 +18,12 @@ export async function POST(req: Request): Promise<Response> {
     corpo = null;
   }
   const visita = visitaDaRequisicao(req.headers, corpo);
-  const gravou = await insertVisit(visita);
+  let gravou = false;
+  try {
+    gravou = await backendAtual().inserirVisita(visita);
+  } catch {
+    gravou = false;
+  }
   return Response.json({ ok: gravou }, { status: gravou ? 200 : 202, headers: { "Cache-Control": "no-store" } });
 }
 

@@ -1,5 +1,5 @@
 import { csvEscape, formatDateTimeBR } from "./history";
-import { ADMIN_VISITS_RPC, SUPABASE_KEY, SUPABASE_URL, VISITS_TABLE, remoteEnabled } from "./remote-config";
+import { remoteEnabled } from "./remote-config";
 
 // Registro de acessos: quem abre o site tem o IP (e o que a Vercel informa de
 // localização) gravado no banco central. O IP vem dos cabeçalhos carimbados
@@ -114,50 +114,7 @@ export function visitaDaRequisicao(h: CabecalhoLeitor, corpo: unknown): Visita {
   };
 }
 
-/** Grava a visita no banco central (servidor). Melhor-esforço: nunca lança. */
-export async function insertVisit(v: Visita, prazoMs = 5000): Promise<boolean> {
-  if (!remoteEnabled()) return false;
-  try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${VISITS_TABLE}`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify({
-        ip: v.ip,
-        pais: v.pais,
-        regiao: v.regiao,
-        cidade: v.cidade,
-        caminho: v.caminho,
-        referer: v.referer,
-        user_agent: v.userAgent,
-        idioma: v.idioma,
-      }),
-      signal: AbortSignal.timeout(prazoMs),
-    });
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-interface LinhaRemota {
-  id: string;
-  created_at: string;
-  ip: string | null;
-  pais: string | null;
-  regiao: string | null;
-  cidade: string | null;
-  caminho: string | null;
-  referer: string | null;
-  user_agent: string | null;
-  idioma: string | null;
-}
-
-/** Lista os acessos mediante a senha do painel (RPC protegida). */
+/** Lista os acessos mediante a senha do painel (rota protegida do servidor). */
 export async function fetchRemoteVisits(password: string): Promise<VisitaRegistro[]> {
   if (!remoteEnabled()) throw new Error("Registro central não está ativado.");
   const prazo =
@@ -166,46 +123,33 @@ export async function fetchRemoteVisits(password: string): Promise<VisitaRegistr
       : undefined;
   let res: Response;
   try {
-    res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${ADMIN_VISITS_RPC}`, {
+    res = await fetch("/api/painel/visitas", {
       method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ p_senha: password }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ senha: password }),
       signal: prazo,
     });
   } catch {
-    throw new Error("Não foi possível falar com o banco central (sem conexão, VPN/firewall ou o projeto Supabase pausado).");
+    throw new Error("Não foi possível falar com o servidor do site (sem conexão, VPN/firewall ou prazo esgotado).");
+  }
+  let j: Record<string, unknown> | null = null;
+  try {
+    const bruto: unknown = await res.json();
+    j = bruto && typeof bruto === "object" ? (bruto as Record<string, unknown>) : null;
+  } catch {
+    j = null;
   }
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    if (body.includes("senha incorreta")) throw new Error("Senha incorreta.");
-    if (res.status === 404 || body.includes("PGRST202")) {
+    const erro = j && typeof j.erro === "string" ? j.erro : "";
+    if (res.status === 401 || erro.includes("senha incorreta")) throw new Error("Senha incorreta.");
+    if (erro.includes("tabela de acessos")) {
       throw new Error("A tabela de acessos ainda não existe no banco: rode supabase/visitas.sql no SQL Editor do projeto.");
     }
-    throw new Error(`Falha ao consultar os acessos (${res.status}).`);
+    throw new Error(`Falha ao consultar os acessos (${res.status})${erro ? `: ${erro}` : ""}.`);
   }
-  let rows: LinhaRemota[];
-  try {
-    rows = (await res.json()) as LinhaRemota[];
-  } catch {
-    throw new Error("A resposta do banco central veio incompleta. Tente novamente.");
-  }
-  if (!Array.isArray(rows)) throw new Error("Resposta inesperada do banco central.");
-  return rows.map((r) => ({
-    id: r.id,
-    createdAt: r.created_at,
-    ip: r.ip ?? null,
-    pais: r.pais ?? null,
-    regiao: r.regiao ?? null,
-    cidade: r.cidade ?? null,
-    caminho: r.caminho ?? null,
-    referer: r.referer ?? null,
-    userAgent: r.user_agent ?? null,
-    idioma: r.idioma ?? null,
-  }));
+  if (!j) throw new Error("A resposta do banco central veio incompleta. Tente novamente.");
+  if (!Array.isArray(j.visitas)) throw new Error("Resposta inesperada do banco central.");
+  return j.visitas as VisitaRegistro[];
 }
 
 /** "Chrome · Android", "Safari · iPhone"… a partir do user-agent (heurística simples). */

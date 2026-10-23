@@ -7,7 +7,7 @@ import { entrar } from "./login.mjs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
 const proxy = process.env.HTTPS_PROXY && !/localhost|127\.0\.0\.1/.test(B) ? { server: process.env.HTTPS_PROXY, bypass: "localhost,127.0.0.1" } : undefined;
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", proxy });
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH ?? "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome", proxy });
 const p = await browser.newPage();
 await entrar(p, B);
 

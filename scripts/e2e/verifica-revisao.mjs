@@ -10,7 +10,7 @@ const variacao = JSON.parse(readFileSync(new URL("./variacao-esperado.json", imp
 const sim = JSON.parse(readFileSync(new URL("./simulador-esperado.json", import.meta.url), "utf8"));
 const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
 const proxy = process.env.HTTPS_PROXY && !/localhost|127\.0\.0\.1/.test(B) ? { server: process.env.HTTPS_PROXY, bypass: "localhost,127.0.0.1" } : undefined;
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", proxy });
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH ?? "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome", proxy });
 
 // Joga um teste de múltipla escolha errando os itens em `errar` (índices):
 // marca (correta+1) % 6 neles e a correta nos demais.
@@ -46,6 +46,7 @@ async function conferirRevisao(p, nome, errados, total, idErrado) {
 }
 
 const p = await browser.newPage();
+await p.clock.install(); // o simulador tem janelas longas (memória 1 s/elemento; velocidade 120 s): avançamos o relógio
 await entrar(p, B);
 p.on("dialog", (d) => d.accept());
 
@@ -94,12 +95,14 @@ p.on("dialog", (d) => d.accept());
   }
   await p.getByRole("button", { name: /Seguir para a memória/ }).click();
   for (const m of b0.memoria) {
+    for (let j = 0; j < 11 && await p.locator("#mem").count() === 0; j++) { await p.clock.fastForward(1100); await p.waitForTimeout(10); }
     await p.locator("#mem").waitFor({ timeout: 30000 });
     await p.locator("#mem").fill(m.resposta);
     await p.getByRole("button", { name: "Confirmar" }).click();
   }
   await p.getByText(/Velocidade de processamento|Velocidade/).first().waitFor();
   for (const presente of b0.velocidade) { await p.keyboard.press(presente ? "s" : "n"); await p.waitForTimeout(30); }
+  await p.clock.fastForward(121000); // encerra a janela de velocidade após os trials do roteiro
   await p.getByText(/Raciocínio/).first().waitFor();
   for (let i = 0; i < b0.raciocinio.length; i++) {
     const r = b0.raciocinio[i];

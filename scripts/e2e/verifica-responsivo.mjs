@@ -10,7 +10,7 @@ const B = process.env.BASE_URL ?? "http://localhost:3111";
 const DIR = process.env.SHOTS_DIR ?? "/tmp/claude-0/-home-user-ahsd-tests/127777f9-3544-5baf-b866-2da183b5c0de/scratchpad/shots";
 mkdirSync(DIR, { recursive: true });
 const LARGURAS = [[390, 844, "celular"], [820, 1180, "ipad"], [1280, 800, "web"]];
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH ?? "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome" });
 const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
 
 async function medir(p) {

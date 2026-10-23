@@ -8,7 +8,7 @@ import { entrar } from "./login.mjs";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const F = process.env.FAKE_URL ?? "http://127.0.0.1:3222";
 const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH ?? "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome" });
 const ctx = await browser.newContext({ extraHTTPHeaders: {
   "x-forwarded-for": "187.10.20.30, 10.0.0.1",
   "x-vercel-ip-country": "BR", "x-vercel-ip-country-region": "SP", "x-vercel-ip-city": "S%C3%A3o%20Paulo",

@@ -5,7 +5,7 @@ const B = process.env.BASE_URL ?? "http://localhost:3111";
 const esperados = JSON.parse(readFileSync("scripts/e2e/esperados.json", "utf8"));
 // Fora do localhost, respeita o proxy do ambiente (HTTPS_PROXY), se houver.
 const proxy = process.env.HTTPS_PROXY && !/localhost|127\.0\.0\.1/.test(B) ? { server: process.env.HTTPS_PROXY, bypass: "localhost,127.0.0.1" } : undefined;
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", proxy });
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH ?? "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome", proxy });
 const fmt = (n) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/\.?0+$/, "").replace(".", ","));
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 let pass = 0, fail = 0; const falhas = [];

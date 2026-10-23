@@ -67,7 +67,8 @@ identificação opcional, pontuações, faixas e subescalas — **sem as respost
 individuais**) é salvo:
 
 - **Neste dispositivo** (localStorage) — sempre.
-- **No registro central** (Supabase) — **ativo**, em projeto dedicado.
+- **No registro central** — **ativo**: Postgres/Neon (quando há `DATABASE_URL`)
+  ou o projeto Supabase dedicado (fallback).
 
 O painel fica em **`/painel-ahsd`** (URL discreta, fora da navegação e com
 `noindex`): lista os registros com data e hora, detalhamento por subescala,
@@ -89,26 +90,67 @@ corrompidos ou forjados fora do formato são rejeitados.
 Todo teste concluído, em qualquer aparelho, grava automaticamente no banco
 central; o painel `/painel-ahsd` lista os registros (até os 2.000 mais recentes)
 mediante a senha, e também sincroniza para lá os registros locais do aparelho ao
-ser aberto. O schema vive em [`supabase/setup.sql`](supabase/setup.sql).
+ser aberto.
+
+**Dois backends, escolhidos pelo servidor** (`lib/registro/index.ts`):
+
+| Backend | Quando | Como |
+| --- | --- | --- |
+| **Postgres/Neon** (`lib/registro/postgres.ts` + `neon.ts`) | a variável de servidor `DATABASE_URL` existe | driver `@neondatabase/serverless` em modo HTTP — **só uma connection string do Neon funciona** (um Postgres comum não responde nesse protocolo); o schema (`resultados`, `visitas`, `admin_config`) é criado sozinho na primeira requisição; a senha do painel vem de `PAINEL_SENHA_INICIAL` e é conferida no servidor com bcrypt. Passo a passo em [`GUIA-NEON.md`](GUIA-NEON.md). |
+| **Supabase** (`lib/registro/supabase.ts`) | sem `DATABASE_URL` (fallback) | a API REST do projeto dedicado, com RLS e as funções `admin_listar_*` de [`supabase/setup.sql`](supabase/setup.sql). |
+
+O navegador **nunca fala com o banco**: tudo passa pelas rotas do servidor,
+que nunca lançam (toda falha vira JSON com `erro`/`motivo`):
+
+- `POST /api/resultados { record }` → `{ ok, status, motivo? }` (grava; o mesmo id repetido é `409` = ok);
+- `POST /api/painel/resultados { senha }` → `{ registros }`; `POST /api/painel/visitas { senha }` → `{ visitas }`
+  (senha errada → `401 { erro: "senha incorreta" }`, senha errada repetida → `429`, outras falhas → `502`);
+- `POST /api/importar { senha, resultados?, visitas? }` → `{ resultados: n, visitas: n }` (só Postgres; idempotente);
+- `POST /api/exportar { senha }` → `{ origem, resultados, visitas, visitas_status }`;
+- `GET /api/registro-central` → sonda + `backend` (`"postgres"` ou `"supabase"`); `POST /api/visita` grava o acesso.
+
+Variáveis: `DATABASE_URL` (liga o Postgres/Neon), `PAINEL_SENHA_INICIAL`
+(**obrigatória com o Neon**, definida antes do primeiro deploy com
+`DATABASE_URL`: é semeada em `admin_config` enquanto a tabela está vazia; sem
+ela o painel recusa qualquer senha — não há senha padrão no código),
+`NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` (outro projeto
+Supabase) e `NEXT_PUBLIC_REGISTRO_CENTRAL=off` (desliga o registro central no
+cliente **e no servidor**, nos dois backends — nada é gravado nem lido,
+inclusive os acessos/IP).
 
 **Segurança do desenho:**
 
-- A chave pública (publishable/anon) só permite **INSERIR** — não lê, não
-  atualiza, não apaga. Por isso a gravação usa `INSERT` simples: o modo *upsert*
-  do PostgREST exigiria política de `UPDATE`, o que deixaria qualquer visitante
-  sobrescrever resultados alheios.
+- No Postgres/Neon a connection string fica só no servidor; não há RLS porque
+  o banco não é exposto. No Supabase a chave pública só permite **INSERIR** —
+  não lê, não atualiza, não apaga; a gravação usa `INSERT` simples porque o
+  modo *upsert* do PostgREST exigiria política de `UPDATE`.
 - A idempotência vem de `UNIQUE(client_id)`: reenviar o mesmo registro devolve
   **409**, que o cliente trata como "já sincronizado".
-- A leitura só acontece pela função `admin_listar_resultados`, que valida a senha
-  do painel contra um hash **bcrypt**. A função é pública — a proteção é a senha,
-  então use uma senha longa e única.
-- `created_at` é carimbado pelo servidor: o cliente não envia data.
+- A leitura exige a senha do painel, validada contra um hash **bcrypt** (no
+  servidor, no Postgres; na função `admin_listar_resultados`, no Supabase). A
+  proteção é a senha, então use uma senha longa e única. As rotas que recebem
+  a senha têm um freio de tentativas por IP (10 erros em 15 min → `429`).
+- Rotas sem senha (`/api/resultados`, `/api/registro-central`, `/api/visita`)
+  nunca ecoam o texto cru de um erro do banco/driver — só uma categoria
+  genérica; o texto completo (sem a connection string) vai para o log do
+  servidor.
+- `created_at` é carimbado pelo servidor: o cliente não envia data (só a
+  importação preserva a data original).
+- Os valores são truncados/limitados no servidor aos mesmos limites dos
+  `CHECK`s do schema (`lib/registro/linhas.ts`), então nunca estouram.
+
+**Testes.** `lib/registro/postgres.test.ts` roda o backend Postgres num
+Postgres de verdade em memória (`@electric-sql/pglite`): schema idempotente,
+409 na repetição, senha certa/errada, mapeamento dos campos, importação
+idempotente com data preservada e truncamento.
 
 **Status visível da gravação.** Cada tela de resultado mostra se o registro
 entrou no banco central ("✓ Gravado no registro central") ou o motivo da falha
 (chave/RLS, tabela ausente, sem conexão) com o botão "Tentar de novo"
 (`components/RegistroCentralStatus.tsx`). O painel testa a gravação ao abrir
-via `GET /api/registro-central`: a sonda envia uma linha propositalmente
+via `GET /api/registro-central`, que também diz qual banco está em uso
+("Banco: Postgres/Neon" ou "Banco: Supabase"). No Postgres a sonda garante o
+schema e roda `select 1`; no Supabase ela envia uma linha propositalmente
 inválida e lê a resposta — 23514 (restrição de valores) significa que a
 política RLS deixou passar e a gravação real funciona; 42501/401 significa
 bloqueada. Nada é gravado pela sonda.
@@ -138,7 +180,8 @@ clínicos continuam sem respostas individuais. Para o projeto Supabase já
 existente, rode uma vez [`supabase/detalhes.sql`](supabase/detalhes.sql);
 até lá o site grava o resumo sem a revisão e avisa na tela.
 `POST /api/exportar` (com a senha do painel) devolve resultados e acessos em
-JSON, para backup ou migração.
+JSON, para backup ou migração; o painel importa esse JSON de volta em
+"Importar exportação (JSON)" (`POST /api/importar`, só no Postgres/Neon).
 
 ### Registro de acessos (IP)
 
@@ -151,16 +194,20 @@ segurança do registro central: a chave pública só insere; a leitura acontece
 pela função `admin_listar_visitas`, protegida pela senha do painel, que lista
 até 5.000 acessos com filtro por IP e exportação CSV.
 
-Para ativar num projeto que ainda não tem a tabela, rode
-[`supabase/visitas.sql`](supabase/visitas.sql) no SQL Editor (o `setup.sql`
-já inclui o mesmo bloco para instalações novas). Endereço IP é dado pessoal
+No Postgres/Neon a tabela nasce sozinha. Num projeto Supabase que ainda não
+a tem, rode [`supabase/visitas.sql`](supabase/visitas.sql) no SQL Editor (o
+`setup.sql` já inclui o mesmo bloco para instalações novas). Endereço IP é dado pessoal
 (LGPD): a finalidade registrada é segurança e auditoria de uso, a página
 "Sobre" informa a coleta e o script traz o comando de limpeza para apagar
 acessos com mais de 180 dias.
 
-**Apontar para outro projeto** (sem alterar código): defina no Vercel
-`NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY`, rode o
-`setup.sql` no projeto novo, defina a senha e faça um novo deploy.
+**Apontar para outro banco** (sem alterar código): para o Neon, defina
+`DATABASE_URL` (connection string do Neon — o driver HTTP não fala com um
+Postgres comum) e `PAINEL_SENHA_INICIAL` na Vercel e faça redeploy
+([`GUIA-NEON.md`](GUIA-NEON.md));
+para outro projeto Supabase, defina `NEXT_PUBLIC_SUPABASE_URL` e
+`NEXT_PUBLIC_SUPABASE_ANON_KEY`, rode o `setup.sql` no projeto novo, defina a
+senha e faça um novo deploy.
 
 ## Guia educativo
 
@@ -183,12 +230,15 @@ components/          # QuizRunner + ResultView + AdminPanel (client)
 lib/
   types.ts           # tipos do domínio
   scoring.ts         # helpers de pontuação (soma, reverso, faixas, subescalas)
-  history.ts         # registro de resultados (local + central) e exportação CSV
-  remote-config.ts   # ativação do registro central (variáveis NEXT_PUBLIC_*)
+  history.ts         # registro de resultados (local + central via /api) e exportação CSV
+  remote-config.ts   # constantes do Supabase (fallback) e liga/desliga do registro central
+  registro/          # backends do registro central (servidor): tipos.ts, postgres.ts,
+                     #   neon.ts, supabase.ts, index.ts (escolha), linhas.ts (mapeamento
+                     #   e limites), http.ts (rotas); postgres.test.ts roda em PGlite
   instruments/       # uma definição por instrumento + registry (index.ts)
   scoring.test.ts    # testes unitários de pontuação (Vitest)
   history.test.ts    # testes do registro/CSV
-supabase/setup.sql   # schema + RLS do registro central (resultados + visitas)
+supabase/setup.sql   # schema + RLS do backend Supabase (o Postgres/Neon cria o schema sozinho)
 supabase/visitas.sql # só a tabela de acessos, para projetos já existentes
 ```
 
@@ -304,9 +354,12 @@ BASE_URL=http://localhost:3111 node scripts/e2e/verifica-dojo.mjs
 # confere que a questão aparece com a alternativa marcada (vermelha) e a correta (verde)
 BASE_URL=http://localhost:3111 node scripts/e2e/verifica-revisao.mjs
 # registro de acessos (IP): site buildado apontando para um Supabase falso local
+# (sem DATABASE_URL, o servidor usa o backend Supabase e fala com o falso)
 node scripts/e2e/supabase-falso.mjs 3222 &
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:3222 npm run build && npx next start -p 3111 &
 node scripts/e2e/verifica-visitas.mjs   # 17 verificações: IP dos cabeçalhos, painel, filtro, CSV
+# backend Postgres/Neon num Postgres em memória (PGlite), sem rede
+npx vitest run lib/registro
 ```
 
 ### Dojo — treino ativo por exame (`/treino/dojo`)

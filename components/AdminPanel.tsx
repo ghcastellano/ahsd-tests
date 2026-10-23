@@ -225,7 +225,7 @@ export default function AdminPanel() {
   const [lembrar, setLembrar] = useState(false);
   const [entrouSozinho, setEntrouSozinho] = useState(false);
   // Sonda: o site consegue gravar novos resultados no banco central?
-  const [sonda, setSonda] = useState<{ gravacao: string; texto: string; detalhe: string } | null>(null);
+  const [sonda, setSonda] = useState<{ gravacao: string; texto: string; detalhe: string; backend?: string } | null>(null);
   useEffect(() => {
     if (!remoteEnabled()) return;
     fetch("/api/registro-central", { cache: "no-store" })
@@ -234,6 +234,54 @@ export default function AdminPanel() {
       .catch(() => setSonda({ gravacao: "sem-conexao", texto: "não foi possível testar a gravação", detalhe: "" }));
   }, []);
   const central = useMemo(() => remoteEnabled(), []);
+  // Importação de uma exportação (JSON de /api/exportar) para o banco atual.
+  const [importJson, setImportJson] = useState("");
+  const [importando, setImportando] = useState(false);
+  const [importResultado, setImportResultado] = useState<{ ok: boolean; texto: string } | null>(null);
+
+  async function importarExportacao() {
+    let dados: unknown;
+    try {
+      dados = JSON.parse(importJson);
+    } catch {
+      setImportResultado({ ok: false, texto: "O texto colado não é um JSON válido." });
+      return;
+    }
+    // Aceita a exportação completa ({ resultados, visitas }) ou só uma lista de resultados.
+    const corpo = Array.isArray(dados)
+      ? { resultados: dados }
+      : dados && typeof dados === "object"
+        ? { resultados: (dados as { resultados?: unknown }).resultados, visitas: (dados as { visitas?: unknown }).visitas }
+        : {};
+    if (!Array.isArray(corpo.resultados) && !Array.isArray(corpo.visitas)) {
+      setImportResultado({ ok: false, texto: "O JSON precisa ter as listas \"resultados\" e/ou \"visitas\" (formato de /api/exportar)." });
+      return;
+    }
+    setImportando(true);
+    setImportResultado(null);
+    try {
+      const res = await fetch("/api/importar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ senha: password, ...corpo }),
+      });
+      const j = (await res.json().catch(() => null)) as { resultados?: number; visitas?: number; erro?: string } | null;
+      if (!res.ok || !j || typeof j.resultados !== "number") {
+        setImportResultado({ ok: false, texto: `Importação falhou${j?.erro ? `: ${j.erro}` : ` (HTTP ${res.status})`}.` });
+      } else {
+        setImportResultado({
+          ok: true,
+          texto: `Importados: ${j.resultados} resultado(s) novo(s) e ${j.visitas ?? 0} acesso(s) novo(s) (o que já existia foi ignorado).`,
+        });
+        setImportJson("");
+        void loadRemote();
+      }
+    } catch {
+      setImportResultado({ ok: false, texto: "Sem conexão com o servidor do site." });
+    } finally {
+      setImportando(false);
+    }
+  }
 
   // Sincroniza os registros deste dispositivo com o banco central (idempotente:
   // o banco ignora client_id duplicado, então rodar toda vez é seguro).
@@ -533,6 +581,11 @@ export default function AdminPanel() {
             data-sonda={sonda?.gravacao}
           >
             Gravação de novos resultados: {sonda ? sonda.texto : "testando…"}
+            {sonda?.backend === "postgres" || sonda?.backend === "supabase" ? (
+              <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600" data-banco={sonda.backend}>
+                Banco: {sonda.backend === "postgres" ? "Postgres/Neon" : "Supabase"}
+              </span>
+            ) : null}
           </p>
         )}
         {!central ? (
@@ -638,6 +691,38 @@ export default function AdminPanel() {
               </div>
             </div>
             <RecordsTable records={remote} />
+
+            <details className="mt-4 rounded-lg border border-slate-200 bg-white p-4" data-importar-exportacao>
+              <summary className="cursor-pointer text-sm font-medium text-slate-700">
+                Importar exportação (JSON)
+              </summary>
+              <p className="mt-2 text-xs text-slate-500">
+                Cole aqui o JSON devolvido por <code className="rounded bg-slate-100 px-1">POST /api/exportar</code> (do
+                banco antigo) para trazer os resultados e os acessos para o banco atual. Pode repetir: o que já
+                existe é ignorado. Disponível só com o banco Postgres/Neon.
+              </p>
+              <textarea
+                value={importJson}
+                onChange={(e) => setImportJson(e.target.value)}
+                rows={5}
+                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs focus:border-brand-500 focus:outline-none"
+                placeholder='{"origem": "...", "resultados": [...], "visitas": [...]}'
+                aria-label="JSON da exportação"
+              />
+              <button
+                type="button"
+                onClick={() => void importarExportacao()}
+                disabled={!importJson.trim() || importando}
+                className="mt-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-40"
+              >
+                {importando ? "Importando…" : "Importar para o banco central"}
+              </button>
+              {importResultado && (
+                <p className={`mt-2 text-sm ${importResultado.ok ? "text-emerald-700" : "text-rose-600"}`} data-importacao={importResultado.ok ? "ok" : "falhou"}>
+                  {importResultado.texto}
+                </p>
+              )}
+            </details>
           </>
         )}
       </section>

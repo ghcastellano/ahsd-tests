@@ -4,7 +4,7 @@
 import { chromium } from "playwright";
 const B = process.env.BASE_URL ?? "http://localhost:3111";
 const log = []; const ok = (c, m) => log.push(`${c ? "PASS  " : "FALHOU"}  ${m}`);
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH ?? "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome" });
 const p = await browser.newPage();
 
 for (const rota of ["/", "/treino/dojo", "/painel-ahsd", "/teste/phq-9", "/resultado"]) {
@@ -22,7 +22,7 @@ await alerta.waitFor();
 ok((await alerta.innerText()).includes("Senha incorreta"), "senha errada: 'Senha incorreta.'");
 ok(p.url().includes("/entrar"), "senha errada: continua na tela de senha");
 
-await p.locator("#senha-site").fill("senha123");
+await p.locator("#senha-site").fill("senha321");
 await p.getByRole("button", { name: "Entrar" }).click();
 await p.waitForURL((u) => u.pathname === "/treino/dojo");
 ok(new URL(p.url()).searchParams.get("exame") === "mensa", "senha certa: volta ao destino original com a query");
@@ -33,9 +33,9 @@ const api = await fetch(`${B}/api/registro-central`);
 ok(api.status === 200, `rotas de API seguem acessíveis sem o cookie (${api.status})`);
 const r401 = await fetch(`${B}/api/entrar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senha: "x" }) });
 ok(r401.status === 401, "POST /api/entrar com senha errada = 401");
-const r200 = await fetch(`${B}/api/entrar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senha: "senha123" }) });
+const r200 = await fetch(`${B}/api/entrar`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ senha: "senha321" }) });
 const sc = r200.headers.get("set-cookie") || "";
-ok(r200.status === 200 && /ahsd_acesso=[0-9a-f]{64}/.test(sc) && /HttpOnly/.test(sc) && !/senha123/.test(sc), "cookie é um hash HttpOnly, sem a senha");
+ok(r200.status === 200 && /ahsd_acesso=[0-9a-f]{64}/.test(sc) && /HttpOnly/.test(sc) && !/senha321/.test(sc), "cookie é um hash HttpOnly, sem a senha");
 
 // sair
 await p.evaluate(() => fetch("/api/sair", { method: "POST" }));

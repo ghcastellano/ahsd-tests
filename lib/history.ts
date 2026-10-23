@@ -1,5 +1,5 @@
 import type { Instrument, InstrumentResult, Severity } from "./types";
-import { ADMIN_RPC, RESULTS_TABLE, SUPABASE_KEY, SUPABASE_URL, remoteEnabled } from "./remote-config";
+import { remoteEnabled } from "./remote-config";
 
 // Registro de resultado gravado no histórico (local e, quando ativo, central).
 // Por privacidade, NÃO armazenamos as respostas individuais — apenas o
@@ -165,7 +165,7 @@ export interface EnvioRemoto {
   motivo?: string;
 }
 
-/** Traduz a resposta do PostgREST/Supabase para um motivo legível. */
+/** Traduz uma resposta HTTP de falha (do banco ou da rota) para um motivo legível. */
 export function motivoDaFalha(status: number | undefined, body: string): string {
   if (status === undefined) return "sem conexão com o banco central (rede, VPN/bloqueador ou projeto pausado)";
   if (status === 401 || status === 403 || body.includes("42501")) {
@@ -173,76 +173,60 @@ export function motivoDaFalha(status: number | undefined, body: string): string 
   }
   if (status === 404 || body.includes("PGRST205") || body.includes("PGRST202")) return "a tabela de resultados não existe no banco central";
   if (status === 400 || status === 422) return `o banco rejeitou os dados (HTTP ${status}${body.includes("23514") ? ", restrição de valores" : ""})`;
+  if (status === 413) return "o registro é grande demais para a rota de gravação";
   if (status >= 500) return `o banco central está fora do ar (HTTP ${status})`;
   return `falha inesperada (HTTP ${status})`;
 }
 
-export async function insertRemoteRecordDetalhado(record: ResultRecord, comDetalhes = true): Promise<EnvioRemoto> {
-  if (!remoteEnabled()) return { ok: false, motivo: "registro central desativado" };
+/** Corpo JSON de uma resposta, ou null quando não dá para interpretar. */
+async function jsonOuNulo(res: Response): Promise<Record<string, unknown> | null> {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${RESULTS_TABLE}`, {
-      method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        Prefer: "return=minimal",
-      },
-      // created_at fica de fora de propósito: o servidor carimba com now(),
-      // impedindo datas forjadas de bagunçar a ordenação do painel.
-      body: JSON.stringify({
-        client_id: record.id,
-        instrument_id: record.instrumentId,
-        acronym: record.acronym,
-        instrument_name: record.instrumentName,
-        respondent: record.respondent ?? null,
-        total_score: record.totalScore,
-        max_score: record.maxScore,
-        band_label: record.bandLabel,
-        severity: record.severity,
-        positive: record.positive ?? null,
-        metric_is_mean: record.metricIsMean ?? false,
-        subscales: record.subscales ?? null,
-        // Colunas novas (detalhes.sql). Se o banco ainda não as tiver, o
-        // PostgREST responde PGRST204 e reenviamos sem elas (o resumo não se perde).
-        ...(comDetalhes ? { duracao_segundos: record.durationSeconds ?? null, detalhes: record.detalhes ?? null } : {}),
-      }),
-    });
-    // 409 = client_id já existe: o registro está no banco, missão cumprida.
-    if (res.ok || res.status === 409) return { ok: true, status: res.status };
-    const body = await res.text().catch(() => "");
-    if (comDetalhes && body.includes("PGRST204")) {
-      const semDetalhes = await insertRemoteRecordDetalhado(record, false);
-      if (semDetalhes.ok) return { ...semDetalhes, motivo: "gravado sem a revisão item a item: o banco ainda não tem as colunas novas (rode supabase/detalhes.sql)" };
-      return semDetalhes;
-    }
-    return { ok: false, status: res.status, motivo: motivoDaFalha(res.status, body) };
+    const j: unknown = await res.json();
+    return j && typeof j === "object" ? (j as Record<string, unknown>) : null;
   } catch {
-    return { ok: false, motivo: motivoDaFalha(undefined, "") };
+    return null;
   }
 }
 
-interface RemoteRow {
-  client_id?: string;
-  id?: string;
-  created_at: string;
-  instrument_id: string;
-  acronym: string;
-  instrument_name: string;
-  respondent: string | null;
-  total_score: number;
-  max_score: number;
-  band_label: string;
-  severity: Severity;
-  positive: boolean | null;
-  metric_is_mean: boolean | null;
-  subscales: RecordSubscale[] | null;
-  notes: string[] | null;
-  duracao_segundos?: number | null;
-  detalhes?: DetalheItem[] | null;
+export async function insertRemoteRecordDetalhado(record: ResultRecord, comDetalhes = true): Promise<EnvioRemoto> {
+  if (!remoteEnabled()) return { ok: false, motivo: "registro central desativado" };
+  // Sem detalhes: manda só o resumo (duração e revisão item a item ficam de fora).
+  const { durationSeconds, detalhes, ...resumo } = record;
+  const enviado: ResultRecord = comDetalhes ? record : resumo;
+  let res: Response;
+  try {
+    res = await fetch("/api/resultados", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ record: enviado }),
+    });
+  } catch {
+    return { ok: false, motivo: "sem conexão com o servidor do site (rede, VPN/bloqueador)" };
+  }
+  if (res.ok || res.status === 409) {
+    // A rota responde { ok, status, motivo } com o que o banco disse.
+    const j = await jsonOuNulo(res);
+    if (j && typeof j.ok === "boolean") {
+      return {
+        ok: j.ok,
+        status: typeof j.status === "number" ? j.status : res.status,
+        motivo: typeof j.motivo === "string" ? j.motivo : undefined,
+      };
+    }
+    return { ok: true, status: res.status };
+  }
+  const body = await res.text().catch(() => "");
+  let motivo: string | undefined;
+  try {
+    const j = JSON.parse(body) as { motivo?: unknown; erro?: unknown };
+    motivo = typeof j.motivo === "string" ? j.motivo : typeof j.erro === "string" ? j.erro : undefined;
+  } catch {
+    motivo = undefined;
+  }
+  return { ok: false, status: res.status, motivo: motivo ?? motivoDaFalha(res.status, body) };
 }
 
-/** Lista os registros centrais mediante a senha do painel (RPC segura). */
+/** Lista os registros centrais mediante a senha do painel (rota protegida do servidor). */
 export async function fetchRemoteRecords(password: string): Promise<ResultRecord[]> {
   if (!remoteEnabled()) throw new Error("Registro central não está ativado.");
   // AbortSignal.timeout não existe no Safari < 16; lá seguimos sem prazo, o
@@ -253,14 +237,10 @@ export async function fetchRemoteRecords(password: string): Promise<ResultRecord
       : undefined;
   let res: Response;
   try {
-    res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${ADMIN_RPC}`, {
+    res = await fetch("/api/painel/resultados", {
       method: "POST",
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ p_senha: password }),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ senha: password }),
       // Sem isso, uma rede que engasga deixa o painel em "Carregando…" para
       // sempre, sem nada explicando o que houve.
       signal: prazo,
@@ -269,44 +249,21 @@ export async function fetchRemoteRecords(password: string): Promise<ResultRecord
     // "Failed to fetch" é a mensagem crua do navegador, em inglês e sem pista
     // do que fazer — traduzimos para algo acionável.
     throw new Error(
-      "Não foi possível falar com o banco central (sem conexão, VPN/firewall ou o projeto Supabase pausado). Os registros deste aparelho continuam na lista acima.",
+      "Não foi possível falar com o servidor do site (sem conexão, VPN/firewall ou prazo esgotado). Os registros deste aparelho continuam na lista acima.",
     );
   }
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    // A função SQL lança exatamente 'senha incorreta'; um substring mais curto
-    // ("senha") também casaria com o erro PGRST202 de função-não-encontrada,
-    // cuja mensagem ecoa o parâmetro "p_senha".
-    if (body.includes("senha incorreta")) throw new Error("Senha incorreta.");
-    throw new Error(`Falha ao consultar o registro central (${res.status}).`);
+    const j = await jsonOuNulo(res);
+    const erro = j && typeof j.erro === "string" ? j.erro : "";
+    if (res.status === 401 || erro.includes("senha incorreta")) throw new Error("Senha incorreta.");
+    throw new Error(`Falha ao consultar o registro central (${res.status})${erro ? `: ${erro}` : ""}.`);
   }
   // A resposta pode ser interrompida no meio (prazo estourado, conexão caiu):
   // sem isso escaparia um DOMException cru, em inglês, para a tela.
-  let rows: RemoteRow[];
-  try {
-    rows = (await res.json()) as RemoteRow[];
-  } catch {
-    throw new Error("A resposta do banco central veio incompleta. Tente novamente.");
-  }
-  if (!Array.isArray(rows)) throw new Error("Resposta inesperada do banco central.");
-  return rows.map((r) => ({
-    id: r.client_id ?? r.id ?? "",
-    createdAt: r.created_at,
-    instrumentId: r.instrument_id,
-    acronym: r.acronym,
-    instrumentName: r.instrument_name,
-    respondent: r.respondent ?? undefined,
-    totalScore: Number(r.total_score),
-    maxScore: Number(r.max_score),
-    bandLabel: r.band_label,
-    severity: r.severity,
-    positive: r.positive ?? undefined,
-    metricIsMean: r.metric_is_mean ?? undefined,
-    subscales: r.subscales ?? undefined,
-    notes: r.notes ?? undefined,
-    durationSeconds: r.duracao_segundos ?? undefined,
-    detalhes: r.detalhes ?? undefined,
-  }));
+  const j = await jsonOuNulo(res);
+  if (!j) throw new Error("A resposta do banco central veio incompleta. Tente novamente.");
+  if (!Array.isArray(j.registros)) throw new Error("Resposta inesperada do banco central.");
+  return j.registros as ResultRecord[];
 }
 
 export function formatDateTimeBR(iso: string): string {

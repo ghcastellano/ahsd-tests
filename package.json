@@ -12,11 +12,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "bcryptjs": "^3.0.3",
     "next": "^15.5.20",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
     "@types/node": "22.10.7",
     "@types/react": "19.0.7",
     "@types/react-dom": "19.0.3",

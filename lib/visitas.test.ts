@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   buildVisitsCsv,
+  fetchRemoteVisits,
   ipDosCabecalhos,
   limparCaminho,
   limparReferer,
@@ -122,5 +123,35 @@ describe("resumoVisitas / buildVisitsCsv", () => {
     expect(linhas[0]).toBe("data_hora;ip;pais;regiao;cidade;caminho;origem;navegador;user_agent;idioma");
     expect(linhas[1]).toContain(";1.1.1.1;BR;RJ;Rio;/;;robô;curl/8;pt");
     expect(linhas[3]).toContain("'=cmd");
+  });
+});
+
+describe("fetchRemoteVisits (contrato de POST /api/painel/visitas)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  function respostaJson(status: number, corpo: unknown) {
+    const texto = JSON.stringify(corpo);
+    return { ok: status >= 200 && status < 300, status, text: async () => texto, json: async () => JSON.parse(texto) } as unknown as Response;
+  }
+  const v: VisitaRegistro = { id: "1", createdAt: "2026-09-12T11:00:00Z", ip: "1.1.1.1", pais: "BR", regiao: null, cidade: null, caminho: "/", referer: null, userAgent: null, idioma: null };
+  it("envia { senha } e devolve a lista de { visitas }", async () => {
+    const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
+      expect(url).toBe("/api/painel/visitas");
+      expect(JSON.parse(String(init.body))).toEqual({ senha: "s3nha" });
+      return respostaJson(200, { visitas: [v] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await fetchRemoteVisits("s3nha")).toEqual([v]);
+  });
+  it("401 = 'Senha incorreta.'; 'tabela de acessos' no erro orienta o SQL; demais falhas trazem o status e o erro", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => respostaJson(401, { erro: "senha incorreta" })));
+    await expect(fetchRemoteVisits("x")).rejects.toThrow("Senha incorreta.");
+    vi.stubGlobal("fetch", vi.fn(async () => respostaJson(502, { erro: "a tabela de acessos ainda não existe no banco: rode supabase/visitas.sql no SQL Editor do projeto" })));
+    await expect(fetchRemoteVisits("x")).rejects.toThrow(/visitas\.sql/);
+    vi.stubGlobal("fetch", vi.fn(async () => respostaJson(429, { erro: "muitas tentativas de senha; aguarde 15 min" })));
+    await expect(fetchRemoteVisits("x")).rejects.toThrow(/429.*muitas tentativas/);
+    vi.stubGlobal("fetch", vi.fn(async () => respostaJson(200, { registros: [] })));
+    await expect(fetchRemoteVisits("x")).rejects.toThrow(/inesperada/);
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
+    await expect(fetchRemoteVisits("x")).rejects.toThrow(/servidor do site/);
   });
 });
