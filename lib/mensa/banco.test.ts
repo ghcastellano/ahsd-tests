@@ -10,7 +10,8 @@ describe("preparação Mensa Brasil", () => {
     for (let seed = 0; seed < 30; seed++) {
       const items = makeMensaItems("principal", seed);
       expect(items).toHaveLength(35);
-      expect(items.every(q => q.domain === "Matrizes")).toBe(true);
+      // rótulo de família com evidência (o que a tela mostra em cada item)
+      expect(items.every(q => q.domain === "Raven/APM-like")).toBe(true);
       expect(items.filter(q => q.type === "figura" && q.item.difficulty === "extrema")).toHaveLength(0);
       expect(new Set(items.map(q => q.id)).size).toBe(35);
       for (const q of items) if (q.type === "figura") {
@@ -23,7 +24,7 @@ describe("preparação Mensa Brasil", () => {
     for (let seed = 0; seed < 20; seed++) {
       const items = makeMensaItems("velocidade", seed);
       expect(items).toHaveLength(45);
-      expect(items.every(q => q.domain === "Matrizes")).toBe(true);
+      expect(items.every(q => q.domain === "Raven/APM-like")).toBe(true);
       expect(items.filter(q => q.type === "figura" && (q.item.kind === "dual" || q.item.difficulty === "extrema"))).toHaveLength(0);
     }
   });

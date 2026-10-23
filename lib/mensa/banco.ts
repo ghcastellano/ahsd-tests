@@ -125,10 +125,11 @@ function matrixBand(item: Item): 1 | 2 | 3 | 4 | 99 {
   return 99; // exclui logicD2 e triad: ficam somente no overtraining.
 }
 
-function matrixSession(seed: number, count: number, speed: boolean, domain = "Raven/APM-like"): FigureItem[] {
+// `seen` pode ser compartilhado entre famílias da mesma sessão: assim um estímulo
+// nunca aparece duas vezes com rótulos diferentes (ex.: Raven/APM-like e G36-like).
+function matrixSession(seed: number, count: number, speed: boolean, domain = "Raven/APM-like", seen = new Set<string>()): FigureItem[] {
   const rand = mulberry32(seed ^ (speed ? 0x41f3 : 0x83af));
   const buckets = new Map<number, FigureItem[]>([[1, []], [2, []], [3, []], [4, []]]);
-  const seen = new Set<string>();
 
   for (let batch = 0; batch < 18; batch++) {
     for (const item of advancedMatrixItems(seed + batch * 104729)) {
@@ -161,9 +162,9 @@ function matrixFamily(
   domain: string,
   allowedKinds: string[],
   offset: number,
+  seen = new Set<string>(),
 ): FigureItem[] {
   const rand = mulberry32(seed ^ offset);
-  const seen = new Set<string>();
   const pool: FigureItem[] = [];
 
   for (let batch = 0; batch < 24 && pool.length < count * 6; batch++) {
@@ -188,13 +189,15 @@ function mixedBrazilSession(seed: number): MensaItem[] {
   // Estas famílias são rótulos editoriais baseados apenas em descrições públicas
   // de formato/construto. Os itens são autorais e não reproduzem instrumentos
   // psicológicos restritos ou seus estímulos.
-  const raven = matrixSession(seed + 101, 16, false, "Raven/APM-like");
+  const seen = new Set<string>(); // nenhum estímulo repetido entre as famílias
+  const raven = matrixSession(seed + 101, 16, false, "Raven/APM-like", seen);
   const gSeries = matrixFamily(
     seed + 211,
     8,
     "G36/G38/R1-like",
     ["d3", "d2", "dual", "logic-or"],
     0x361,
+    seen,
   );
   const tig = matrixFamily(
     seed + 307,
@@ -202,6 +205,7 @@ function mixedBrazilSession(seed: number): MensaItem[] {
     "TIG-NV-like",
     ["logic-or", "logic-and", "d3", "dual"],
     0x71a,
+    seen,
   );
 
   const dominoes = complementItems(seed + 401)
