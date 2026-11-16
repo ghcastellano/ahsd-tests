@@ -10,7 +10,6 @@ import {
   saveLocalRecord,
   type ResultRecord,
 } from "@/lib/history";
-import { remoteEnabled } from "@/lib/remote-config";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
 import type { Responses } from "@/lib/types";
 import ResultView from "./ResultView";
@@ -225,13 +224,6 @@ export default function QuizRunner({ id }: { id: string }) {
             {complete ? "Tudo respondido ✓" : `${total - answered} restantes`}
           </span>
         </div>
-        <p className="mt-3 text-xs text-slate-400">
-          Ao ver o resultado, um registro com data/hora, identificação (se informada) e as
-          pontuações — <strong>sem as respostas individuais</strong> — é salvo neste dispositivo
-          {remoteEnabled()
-            ? " e no registro central desta plataforma, para acompanhamento no painel."
-            : " para acompanhamento no painel deste dispositivo."}
-        </p>
       </div>
     </div>
   );

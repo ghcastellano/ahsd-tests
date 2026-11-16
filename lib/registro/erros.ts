@@ -25,8 +25,9 @@ function textoDoErro(e: unknown): string {
 /** Mensagem sem a connection string (usuário e senha do banco) e sem textos quilométricos. */
 export function mensagemSegura(e: unknown, max = 300): string {
   let msg = textoDoErro(e);
-  const url = process.env.DATABASE_URL;
-  if (url) msg = msg.split(url).join("[DATABASE_URL]");
+  for (const url of [process.env.DATABASE_URL, process.env.POSTGRES_URL]) {
+    if (url) msg = msg.split(url).join("[DATABASE_URL]");
+  }
   msg = msg.replace(URL_DE_BANCO, "[DATABASE_URL]").replace(/\s+/g, " ").trim();
   return msg.length > max ? `${msg.slice(0, max)}…` : msg || "erro desconhecido";
 }

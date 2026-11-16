@@ -8,14 +8,18 @@ import type { Executor } from "./postgres";
 // ser importado em código de servidor: a connection string carrega usuário e
 // senha do banco.
 
-/** Há um Postgres configurado? (A Vercel cria DATABASE_URL ao conectar o Neon.) */
+function urlNeon(): string | undefined {
+  return process.env.DATABASE_URL || process.env.POSTGRES_URL;
+}
+
+/** Há um Postgres configurado? (A Vercel cria DATABASE_URL/POSTGRES_URL ao conectar o Neon.) */
 export function postgresDisponivel(): boolean {
-  return !!process.env.DATABASE_URL;
+  return !!urlNeon();
 }
 
 /** Executor em modo HTTP (um comando por chamada, sem conexão persistente). */
 export function executorNeon(): Executor {
-  const url = process.env.DATABASE_URL;
+  const url = urlNeon();
   if (!url) throw new Error("DATABASE_URL não definida");
   const sql = neon(url, { fullResults: true });
   return async (texto, params = []) => {

@@ -203,10 +203,6 @@ export default function MatrixQuiz() {
         >
           Iniciar cronômetro e começar
         </button>
-        <p className="mt-3 text-xs text-slate-400">
-          Ao finalizar, um registro do resultado (data/hora, identificação opcional e pontuações)
-          é salvo para o painel de acompanhamento.
-        </p>
       </div>
     );
   }

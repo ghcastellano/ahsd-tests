@@ -36,7 +36,6 @@ async function medir(p) {
 
 // Telas e como chegar nelas
 const TELAS = [
-  { nome: "entrar", ir: async (p) => p.goto(`${B}/entrar`) },
   { nome: "home", ir: async (p) => p.goto(`${B}/`) },
   { nome: "treino", ir: async (p) => p.goto(`${B}/treino`) },
   { nome: "regras", ir: async (p) => p.goto(`${B}/treino/regras`) },

@@ -18,8 +18,7 @@ export default function HomePage() {
           personalidade e bem-estar — com correção automática, pontuação e detalhamento. Feito
           para autoavaliação e para que profissionais
           e familiares possam aplicar e interpretar. Os resultados são calculados no seu
-          navegador; um registro do resultado (data/hora, identificação opcional e pontuações —
-          sem as respostas de cada questão) é guardado para o painel de acompanhamento.
+          navegador.
         </p>
         <p className="mt-3 max-w-3xl text-sm text-slate-500">
           Quer entender como estes rastreios se relacionam com testes de QI e com o laudo formal
