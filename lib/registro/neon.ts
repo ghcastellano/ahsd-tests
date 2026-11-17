@@ -9,7 +9,10 @@ import type { Executor } from "./postgres";
 // senha do banco.
 
 function urlNeon(): string | undefined {
-  return process.env.DATABASE_URL || process.env.POSTGRES_URL;
+  const raw = (process.env.DATABASE_URL || process.env.POSTGRES_URL || "").trim();
+  if (!raw) return undefined;
+  const match = raw.match(/postgres(?:ql)?:\/\/[^\s'"]+/i);
+  return match ? match[0] : raw.replace(/^['"]|['"]$/g, "");
 }
 
 /** Há um Postgres configurado? (A Vercel cria DATABASE_URL/POSTGRES_URL ao conectar o Neon.) */
