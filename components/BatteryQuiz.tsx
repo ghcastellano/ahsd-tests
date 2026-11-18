@@ -461,6 +461,18 @@ export default function BatteryQuiz({ id, testDef }: { id: string; testDef?: Tes
         </div>
       )}
 
+      {item.imageMatrix && (
+        <div className="mt-6 flex justify-center">
+          <div className="rounded-xl border border-slate-300 bg-white p-3">
+            <img
+              src={item.imageMatrix}
+              alt={`Matriz do item ${current + 1}`}
+              className="max-h-64 w-auto object-contain"
+            />
+          </div>
+        </div>
+      )}
+
       {item.textOptions && (
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {item.textOptions.map((t, i) => (
@@ -474,6 +486,25 @@ export default function BatteryQuiz({ id, testDef }: { id: string; testDef?: Tes
               }`}
             >
               {t}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {item.imageOptions && (
+        <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-6">
+          {item.imageOptions.map((src, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => pick(i)}
+              aria-label={`Alternativa ${i + 1}`}
+              className={`flex flex-col items-center justify-center rounded-xl border-2 bg-white p-2 transition ${
+                chosen[current] === i ? "border-brand-600 ring-2 ring-brand-200" : "border-slate-200 hover:border-brand-300"
+              }`}
+            >
+              <img src={src} alt={`Alternativa ${i + 1}`} className="h-20 w-20 object-contain" />
+              <span className="mt-1 text-xs font-semibold text-slate-400">{i + 1}</span>
             </button>
           ))}
         </div>

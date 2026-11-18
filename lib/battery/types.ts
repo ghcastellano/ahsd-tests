@@ -56,6 +56,10 @@ export interface Item {
   options?: Cell[];
   /** Alternativas textuais (séries numéricas). */
   textOptions?: string[];
+  /** Imagem real da matriz (ex.: exames extraídos de vídeo). */
+  imageMatrix?: string;
+  /** Imagens reais das 6 alternativas. */
+  imageOptions?: string[];
   answerIndex: number;
   /** Regra(s) aplicadas — mostradas na revisão pós-teste. */
   explanation: string;

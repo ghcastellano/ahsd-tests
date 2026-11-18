@@ -114,6 +114,29 @@ export default function RevisaoItem({ item, escolhido, uid }: { item: Item; esco
           })}
         </div>
       )}
+      {item.imageMatrix && (
+        <div className="mt-3 flex justify-center">
+          <div className="rounded-xl border border-slate-300 bg-white p-2">
+            <img src={item.imageMatrix} alt={`Matriz ${item.id}`} className="max-h-52 w-auto object-contain" />
+          </div>
+        </div>
+      )}
+      {item.imageOptions && (
+        <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {item.imageOptions.map((src, i) => {
+            const papel = papelDe(i, escolhido, correta);
+            return (
+              <div key={i} data-papel={papel ?? undefined} aria-label={`Alternativa ${i + 1}${papel ? ` (${papel})` : ""}`}>
+                <div className={`flex flex-col items-center justify-center rounded-xl border-2 p-1 ${classeDe(i, escolhido, correta)}`}>
+                  <img src={src} alt={`Alternativa ${i + 1}`} className="h-14 w-14 object-contain" />
+                  <span className="text-[10px] font-semibold text-slate-400">{i + 1}</span>
+                </div>
+                <Rotulo papel={papel} />
+              </div>
+            );
+          })}
+        </div>
+      )}
       {item.explanation && <p className="mt-3 text-sm text-slate-600"><strong>Regra:</strong> {item.explanation}</p>}
     </div>
   );
