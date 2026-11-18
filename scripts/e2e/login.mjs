@@ -1,7 +1,2 @@
-// Entra no site com a senha de acesso (portão): usado por todos os roteiros.
-export async function entrar(page, B, senha = process.env.SITE_SENHA ?? "Ps1c0#Ahsd!94xQ7mL2") {
-  await page.goto(`${B}/entrar`);
-  await page.locator("#senha-site").fill(senha);
-  await page.getByRole("button", { name: "Entrar" }).click();
-  await page.waitForURL((u) => !u.pathname.startsWith("/entrar"), { timeout: 15000 });
-}
+// O acesso ao site é aberto (sem senha de entrada); mantido como no-op para compatibilidade dos roteiros E2E.
+export async function entrar() {}
