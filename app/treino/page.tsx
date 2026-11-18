@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { tests } from "@/lib/battery";
+import { extraTests } from "@/lib/battery/exames-autorais";
 
 export const metadata: Metadata = {
   title: "Bateria de treino de raciocínio",
@@ -117,6 +118,34 @@ export default function TreinoIndex() {
             </div>
             <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-brand-700">{t.name}</h3>
             <p className="mt-1 text-sm text-slate-600">{t.intro.slice(0, 155)}…</p>
+            <p className="mt-3 text-sm font-medium text-brand-600">Iniciar →</p>
+          </Link>
+        ))}
+      </div>
+
+      <h2 className="mt-10 text-xl font-bold text-slate-900">
+        Simulados autorais inspirados em exames clássicos
+      </h2>
+      <p className="mt-1 text-sm text-slate-600">
+        Bancos inéditos com gabarito comentado e referência comercial para aquisição dos instrumentos oficiais por psicólogos.
+      </p>
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        {extraTests.map((t) => (
+          <Link
+            key={t.id}
+            href={`/${t.id}`}
+            className="group rounded-xl border border-slate-200 bg-white p-5 transition hover:border-brand-400 hover:shadow-md"
+          >
+            <div className="flex items-center justify-between">
+              <span className="rounded-md bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
+                POTÊNCIA
+              </span>
+              <span className="text-xs text-slate-400">
+                {t.itemCount} itens · {Math.round(t.timeLimitSeconds / 60)} min
+              </span>
+            </div>
+            <h3 className="mt-3 font-semibold text-slate-900 group-hover:text-brand-700">{t.name}</h3>
+            <p className="mt-1 text-sm text-slate-600">{t.intro.slice(0, 130)}…</p>
             <p className="mt-3 text-sm font-medium text-brand-600">Iniciar →</p>
           </Link>
         ))}

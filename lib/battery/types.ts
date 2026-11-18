@@ -63,6 +63,14 @@ export interface Item {
 
 export type TestFormat = "matriz" | "serie-figural" | "classificacao" | "serie-numerica";
 
+export interface TestReference {
+  title: string;
+  publisher: string;
+  citation: string;
+  purchaseUrl: string;
+  purchaseLabel: string;
+}
+
 export interface TestDef {
   id: string;
   name: string;
@@ -76,6 +84,8 @@ export interface TestDef {
   instructions: string;
   /** Regime: potência (tempo folgado, itens complexos) ou velocidade. */
   regime: "potencia" | "velocidade";
+  /** Referência editorial e link oficial de aquisição para profissionais. */
+  reference?: TestReference;
   /** Itens da tentativa. A semente varia a superfície (valores, ordem, formas) mantendo a estrutura de regras e a dificuldade. */
   items: (seed?: number) => Item[];
 }

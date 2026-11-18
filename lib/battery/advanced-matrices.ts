@@ -32,13 +32,75 @@ const key = visualKey;
 function d3Item(id: string, seed: number, difficulty: Difficulty): Item {
   const rand = mulberry32(seed);
   const shapes = shuffle(SHAPES, rand).slice(0, 3);
+  const shiftA = rand() < 0.5 ? 1 : 2;
+  const shiftB = shiftA === 1 ? 2 : 1;
+  const variant = Math.floor(rand() * 3); // 0: forma+preenchimento, 1: forma+quantidade, 2: forma+tamanho
+
+  if (variant === 1) {
+    const counts = shuffle([1, 2, 3], rand);
+    const cellAt = (r: number, c: number): Cell => ({
+      marks: [shapes[(shiftA * r + c) % 3]],
+      count: counts[(shiftB * r + c) % 3],
+      size: 1,
+    });
+    const grid: Cell[][] = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cellAt(r, c)));
+    const answer = grid[2][2];
+    const distractors: Cell[] = [
+      { ...answer, count: counts[(shiftB * 2 + 2 + 1) % 3] },
+      { ...answer, count: counts[(shiftB * 2 + 2 + 2) % 3] },
+      { ...answer, marks: [shapes[(shiftA * 2 + 2 + 1) % 3]] },
+      { ...answer, marks: [shapes[(shiftA * 2 + 2 + 2) % 3]] },
+      { marks: [shapes[(shiftA * 2 + 2 + 1) % 3]], count: counts[(shiftB * 2 + 2 + 1) % 3], size: 1 },
+      { marks: [shapes[(shiftA * 2 + 2 + 2) % 3]], count: counts[(shiftB * 2 + 2 + 2) % 3], size: 1 },
+    ];
+    const { options, answerIndex } = buildOptions(answer, distractors, key, rand);
+    return {
+      id,
+      difficulty,
+      kind: "d3",
+      grid,
+      options,
+      answerIndex,
+      explanation:
+        "Distribuição de três em dois atributos: cada linha e coluna contém as três formas e as três quantidades (1, 2 e 3), uma vez cada, em ordens independentes. A resposta é a combinação que falta na última linha.",
+    };
+  }
+
+  if (variant === 2) {
+    const sizes = shuffle([1, 2, 3] as const, rand);
+    const cellAt = (r: number, c: number): Cell => ({
+      marks: [shapes[(shiftA * r + c) % 3]],
+      size: sizes[(shiftB * r + c) % 3],
+      innerFill: "none",
+    });
+    const grid: Cell[][] = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cellAt(r, c)));
+    const answer = grid[2][2];
+    const distractors: Cell[] = [
+      { ...answer, size: sizes[(shiftB * 2 + 2 + 1) % 3] },
+      { ...answer, size: sizes[(shiftB * 2 + 2 + 2) % 3] },
+      { ...answer, marks: [shapes[(shiftA * 2 + 2 + 1) % 3]] },
+      { ...answer, marks: [shapes[(shiftA * 2 + 2 + 2) % 3]] },
+      { marks: [shapes[(shiftA * 2 + 2 + 1) % 3]], size: sizes[(shiftB * 2 + 2 + 1) % 3], innerFill: "none" },
+      { marks: [shapes[(shiftA * 2 + 2 + 2) % 3]], size: sizes[(shiftB * 2 + 2 + 2) % 3], innerFill: "none" },
+    ];
+    const { options, answerIndex } = buildOptions(answer, distractors, key, rand);
+    return {
+      id,
+      difficulty,
+      kind: "d3",
+      grid,
+      options,
+      answerIndex,
+      explanation:
+        "Distribuição de três em forma e tamanho: cada linha contém as três formas e os três tamanhos (pequeno, médio, grande), uma vez cada, em ordens independentes.",
+    };
+  }
+
   const fills = shuffle([...FILLS], rand);
-  // Dois quadrados latinos com deslocamentos diferentes: a forma anda por
-  // (linha+coluna), o preenchimento por (2*linha+coluna). Sem alinhamento
-  // entre eles, não dá para deduzir um a partir do outro.
+  // Dois quadrados latinos com deslocamentos diferentes: sem alinhamento entre eles.
   const cellAt = (r: number, c: number): Cell => ({
-    marks: [shapes[(r + c) % 3]],
-    innerFill: fills[(2 * r + c) % 3],
+    marks: [shapes[(shiftA * r + c) % 3]],
+    innerFill: fills[(shiftB * r + c) % 3],
   });
 
   const grid: Cell[][] = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cellAt(r, c)));
@@ -46,14 +108,14 @@ function d3Item(id: string, seed: number, difficulty: Difficulty): Item {
 
   const distractors: Cell[] = [
     // certo na forma, errado no preenchimento (satisfaz 1 das 2 regras)
-    { marks: answer.marks, innerFill: fills[(2 * 2 + 2 + 1) % 3] },
-    { marks: answer.marks, innerFill: fills[(2 * 2 + 2 + 2) % 3] },
+    { marks: answer.marks, innerFill: fills[(shiftB * 2 + 2 + 1) % 3] },
+    { marks: answer.marks, innerFill: fills[(shiftB * 2 + 2 + 2) % 3] },
     // certo no preenchimento, errado na forma
-    { marks: [shapes[(2 + 2 + 1) % 3]], innerFill: answer.innerFill },
-    { marks: [shapes[(2 + 2 + 2) % 3]], innerFill: answer.innerFill },
+    { marks: [shapes[(shiftA * 2 + 2 + 1) % 3]], innerFill: answer.innerFill },
+    { marks: [shapes[(shiftA * 2 + 2 + 2) % 3]], innerFill: answer.innerFill },
     // errado nos dois
-    { marks: [shapes[(2 + 2 + 1) % 3]], innerFill: fills[(2 * 2 + 2 + 1) % 3] },
-    { marks: [shapes[(2 + 2 + 2) % 3]], innerFill: fills[(2 * 2 + 2 + 2) % 3] },
+    { marks: [shapes[(shiftA * 2 + 2 + 1) % 3]], innerFill: fills[(shiftB * 2 + 2 + 1) % 3] },
+    { marks: [shapes[(shiftA * 2 + 2 + 2) % 3]], innerFill: fills[(shiftB * 2 + 2 + 2) % 3] },
   ];
 
   const { options, answerIndex } = buildOptions(answer, distractors, key, rand);
@@ -215,12 +277,15 @@ function dualItem(id: string, seed: number, difficulty: Difficulty): Item {
   const rand = mulberry32(seed);
   const outers = shuffle(SHAPES, rand).slice(0, 3);
   const inners = shuffle(ELEMENTS, rand).slice(0, 3);
-  // Componente externo: distribuição de três.
-  // Componente interno: progressão quantitativa (quantidade cresce na linha).
+  const outerShift = rand() < 0.5 ? 1 : 2;
+  const descCount = rand() < 0.5;
+  const colInner = rand() < 0.5;
+  const countAt = (c: number) => (descCount ? 3 - c : c + 1) as 1 | 2 | 3;
+
   const cellAt = (r: number, c: number): Cell => ({
-    outer: outers[(r + c) % 3],
-    marks: [inners[r % 3]],
-    count: (c + 1) as 1 | 2 | 3,
+    outer: outers[(outerShift * r + c) % 3],
+    marks: [inners[(colInner ? c : r) % 3]],
+    count: countAt(c),
     size: 1, // elementos pequenos: não vazam do contorno
   });
 
@@ -228,15 +293,17 @@ function dualItem(id: string, seed: number, difficulty: Difficulty): Item {
   const answer = grid[2][2];
 
   const distractors: Cell[] = [
-    { ...answer, outer: outers[(2 + 2 + 1) % 3] }, // externo errado
-    { ...answer, outer: outers[(2 + 2 + 2) % 3] },
-    { ...answer, count: 2 }, // quantidade errada
-    { ...answer, count: 1 },
+    { ...answer, outer: outers[(outerShift * 2 + 2 + 1) % 3] }, // externo errado
+    { ...answer, outer: outers[(outerShift * 2 + 2 + 2) % 3] },
+    { ...answer, count: countAt(1) }, // quantidade errada
+    { ...answer, count: countAt(0) },
     { ...answer, marks: [inners[(2 + 1) % 3]] }, // elemento interno errado
-    { ...answer, outer: outers[(2 + 2 + 1) % 3], count: 2 }, // dois erros
+    { ...answer, outer: outers[(outerShift * 2 + 2 + 1) % 3], count: countAt(1) }, // dois erros
   ];
 
   const { options, answerIndex } = buildOptions(answer, distractors, key, rand);
+  const dirText = descCount ? "decresce (3 → 2 → 1)" : "cresce (1 → 2 → 3)";
+  const innerAxis = colInner ? "constante por coluna" : "constante por linha";
   return {
     id,
     difficulty,
@@ -245,7 +312,95 @@ function dualItem(id: string, seed: number, difficulty: Difficulty): Item {
     options,
     answerIndex,
     explanation:
-      "Dois componentes, duas regras independentes: a forma externa segue distribuição de três (cada linha usa as três formas), enquanto a quantidade do elemento interno cresce da esquerda para a direita. O contorno e o conteúdo obedecem a regras separadas — resolva um componente de cada vez.",
+      `Dois componentes, duas regras independentes: a forma externa segue distribuição de três (cada linha usa as três formas), o tipo de elemento interno é ${innerAxis}, e a quantidade ${dirText} da esquerda para a direita.`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 4b. Rotação progressiva + preenchimento independente
+// ---------------------------------------------------------------------------
+
+function rotProgItem(id: string, seed: number, difficulty: Difficulty): Item {
+  const rand = mulberry32(seed);
+  // Triângulo tem período de 360°: 0°, 90°, 180°, 270° são todos visualmente distintos.
+  const fills = shuffle([...FILLS], rand);
+  const stepCol = rand() < 0.5 ? 90 : 270;
+  const stepRow = rand() < 0.5 ? 90 : 180;
+  const baseRot = Math.floor(rand() * 4) * 90;
+  const rotAt = (r: number, c: number) => (baseRot + r * stepRow + c * stepCol) % 360;
+  const shiftFill = rand() < 0.5 ? 1 : 2;
+
+  const cellAt = (r: number, c: number): Cell => ({
+    marks: ["triangle"],
+    rotation: rotAt(r, c),
+    innerFill: fills[(shiftFill * r + c) % 3],
+  });
+
+  const grid: Cell[][] = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cellAt(r, c)));
+  const answer = grid[2][2];
+
+  const rotsErradas = [90, 180, 270].map((d) => ((answer.rotation ?? 0) + d) % 360);
+  const fillsErrados = fills.filter((f) => f !== answer.innerFill);
+  const distractors: Cell[] = [
+    { ...answer, rotation: rotsErradas[0] },
+    { ...answer, rotation: rotsErradas[1] },
+    { ...answer, innerFill: fillsErrados[0] },
+    { ...answer, innerFill: fillsErrados[1] },
+    { ...answer, rotation: rotsErradas[2], innerFill: fillsErrados[0] },
+    { ...answer, rotation: rotsErradas[0], innerFill: fillsErrados[1] },
+  ];
+
+  const { options, answerIndex } = buildOptions(answer, distractors, key, rand);
+  return {
+    id,
+    difficulty,
+    kind: "rot-prog",
+    grid,
+    options,
+    answerIndex,
+    explanation:
+      `Progressão rotacional + preenchimento: o triângulo gira ${stepCol === 90 ? "90° no sentido horário" : "90° no sentido anti-horário"} a cada coluna, e o preenchimento segue distribuição de três (cada linha usa vazio, metade e sólido uma vez cada).`,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 4c. Constante por linha + constante por coluna
+// ---------------------------------------------------------------------------
+
+function constRowColItem(id: string, seed: number, difficulty: Difficulty): Item {
+  const rand = mulberry32(seed);
+  const shapes = shuffle(SHAPES, rand).slice(0, 3);
+  const fills = shuffle([...FILLS], rand);
+  const rowShape = rand() < 0.5;
+
+  const cellAt = (r: number, c: number): Cell => ({
+    marks: [shapes[rowShape ? r : c]],
+    innerFill: fills[rowShape ? c : r],
+  });
+
+  const grid: Cell[][] = [0, 1, 2].map((r) => [0, 1, 2].map((c) => cellAt(r, c)));
+  const answer = grid[2][2];
+
+  const distractors: Cell[] = [
+    { marks: [shapes[0]], innerFill: answer.innerFill },
+    { marks: [shapes[1]], innerFill: answer.innerFill },
+    { marks: answer.marks, innerFill: fills[0] },
+    { marks: answer.marks, innerFill: fills[1] },
+    { marks: [shapes[0]], innerFill: fills[1] },
+    { marks: [shapes[1]], innerFill: fills[0] },
+  ];
+
+  const { options, answerIndex } = buildOptions(answer, distractors, key, rand);
+  return {
+    id,
+    difficulty,
+    kind: "const-rc",
+    grid,
+    options,
+    answerIndex,
+    explanation: rowShape
+      ? "Eixos ortogonais: a forma é constante em cada LINHA e o preenchimento é constante em cada COLUNA."
+      : "Eixos ortogonais: a forma é constante em cada COLUNA e o preenchimento é constante em cada LINHA.",
   };
 }
 
@@ -391,22 +546,114 @@ export function advancedMatrixItems(seed = 0): Item[] {
   let n = 0;
   const next = () => `am${String(++n).padStart(2, "0")}`;
 
-  // Bloco 1 (1–9): distribuição de três em dois atributos.
-  for (let i = 0; i < 9; i++) items.push(d3Item(next(), 1000 + i * 37 + k, "media"));
-  // Bloco 2 (10–18): operações lógicas — OR e AND primeiro.
-  for (let i = 0; i < 5; i++) items.push(logicItem(next(), 2000 + i * 41 + k, i % 2 ? "and" : "or", "media"));
-  for (let i = 0; i < 4; i++) items.push(logicItem(next(), 2500 + i * 43 + k, "xor", "dificil"));
-  // Bloco 3 (19–27): dois componentes sem pista de separação.
-  for (let i = 0; i < 9; i++) items.push(dualItem(next(), 3000 + i * 47 + k, "dificil"));
-  // Bloco 4 (28–36): distribuição de dois com layout sorteado, depois os dois
-  // tipos de teto (duas regras em componentes diferentes; quatro regras em
-  // eixos distintos com alternativas equilibradas). Antes, "extrema" era o mesmo XOR
-  // dos itens 15–18 com outro rótulo.
-  for (let i = 0; i < 4; i++) items.push(d2Item(next(), 4000 + i * 53 + k, "dificil"));
-  for (let i = 0; i < 2; i++) items.push(logicD2Item(next(), 4500 + i * 59 + k, i ? "and" : "xor", "extrema"));
-  for (let i = 0; i < 3; i++) items.push(triadItem(next(), 4700 + i * 61 + k, "extrema"));
+  // Bloco "media" (14 itens): regras intercaladas para não repetir padrão em sequência.
+  const mediaSeq: Array<(id: string, s: number) => Item> = [
+    (id, s) => d3Item(id, s, "media"),
+    (id, s) => constRowColItem(id, s, "media"),
+    (id, s) => logicItem(id, s, "or", "media"),
+    (id, s) => rotProgItem(id, s, "media"),
+    (id, s) => d3Item(id, s, "media"),
+    (id, s) => logicItem(id, s, "and", "media"),
+    (id, s) => constRowColItem(id, s, "media"),
+    (id, s) => rotProgItem(id, s, "media"),
+    (id, s) => d3Item(id, s, "media"),
+    (id, s) => logicItem(id, s, "or", "media"),
+    (id, s) => rotProgItem(id, s, "media"),
+    (id, s) => constRowColItem(id, s, "media"),
+    (id, s) => d3Item(id, s, "media"),
+    (id, s) => logicItem(id, s, "and", "media"),
+  ];
+  mediaSeq.forEach((fn, i) => items.push(fn(next(), 1000 + i * 37 + k)));
+
+  // Bloco "dificil" (17 itens): dual, XOR, D2, rotação e D3 intercalados.
+  const dificilSeq: Array<(id: string, s: number) => Item> = [
+    (id, s) => dualItem(id, s, "dificil"),
+    (id, s) => logicItem(id, s, "xor", "dificil"),
+    (id, s) => d2Item(id, s, "dificil"),
+    (id, s) => rotProgItem(id, s, "dificil"),
+    (id, s) => dualItem(id, s, "dificil"),
+    (id, s) => logicItem(id, s, "xor", "dificil"),
+    (id, s) => d3Item(id, s, "dificil"),
+    (id, s) => d2Item(id, s, "dificil"),
+    (id, s) => dualItem(id, s, "dificil"),
+    (id, s) => logicItem(id, s, "xor", "dificil"),
+    (id, s) => rotProgItem(id, s, "dificil"),
+    (id, s) => d2Item(id, s, "dificil"),
+    (id, s) => dualItem(id, s, "dificil"),
+    (id, s) => logicItem(id, s, "xor", "dificil"),
+    (id, s) => d3Item(id, s, "dificil"),
+    (id, s) => d2Item(id, s, "dificil"),
+    (id, s) => dualItem(id, s, "dificil"),
+  ];
+  dificilSeq.forEach((fn, i) => items.push(fn(next(), 2500 + i * 43 + k)));
+
+  // Bloco "extrema" (5 itens): teto real intercalado.
+  const extremaSeq: Array<(id: string, s: number) => Item> = [
+    (id, s) => triadItem(id, s, "extrema"),
+    (id, s) => logicD2Item(id, s, "xor", "extrema"),
+    (id, s) => triadItem(id, s, "extrema"),
+    (id, s) => logicD2Item(id, s, "and", "extrema"),
+    (id, s) => triadItem(id, s, "extrema"),
+  ];
+  extremaSeq.forEach((fn, i) => items.push(fn(next(), 4500 + i * 59 + k)));
 
   return items.map((item, i) => balanceMatrixOptions(item, mulberry32(k + 7001 + i * 101)));
+}
+
+export type MatrixRuleKind =
+  | "d3"
+  | "const-rc"
+  | "rot-prog"
+  | "logic-or"
+  | "logic-and"
+  | "logic-xor"
+  | "dual"
+  | "d2"
+  | "logicD2-xor"
+  | "logicD2-and"
+  | "triad";
+
+export interface MatrixSlot {
+  kind: MatrixRuleKind;
+  difficulty: Difficulty;
+}
+
+export function buildMatrixBank(
+  prefix: string,
+  slots: readonly MatrixSlot[],
+  baseOffset: number,
+  seed = 0,
+): Item[] {
+  const k = (seed >>> 0) * 1_000_003 + baseOffset;
+  const items = slots.map((slot, i) => {
+    const id = `${prefix}${String(i + 1).padStart(2, "0")}`;
+    const s = k + (i + 1) * 7919;
+    switch (slot.kind) {
+      case "d3":
+        return d3Item(id, s, slot.difficulty);
+      case "const-rc":
+        return constRowColItem(id, s, slot.difficulty);
+      case "rot-prog":
+        return rotProgItem(id, s, slot.difficulty);
+      case "logic-or":
+        return logicItem(id, s, "or", slot.difficulty);
+      case "logic-and":
+        return logicItem(id, s, "and", slot.difficulty);
+      case "logic-xor":
+        return logicItem(id, s, "xor", slot.difficulty);
+      case "dual":
+        return dualItem(id, s, slot.difficulty);
+      case "d2":
+        return d2Item(id, s, slot.difficulty);
+      case "logicD2-xor":
+        return logicD2Item(id, s, "xor", slot.difficulty);
+      case "logicD2-and":
+        return logicD2Item(id, s, "and", slot.difficulty);
+      case "triad":
+        return triadItem(id, s, slot.difficulty);
+    }
+  });
+  return items.map((item, i) => balanceMatrixOptions(item, mulberry32(k + 9001 + i * 131)));
 }
 
 function balanceMatrixOptions(item: Item, rand: () => number): Item {

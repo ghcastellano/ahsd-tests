@@ -6,6 +6,7 @@ import CellSvg from "./CellSvg";
 import RevisaoItem from "./RevisaoItem";
 import ShareBlock from "./ShareBlock";
 import { getTest } from "@/lib/battery";
+import { getExtraTest } from "@/lib/battery/exames-autorais";
 import type { Item, TestDef } from "@/lib/battery/types";
 import { makeRecordId, saveLocalRecord, type ResultRecord } from "@/lib/history";
 import { useScrollTopOnScreenChange } from "@/lib/use-scroll-top";
@@ -41,8 +42,8 @@ function band(pct: number): { label: string; text: string } {
   };
 }
 
-export default function BatteryQuiz({ id }: { id: string }) {
-  const test = getTest(id) as TestDef | undefined;
+export default function BatteryQuiz({ id, testDef }: { id: string; testDef?: TestDef }) {
+  const test = (testDef ?? getTest(id) ?? getExtraTest(id)) as TestDef | undefined;
   // Cada tentativa recebe uma semente: mesma estrutura de dificuldade, itens diferentes.
   const [seed] = useSeed();
   const items = useMemo<Item[]>(() => (test ? test.items(seed ?? 0) : []), [test, seed]);
@@ -176,6 +177,21 @@ export default function BatteryQuiz({ id }: { id: string }) {
           afiliação com nenhuma sociedade de alto QI.
         </div>
 
+        {test.reference && (
+          <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <p className="font-semibold text-slate-900">Referência oficial ({test.reference.publisher})</p>
+            <p className="mt-1 text-xs text-slate-600">{test.reference.citation}</p>
+            <a
+              href={test.reference.purchaseUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block font-medium text-brand-700 hover:underline"
+            >
+              {test.reference.purchaseLabel} →
+            </a>
+          </div>
+        )}
+
         <p className="mt-4 text-sm text-slate-600">
           Ainda não leu o{" "}
           <Link href="/treino/regras" className="font-medium text-brand-600 hover:underline">
@@ -294,6 +310,21 @@ export default function BatteryQuiz({ id }: { id: string }) {
         </div>
 
         {savedRecord && <ShareBlock record={savedRecord} />}
+
+        {test.reference && (
+          <div className="no-print mt-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <p className="font-semibold text-slate-900">Avaliação formal: {test.reference.title} ({test.reference.publisher})</p>
+            <p className="mt-1 text-xs text-slate-600">{test.reference.citation}</p>
+            <a
+              href={test.reference.purchaseUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-block font-medium text-brand-700 hover:underline"
+            >
+              {test.reference.purchaseLabel} →
+            </a>
+          </div>
+        )}
 
         <div className="no-print mt-6 flex flex-wrap gap-3">
           <Link href="/treino" className="rounded-lg bg-brand-600 px-5 py-2.5 font-medium text-white hover:bg-brand-700">
